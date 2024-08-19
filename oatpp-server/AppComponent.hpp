@@ -14,7 +14,7 @@
 
 #include <boost/asio.hpp>
 
-#include "MyResponseInterceptor.hpp" 
+#include "interceptors/MyResponseInterceptor.hpp" 
 
 /**
  *  Class which creates and holds Application components and registers components in oatpp::base::Environment

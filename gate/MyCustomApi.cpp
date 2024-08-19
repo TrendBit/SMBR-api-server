@@ -8,14 +8,15 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
-#include <utility> 
+#include <utility>
 #include <cmath>
 
 namespace OpenAPI {
 
+
+
 MyCustomApi::MyCustomApi(const int timeOut)
     : OAIDefaultApi(timeOut) {
-    // Start the periodic message listener
     std::thread([this] {
         while (true) {
             int s;
@@ -67,11 +68,23 @@ MyCustomApi::MyCustomApi(const int timeOut)
 MyCustomApi::~MyCustomApi() {
 }
 
+
+uint32_t MyCustomApi::createCanId(Codes::Module module, Codes::Instance instance, Codes::Message_type messageType, bool emergencyFlag) {
+    uint32_t id = 0;
+    id |= (emergencyFlag ? 1 : 0) << 28; // 1 bit Emergency flag
+    id |= static_cast<uint32_t>(messageType) << 16; // 12 bits Message type
+    id |= static_cast<uint32_t>(module) << 4; // 8 bits Module ID
+    id |= static_cast<uint32_t>(instance); // 4 bits Instance ID
+    return id;
+}
+
+
 std::string MyCustomApi::ping() {
     std::string response;
     uint8_t data = 0x04;
 
-    uint32_t can_id = 0xb000051;
+
+    uint32_t can_id = createCanId(Codes::Module::Control_board, Codes::Instance::Exclusive, Codes::Message_type::Ping_request, false);
 
     if (sendCanMessage(can_id, &data, 1) && receiveNextCanMessage(response)) {
         return response;
@@ -79,6 +92,7 @@ std::string MyCustomApi::ping() {
         return "CAN message failed";
     }
 }
+
 
 bool MyCustomApi::sendCanMessage(uint32_t can_id, const uint8_t* data, size_t data_len) {
     int s;
