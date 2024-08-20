@@ -22,7 +22,7 @@ public:
    * @param apiContentMappers - mappers used to serialize/deserialize DTOs.
    */
   MyController(OATPP_COMPONENT(std::shared_ptr<oatpp::web::mime::ContentMappers>, apiContentMappers))
-    : oatpp::web::server::api::ApiController(apiContentMappers), apiClient(30000) // Timeout 30 seconds
+    : oatpp::web::server::api::ApiController(apiContentMappers), apiClient() 
   {}
 
 public:

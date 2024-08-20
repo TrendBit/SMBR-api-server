@@ -10,7 +10,7 @@ namespace OpenAPI {
 
 class MyCustomApi  {
 public:
-    MyCustomApi(const int timeOut);
+    MyCustomApi();
     ~MyCustomApi();
 
     std::string ping();  
@@ -20,8 +20,6 @@ private:
 
     uint32_t createCanId(Codes::Module module, Codes::Instance instance, Codes::Message_type messageType, bool emergencyFlag);
 
-        std::string lastPeriodicMessage;
-    std::mutex lastMessageMutex;
 };
 
 } // namespace OpenAPI
