@@ -5,6 +5,10 @@ ControlModule::ControlModule()
 
 ControlModule::~ControlModule() {}
 
+float ControlModule::ping() {
+    return CommonModule::ping(); 
+}
+
 float ControlModule::getLoad() {
     return 0.0;
 }

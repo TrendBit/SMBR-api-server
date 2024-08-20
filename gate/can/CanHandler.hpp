@@ -8,7 +8,7 @@ public:
     CanHandler();
     ~CanHandler();
 
-    std::string sendPingRequest(uint32_t can_id, uint8_t seq_number);
+    std::pair<bool, std::string> sendPingRequest(uint32_t can_id, uint8_t seq_number);
     float sendLoadRequest(uint32_t can_id);
     float sendTemperatureRequest(uint32_t can_id);
     bool sendRestartRequest(uint32_t can_id, const std::string& uid);
@@ -22,7 +22,8 @@ public:
     std::vector<std::string> sendAvailableModulesRequest(uint32_t can_id);
     float sendSystemTemperatureRequest(uint32_t can_id);
 
-private:
     bool sendCanMessage(uint32_t can_id, const uint8_t* data, size_t data_len);
     bool receiveNextCanMessage(std::string &response);
+
+    uint32_t extractCanIdFromResponse(const std::string& response);  
 };

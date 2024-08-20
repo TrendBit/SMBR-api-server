@@ -1,14 +1,14 @@
-#ifndef PingResponseDto_hpp
-#define PingResponseDto_hpp
+#ifndef MyPingResponseDto_hpp
+#define MyPingResponseDto_hpp
 
-#include "oatpp/core/macro/codegen.hpp"
-#include "oatpp/core/Types.hpp"
+#include "oatpp/macro/codegen.hpp"
+#include "oatpp/Types.hpp"
 
 #include OATPP_CODEGEN_BEGIN(DTO)
 
-class PingResponseDto : public oatpp::DTO {
+class MyPingResponseDto : public oatpp::DTO {
   
-  DTO_INIT(PingResponseDto, DTO)
+  DTO_INIT(MyPingResponseDto, DTO)
   
   DTO_FIELD(Float32, time_ms);  
   
@@ -16,4 +16,4 @@ class PingResponseDto : public oatpp::DTO {
 
 #include OATPP_CODEGEN_END(DTO)
 
-#endif /* PingResponseDto_hpp */
+#endif /* MyPingResponseDto_hpp */

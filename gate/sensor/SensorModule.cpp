@@ -5,6 +5,10 @@ SensorModule::SensorModule()
 
 SensorModule::~SensorModule() {}
 
+float SensorModule::ping() {
+    return CommonModule::ping(); 
+}
+
 float SensorModule::getLoad() {
     return 0.0;
 }

@@ -6,6 +6,7 @@ public:
     CoreModule();
     virtual ~CoreModule();
 
+    float ping() override;  
     float getLoad() override;
     float getCoreTemperature() override;
     bool restart(const std::string& uid) override;

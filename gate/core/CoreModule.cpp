@@ -5,6 +5,10 @@ CoreModule::CoreModule()
 
 CoreModule::~CoreModule() {}
 
+float CoreModule::ping() {
+    return CommonModule::ping(); 
+}
+
 float CoreModule::getLoad() {
     return 0.0;
 }
