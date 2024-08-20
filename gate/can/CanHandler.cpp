@@ -1,4 +1,4 @@
-#include "MyCustomApi.h"
+#include "can/CanHandler.hpp"
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -10,28 +10,12 @@
 #include <iomanip>
 #include <string>
 
-namespace OpenAPI {
+CanHandler::CanHandler() {}
+CanHandler::~CanHandler() {}
 
-MyCustomApi::MyCustomApi() {
-}
-
-MyCustomApi::~MyCustomApi() {
-
-}
-
-uint32_t MyCustomApi::createCanId(Codes::Module module, Codes::Instance instance, Codes::Message_type messageType, bool emergencyFlag) {
-    uint32_t id = 0;
-    id |= (emergencyFlag ? 1 : 0) << 28;               // 1 bit Emergency flag
-    id |= static_cast<uint32_t>(messageType) << 16;    // 12 bits Message type
-    id |= static_cast<uint32_t>(module) << 4;          // 8 bits Module ID
-    id |= static_cast<uint32_t>(instance);             // 4 bits Instance ID
-    return id;
-}
-
-std::string MyCustomApi::ping() {
+std::string CanHandler::sendPingRequest(uint32_t can_id, uint8_t seq_number) {
     std::string response;
-    uint8_t data = 0x04;
-    uint32_t can_id = createCanId(Codes::Module::Control_board, Codes::Instance::Exclusive, Codes::Message_type::Ping_request, false);
+    uint8_t data = seq_number;  
 
     if (sendCanMessage(can_id, &data, 1) && receiveNextCanMessage(response)) {
         return response;
@@ -40,7 +24,55 @@ std::string MyCustomApi::ping() {
     }
 }
 
-bool MyCustomApi::sendCanMessage(uint32_t can_id, const uint8_t* data, size_t data_len) {
+float CanHandler::sendLoadRequest(uint32_t can_id) {
+    return 0.0f;
+}
+
+float CanHandler::sendTemperatureRequest(uint32_t can_id) {
+    return 0.0f;
+}
+
+bool CanHandler::sendRestartRequest(uint32_t can_id, const std::string& uid) {
+    return false;
+}
+
+bool CanHandler::sendBootloaderRequest(uint32_t can_id, const std::string& uid) {
+    return false;
+}
+
+bool CanHandler::sendHeaterTemperatureRequest(uint32_t can_id, float temperature) {
+    return false;
+}
+
+float CanHandler::sendGetHeaterTemperatureRequest(uint32_t can_id) {
+    return 0.0f;
+}
+
+bool CanHandler::sendDisableHeaterRequest(uint32_t can_id) {
+    return false;
+}
+
+float CanHandler::sendTopSensorTemperatureRequest(uint32_t can_id) {
+    return 0.0f;
+}
+
+float CanHandler::sendBottomSensorTemperatureRequest(uint32_t can_id) {
+    return 0.0f;
+}
+
+bool CanHandler::sendSupplyTypeRequest(uint32_t can_id) {
+    return false;
+}
+
+std::vector<std::string> CanHandler::sendAvailableModulesRequest(uint32_t can_id) {
+    return {};
+}
+
+float CanHandler::sendSystemTemperatureRequest(uint32_t can_id) {
+    return 0.0f;
+}
+
+bool CanHandler::sendCanMessage(uint32_t can_id, const uint8_t* data, size_t data_len) {
     int s;
     struct sockaddr_can addr;
     struct ifreq ifr;
@@ -82,7 +114,7 @@ bool MyCustomApi::sendCanMessage(uint32_t can_id, const uint8_t* data, size_t da
     return true;
 }
 
-bool MyCustomApi::receiveNextCanMessage(std::string &response) {
+bool CanHandler::receiveNextCanMessage(std::string &response) {
     int s;
     struct sockaddr_can addr;
     struct ifreq ifr;
@@ -123,5 +155,3 @@ bool MyCustomApi::receiveNextCanMessage(std::string &response) {
     close(s);
     return true;
 }
-
-} // namespace OpenAPI

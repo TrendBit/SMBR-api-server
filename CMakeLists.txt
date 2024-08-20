@@ -13,8 +13,12 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 add_library(QtOpenAPIClient
-  gate/MyCustomApi.h
-  gate/MyCustomApi.cpp
+  gate/base/CommonModule.cpp
+  gate/core/CoreModule.cpp
+  gate/control/ControlModule.cpp
+  gate/sensor/SensorModule.cpp
+  gate/system/SystemModule.cpp
+  gate/can/CanHandler.cpp
 )
 
 target_include_directories(QtOpenAPIClient
@@ -28,11 +32,6 @@ target_link_libraries(QtOpenAPIClient
         Qt${QT_VERSION_MAJOR}::Core
         Qt${QT_VERSION_MAJOR}::Network
         Qt${QT_VERSION_MAJOR}::Gui
-)
-
-configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/gate/Config.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/QtOpenAPIClientConfig.cmake"
-    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/QtOpenAPIClient"
 )
 
 install(
@@ -72,13 +71,22 @@ add_library(ServerLibrary
     oatpp-server/AppComponent.hpp
 )
 
+target_include_directories(ServerLibrary
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/oatpp-server
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate/base
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate/core
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate/control
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate/sensor
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate/system
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate/can
+)
+
 target_link_libraries(ServerLibrary
     PUBLIC oatpp::oatpp
     PUBLIC oatpp::oatpp-swagger
     PUBLIC QtOpenAPIClient
 )
-
-target_include_directories(ServerLibrary PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/oatpp-server)
 
 add_executable(Server oatpp-server/App.cpp)  
 
@@ -95,4 +103,3 @@ set_target_properties(ServerLibrary Server PROPERTIES
 add_definitions(
     -DOATPP_SWAGGER_RES_PATH="/usr/local/include/oatpp-1.4.0/bin/oatpp-swagger/res"
 )
-
