@@ -14,25 +14,7 @@ include(CMakePackageConfigHelpers)
 
 add_library(QtOpenAPIClient
   gate/MyCustomApi.h
-  gate/OAIMyMessageDto.h
-  gate/OAIMyTemperatureDto.h
-  gate/OAIDefaultApi.h
-  gate/OAIHelpers.h
-  gate/OAIHttpRequest.h
-  gate/OAIObject.h
-  gate/OAIEnum.h
-  gate/OAIHttpFileElement.h
-  gate/OAIServerConfiguration.h
-  gate/OAIServerVariable.h
-  gate/OAIOauth.h
   gate/MyCustomApi.cpp
-  gate/OAIMyMessageDto.cpp
-  gate/OAIMyTemperatureDto.cpp
-  gate/OAIDefaultApi.cpp
-  gate/OAIHelpers.cpp
-  gate/OAIHttpRequest.cpp
-  gate/OAIHttpFileElement.cpp
-  gate/OAIOauth.cpp
 )
 
 target_include_directories(QtOpenAPIClient

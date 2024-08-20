@@ -1,7 +1,6 @@
 #ifndef MY_CUSTOM_API_H
 #define MY_CUSTOM_API_H
 
-#include "OAIDefaultApi.h"  
 #include <string>         
 #include <cstdint>         
 #include <mutex>           
@@ -9,7 +8,7 @@
 
 namespace OpenAPI {
 
-class MyCustomApi : public OAIDefaultApi {
+class MyCustomApi  {
 public:
     MyCustomApi(const int timeOut);
     ~MyCustomApi();

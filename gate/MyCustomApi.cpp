@@ -10,13 +10,13 @@
 #include <iomanip>
 #include <utility>
 #include <cmath>
+#include <thread> 
 
 namespace OpenAPI {
 
 
 
-MyCustomApi::MyCustomApi(const int timeOut)
-    : OAIDefaultApi(timeOut) {
+MyCustomApi::MyCustomApi(const int timeOut) {
     std::thread([this] {
         while (true) {
             int s;
