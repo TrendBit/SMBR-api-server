@@ -10,7 +10,6 @@
 #include <iomanip>
 #include <string>
 #include <utility>
-#include <iostream>
 
 CanHandler::CanHandler() {}
 CanHandler::~CanHandler() {}
@@ -57,12 +56,6 @@ bool CanHandler::sendCanMessage(uint32_t can_id, const uint8_t* data, size_t dat
     } else {
         std::memset(frame.data, 0, sizeof(frame.data));
     }
-
-    std::cout << "Sending CAN message: " << std::hex << "ID: 0x" << frame.can_id << " Data: ";
-    for (size_t i = 0; i < frame.can_dlc; ++i) {
-        std::cout << "0x" << static_cast<int>(frame.data[i]) << " ";
-    }
-    std::cout << std::dec << std::endl;
 
     if (write(s, &frame, sizeof(frame)) != sizeof(frame)) {
         perror("Write");
@@ -112,8 +105,6 @@ bool CanHandler::receiveNextCanMessage(std::string &response) {
     }
     response = oss.str();
 
-    std::cout << "Received CAN message: " << response << std::endl;
-
     close(s);
     return true;
 }
@@ -121,7 +112,6 @@ bool CanHandler::receiveNextCanMessage(std::string &response) {
 uint32_t CanHandler::extractCanIdFromResponse(const std::string& response) {
     std::size_t idPos = response.find("ID: ");
     if (idPos == std::string::npos) {
-        std::cerr << "ID not found in response string!" << std::endl;
         return 0;
     }
 
@@ -131,7 +121,6 @@ uint32_t CanHandler::extractCanIdFromResponse(const std::string& response) {
 
     uint32_t canId = std::stoul(idStr, nullptr, 16);
     uint32_t messageType = (canId >> 16) & 0xFFF;  
-    std::cout << "Extracted Message Type: 0x" << std::hex << messageType << std::dec << std::endl;
 
     return messageType;
 }
@@ -183,10 +172,3 @@ std::vector<std::string> CanHandler::sendAvailableModulesRequest(uint32_t can_id
 float CanHandler::sendSystemTemperatureRequest(uint32_t can_id) {
     return 0.0f;
 }
-
-
-
-
-
-
-

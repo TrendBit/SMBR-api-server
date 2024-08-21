@@ -26,6 +26,7 @@ public:
   /**
    *  Function to get the local IP address
    */
+  /*
   std::string getLocalIPAddress() {
     try {
       boost::asio::io_service io_service;
@@ -41,15 +42,22 @@ public:
       return "0.0.0.0"; 
     }
   }
-
+  */
+  
   /**
    *  Create ConnectionProvider component which listens on the port
    */
+  /*
   OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, serverConnectionProvider)([this] {
     std::string serverIp = getLocalIPAddress();
     return oatpp::network::tcp::server::ConnectionProvider::createShared({serverIp.c_str(), 8089, oatpp::network::Address::IP_4});
   }());
-  
+  */
+
+  OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, serverConnectionProvider)([] {
+    return oatpp::network::tcp::server::ConnectionProvider::createShared({"127.0.0.1", 8089, oatpp::network::Address::IP_4});
+  }());
+
   /**
    *  Create Router component
    */
@@ -61,17 +69,14 @@ public:
    *  Create ConnectionHandler component which uses Router component to route requests
    */
   OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, serverConnectionHandler)([] {
-  OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router); // get Router component
+    OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router); // get Router component
   
-  auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
-
-  connectionHandler->addResponseInterceptor(std::make_shared<MyResponseInterceptor>());
-
-  return connectionHandler;
-}());
+    auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
+    return connectionHandler;
+  }());
 
   /**
-   *  Create ObjectMapper component to serialize/deserialize DTOs in Contoller's API
+   *  Create ObjectMapper component to serialize/deserialize DTOs in Controller's API
    */
   OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::web::mime::ContentMappers>, apiContentMappers)([] {
 
@@ -95,8 +100,13 @@ public:
     
     oatpp::swagger::DocumentInfo::Builder builder;
     builder
-      .setTitle("Service with Swagger-UI")
-      .setDescription("C++/oat++ Web Service with Swagger-UI");
+      .setTitle("Smart Modular BioReactor API/CAN Specification")
+      .setDescription("API facilitating communication with SMBR (Smart Modular BioReactor), which is used for algae cultivation.")
+      .setVersion("0.1.0")
+      .setContactName("Your Name")
+      .setLicenseName("Apache License, Version 2.0")
+      .setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0");
+      //.setTermsOfServiceUrl("https://example.com/terms/");
     return builder.build();
   }());
 

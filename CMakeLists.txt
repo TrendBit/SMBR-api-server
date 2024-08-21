@@ -67,7 +67,6 @@ find_package(oatpp-swagger 1.4.0 REQUIRED)
 add_library(ServerLibrary
     oatpp-server/controller/MyController.cpp
     oatpp-server/dto/MyMessageDto.hpp
-    oatpp-server/dto/MyTemperatureDto.hpp
     oatpp-server/AppComponent.hpp
 )
 
