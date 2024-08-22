@@ -2,60 +2,54 @@ cmake_minimum_required(VERSION 3.20)
 project(client_server_project)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_AUTOMOC ON)
 
-# --- QtOpenAPIClient (gate) ---
+# --- GateLibrary (gate) ---
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Network Gui)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Network Gui)
-
-include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
-
-add_library(QtOpenAPIClient
+add_library(GateLibrary
   gate/base/CommonModule.cpp
   gate/core/CoreModule.cpp
   gate/control/ControlModule.cpp
   gate/sensor/SensorModule.cpp
   gate/system/SystemModule.cpp
   gate/can/CanHandler.cpp
+  gate/can/CanUtils.cpp
 )
 
-target_include_directories(QtOpenAPIClient
+target_include_directories(GateLibrary
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/gate>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/oatpp-server/dto>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        /usr/local/include/oatpp-1.4.0   # Cesta k Oat++ hlavičkovým souborům
 )
 
-target_link_libraries(QtOpenAPIClient
+target_link_libraries(GateLibrary
     PUBLIC
-        Qt${QT_VERSION_MAJOR}::Core
-        Qt${QT_VERSION_MAJOR}::Network
-        Qt${QT_VERSION_MAJOR}::Gui
+        oatpp::oatpp    # Přidání Oat++ knihovny
 )
 
 install(
-    TARGETS QtOpenAPIClient
-    EXPORT QtOpenAPIClientTargets
+    TARGETS GateLibrary
+    EXPORT GateLibraryTargets
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/QtOpenAPIClient"
+    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/GateLibrary"
 )
 
 install(
     FILES gate/*.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/QtOpenAPIClient
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/GateLibrary
 )
 
 install(
-    FILES "${CMAKE_CURRENT_BINARY_DIR}/QtOpenAPIClientConfig.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/QtOpenAPIClient
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/GateLibraryConfig.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GateLibrary
 )
 
 install(
-    EXPORT QtOpenAPIClientTargets
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/QtOpenAPIClient
+    EXPORT GateLibraryTargets
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GateLibrary
 )
 
 
@@ -66,25 +60,20 @@ find_package(oatpp-swagger 1.4.0 REQUIRED)
 
 add_library(ServerLibrary
     oatpp-server/controller/MyController.cpp
-    oatpp-server/dto/MyMessageDto.hpp
     oatpp-server/AppComponent.hpp
 )
 
 target_include_directories(ServerLibrary
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/oatpp-server
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/oatpp-server/dto 
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate/base
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate/core
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate/control
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate/sensor
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate/system
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate/can
+    PUBLIC /usr/local/include/oatpp-1.4.0  # Cesta k Oat++ hlavičkovým souborům
 )
 
 target_link_libraries(ServerLibrary
     PUBLIC oatpp::oatpp
     PUBLIC oatpp::oatpp-swagger
-    PUBLIC QtOpenAPIClient
+    PUBLIC GateLibrary
 )
 
 add_executable(Server oatpp-server/App.cpp)  

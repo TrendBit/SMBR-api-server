@@ -17,12 +17,17 @@
 #include "core/CoreModule.hpp"
 #include "control/ControlModule.hpp"
 #include "sensor/SensorModule.hpp"
+#include "system/SystemModule.hpp"
 
 #include "oatpp/data/mapping/ObjectMapper.hpp"
 
 #include OATPP_CODEGEN_BEGIN(ApiController) //<-- Begin Codegen
 
 class MyController : public oatpp::web::server::api::ApiController {
+
+private:
+    SystemModule systemModule;
+
 public:
   /**
    * Constructor with object mapper.
@@ -38,45 +43,28 @@ public:
 // ==========================================
 
 ENDPOINT_INFO(getAvailableModules) {
-    info->summary = "Determines which all modules are available on the device and their respective unique CAN IDs";
-    info->addTag("System");
-    info->description = "Returns a list of all modules that have responded to the identification message and can therefore be considered available on the device.";
-    info->addResponse<List<Object<MyModuleInfoDto>>>(Status::CODE_200, "application/json");
-}
+        info->summary = "Determines which all modules are available on the device and their respective unique CAN IDs";
+        info->addTag("System");
+        info->description = "Returns a list of all modules that have responded to the identification message and can therefore be considered available on the device.";
+        info->addResponse<List<Object<MyModuleInfoDto>>>(Status::CODE_200, "application/json");
+    }
 
-ENDPOINT("GET", "/system/modules", getAvailableModules) {
+    ENDPOINT("GET", "/system/modules", getAvailableModules) {
+        auto modules = systemModule.getAvailableModules(); 
+        return createDtoResponse(Status::CODE_200, modules);
+    }
 
-    auto modules = oatpp::List<Object<MyModuleInfoDto>>::createShared();
+    ENDPOINT_INFO(getSystemTemperature) {
+        info->summary = "Get the main temperature of the system/bottle";
+        info->addTag("System");
+        info->description = "This temperature could be obtained by different means based on configuration. Configured module (sensor module at default) will periodically calculate temperature of system and will it broadcast it via CAN. On side of gateway this last temperature value is saved and supplied to API.";
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+    }
 
-    auto coreModule = MyModuleInfoDto::createShared();
-    coreModule->module_type = "core";
-    coreModule->uid = 0x0123456789abcdef;
-
-    auto controlModule = MyModuleInfoDto::createShared();
-    controlModule->module_type = "control";
-    controlModule->uid = 0xfedcba9876543210;
-
-    modules->push_back(coreModule);
-    modules->push_back(controlModule);
-
-    return createDtoResponse(Status::CODE_200, modules);
-}
-
-ENDPOINT_INFO(getSystemTemperature) {
-    info->summary = "Get the main temperature of the system/bottle";
-    info->addTag("System");
-    info->description = "This temperature could be obtained by different means based on configuration. Configured module (sensor module at default) will periodically calculate temperature of system and will it broadcast it via CAN. On side of gateway this last temperature value is saved and supplied to API.";
-    info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
-}
-
-ENDPOINT("GET", "/system/temperature", getSystemTemperature) {
-
-    auto dto = MyTempDto::createShared();
-    
-    dto->temperature = 30.2f; 
-
-    return createDtoResponse(Status::CODE_200, dto);
-}
+    ENDPOINT("GET", "/system/temperature", getSystemTemperature) {
+        auto dto = systemModule.getSystemTemperature(); 
+        return createDtoResponse(Status::CODE_200, dto);
+    }
 
 
 // ==========================================
@@ -120,43 +108,84 @@ ENDPOINT("GET", "/system/temperature", getSystemTemperature) {
     return createDtoResponse(Status::CODE_200, dto);
   }
 
-  ENDPOINT_INFO(getModuleLoad) {
+ENDPOINT_INFO(getModuleLoad) {
     info->summary = "Get module CPU/MCU load";
     info->addTag("Common");
     info->description = "Gets the current workload values of the computing unit, including the average utilization and number of cores.";
     info->addResponse<Object<MyLoadResponseDto>>(Status::CODE_200, "application/json");
     info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
-  }
+}
 
-  ENDPOINT("GET", "/{module}/load", getModuleLoad,
-           PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module)) {
+ENDPOINT("GET", "/{module}/load", getModuleLoad,
+         PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module)) {
 
+    float loadValue = -1.0f;
+    int cores = 0;
+
+    if (module == dto::ModuleEnum::core) {
+        CoreModule coreModule;
+        loadValue = coreModule.getLoad();
+        cores = coreModule.getCoreCount();
+    } else if (module == dto::ModuleEnum::control) {
+        ControlModule controlModule;
+        loadValue = controlModule.getLoad();
+        cores = controlModule.getCoreCount();
+    } else if (module == dto::ModuleEnum::sensor) {
+        SensorModule sensorModule;
+        loadValue = sensorModule.getLoad();
+        cores = sensorModule.getCoreCount();
+    } else {
+        return createResponse(Status::CODE_404, "Module not found");
+    }
+
+    if (loadValue < 0) {
+        return createResponse(Status::CODE_500, "Failed to retrieve load");
+    }
 
     auto dto = MyLoadResponseDto::createShared();
-    dto->load = 0.5f;  
-    dto->cores = 4;    
+    dto->load = loadValue;
+    dto->cores = cores;
 
     return createDtoResponse(Status::CODE_200, dto);
-  }
+}
 
-  ENDPOINT_INFO(getModuleCoreTemperature) {
+ENDPOINT_INFO(getModuleCoreTemperature) {
     info->summary = "Get module CPU/MCU temperature";
     info->addTag("Common");
     info->description = "Gets the current temperature of CPU/MCU core values of the computing unit.";
     info->addResponse<Object<MyCoreTempResponseDto>>(Status::CODE_200, "application/json");
     info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
-  }
+}
 
-  ENDPOINT("GET", "/{module}/core_temp", getModuleCoreTemperature,
-           PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module)) {
+ENDPOINT("GET", "/{module}/core_temp", getModuleCoreTemperature,
+         PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module)) {
+
+    float coreTemp = -1.0f;
+
+    if (module == dto::ModuleEnum::core) {
+        CoreModule coreModule;
+        coreTemp = coreModule.getCoreTemperature();
+    } else if (module == dto::ModuleEnum::control) {
+        ControlModule controlModule;
+        coreTemp = controlModule.getCoreTemperature();
+    } else if (module == dto::ModuleEnum::sensor) {
+        SensorModule sensorModule;
+        coreTemp = sensorModule.getCoreTemperature();
+    } else {
+        return createResponse(Status::CODE_404, "Module not found");
+    }
+
+    if (coreTemp < 0) {
+        return createResponse(Status::CODE_500, "Failed to retrieve core temperature");
+    }
 
     auto dto = MyCoreTempResponseDto::createShared();
-    dto->core_temp = 45.3f;  
+    dto->core_temp = coreTemp;
 
     return createDtoResponse(Status::CODE_200, dto);
-  }
+}
 
-  ENDPOINT_INFO(restartModule) {
+ENDPOINT_INFO(restartModule) {
     info->summary = "Restart module into application mode";
     info->addTag("Common");
     info->addConsumes<Object<MyModuleActionRequestDto>>("application/json");
@@ -168,13 +197,27 @@ ENDPOINT("POST", "/{module}/restart", restartModule,
          PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
          BODY_DTO(Object<MyModuleActionRequestDto>, body)) {
 
-    if (module == dto::ModuleEnum::core || 
-        module == dto::ModuleEnum::control || 
-        module == dto::ModuleEnum::sensor) {
+    bool success = false;
 
-        return createResponse(Status::CODE_200, "Successfully restarted module");
+    std::string uid = std::to_string(body->uid);  
+
+    if (module == dto::ModuleEnum::core) {
+        CoreModule coreModule;
+        success = coreModule.restart(uid);
+    } else if (module == dto::ModuleEnum::control) {
+        ControlModule controlModule;
+        success = controlModule.restart(uid);
+    } else if (module == dto::ModuleEnum::sensor) {
+        SensorModule sensorModule;
+        success = sensorModule.restart(uid);
     } else {
         return createResponse(Status::CODE_404, "Module not found");
+    }
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Successfully restarted module");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to restart module");
     }
 }
 
@@ -190,15 +233,30 @@ ENDPOINT("POST", "/{module}/bootloader", restartModuleBootloader,
          PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
          BODY_DTO(Object<MyModuleActionRequestDto>, body)) {
 
-    if (module == dto::ModuleEnum::core || 
-        module == dto::ModuleEnum::control || 
-        module == dto::ModuleEnum::sensor) {
+    bool success = false;
 
-        return createResponse(Status::CODE_200, "Successfully restarted module in bootloader mode");
+    std::string uid = std::to_string(body->uid);  
+
+    if (module == dto::ModuleEnum::core) {
+        CoreModule coreModule;
+        success = coreModule.bootloader(uid);
+    } else if (module == dto::ModuleEnum::control) {
+        ControlModule controlModule;
+        success = controlModule.bootloader(uid);
+    } else if (module == dto::ModuleEnum::sensor) {
+        SensorModule sensorModule;
+        success = sensorModule.bootloader(uid);
     } else {
         return createResponse(Status::CODE_404, "Module not found");
     }
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Successfully restarted module in bootloader mode");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to restart module in bootloader mode");
+    }
 }
+
 
 // ==========================================
 // Core module
@@ -212,10 +270,8 @@ ENDPOINT_INFO(getSupplyType) {
 
 ENDPOINT("GET", "/core/supply_type", getSupplyType) {
 
-    auto dto = MySupplyTypeResponseDto::createShared();
-
-    dto->adapter = true;  
-    dto->poe = false;    
+    CoreModule coreModule;
+    auto dto = coreModule.getSupplyType();
 
     return createDtoResponse(Status::CODE_200, dto);
 }
@@ -234,9 +290,14 @@ ENDPOINT_INFO(setHeaterTemperature) {
 ENDPOINT("POST", "/control/heater", setHeaterTemperature,
          BODY_DTO(Object<MyTempDto>, heaterDto)) {
 
-    float targetTemperature = heaterDto->temperature;
+    ControlModule controlModule;
+    bool success = controlModule.setHeaterTemperature(heaterDto->temperature);
 
-    return createResponse(Status::CODE_200, "Heater target temperature set successfully");
+    if (success) {
+        return createResponse(Status::CODE_200, "Heater target temperature set successfully");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to set heater target temperature");
+    }
 }
 
 ENDPOINT_INFO(getHeaterTemperature) {
@@ -248,8 +309,8 @@ ENDPOINT_INFO(getHeaterTemperature) {
 
 ENDPOINT("GET", "/control/heater", getHeaterTemperature) {
 
-    auto dto = MyTempDto::createShared();
-    dto->temperature = 37.5;
+    ControlModule controlModule;
+    auto dto = controlModule.getHeaterTemperature();
 
     return createDtoResponse(Status::CODE_200, dto);
 }
@@ -263,7 +324,14 @@ ENDPOINT_INFO(disableHeater) {
 
 ENDPOINT("GET", "/control/disable_heater", disableHeater) {
 
-    return createResponse(Status::CODE_200, "Heater disabled successfully");
+    ControlModule controlModule;
+    bool success = controlModule.disableHeater();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Heater disabled successfully");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to disable heater");
+    }
 }
 
 // ==========================================
@@ -277,9 +345,8 @@ ENDPOINT_INFO(getTopSensorTemperature) {
 }
 
 ENDPOINT("GET", "/sensor/temperature_top", getTopSensorTemperature) {
-
-    auto dto = MyTempDto::createShared();
-    dto->temperature = 25.5;
+    SensorModule sensorModule;
+    auto dto = sensorModule.getTopSensorTemperature(); 
 
     return createDtoResponse(Status::CODE_200, dto);
 }
@@ -292,12 +359,12 @@ ENDPOINT_INFO(getBottomSensorTemperature) {
 }
 
 ENDPOINT("GET", "/sensor/temperature_bottom", getBottomSensorTemperature) {
-
-    auto dto = MyTempDto::createShared();
-    dto->temperature = 24.8;
+    SensorModule sensorModule;
+    auto dto = sensorModule.getBottomSensorTemperature(); 
 
     return createDtoResponse(Status::CODE_200, dto);
 }
+
 
 
 };

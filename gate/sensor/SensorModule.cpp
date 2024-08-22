@@ -8,7 +8,7 @@ SensorModule::~SensorModule() {}
 float SensorModule::ping() {
     return CommonModule::ping(); 
 }
-
+/*
 float SensorModule::getLoad() {
     return 0.0;
 }
@@ -23,4 +23,18 @@ bool SensorModule::restart(const std::string& uid) {
 
 bool SensorModule::bootloader(const std::string& uid) {
     return false;
+}*/
+
+oatpp::Object<MyTempDto> SensorModule::getTopSensorTemperature() {
+
+    auto dto = MyTempDto::createShared();
+    dto->temperature = 25.5; 
+    return dto;
+}
+
+oatpp::Object<MyTempDto> SensorModule::getBottomSensorTemperature() {
+
+    auto dto = MyTempDto::createShared();
+    dto->temperature = 24.8; 
+    return dto;
 }

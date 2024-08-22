@@ -1,4 +1,6 @@
 #include "base/CommonModule.hpp"
+#include "can/CanHandler.hpp"
+#include "can/CanUtils.hpp"  
 #include <chrono>
 
 CommonModule::CommonModule(Codes::Module mod, Codes::Instance inst)
@@ -6,21 +8,13 @@ CommonModule::CommonModule(Codes::Module mod, Codes::Instance inst)
 
 CommonModule::~CommonModule() {}
 
-uint32_t CommonModule::createCanId(Codes::Message_type messageType, bool emergencyFlag) {
-    uint32_t id = 0;
-    id |= (emergencyFlag ? 1 : 0) << 28;
-    id |= static_cast<uint32_t>(messageType) << 16;
-    id |= static_cast<uint32_t>(module) << 4;
-    id |= static_cast<uint32_t>(instance);
-    return id;
-}
-
 float CommonModule::ping() {
     uint8_t seq_number = 0x00;
-    uint32_t can_id = createCanId(Codes::Message_type::Ping_request);
+    uint32_t can_id = createCanId(Codes::Message_type::Ping_request, module, instance);
 
     auto start_time = std::chrono::steady_clock::now();
 
+    CanHandler canHandler;
     auto [success, response] = canHandler.sendPingRequest(can_id, seq_number);
 
     if (!success) {
@@ -40,17 +34,37 @@ float CommonModule::ping() {
 }
 
 float CommonModule::getLoad() {
-    return 0.0;
+    uint32_t can_id = createCanId(Codes::Message_type::Core_load_request, module, instance);
+    
+    CanHandler canHandler;
+    canHandler.sendLoadRequest(can_id);  
+
+    return 0.0f;
+}
+
+int CommonModule::getCoreCount() {
+    return 4; 
 }
 
 float CommonModule::getCoreTemperature() {
-    return 0.0;
+    uint32_t can_id = createCanId(Codes::Message_type::Core_temperature_request, module, instance);
+    
+    CanHandler canHandler;
+    canHandler.sendTemperatureRequest(can_id);  
+
+    return 0.0f; 
 }
 
 bool CommonModule::restart(const std::string& uid) {
-    return false;
+    uint32_t can_id = createCanId(Codes::Message_type::Device_reset, module, instance);
+    
+    CanHandler canHandler;
+    return canHandler.sendRestartRequest(can_id, uid);  
 }
 
 bool CommonModule::bootloader(const std::string& uid) {
-    return false;
+    uint32_t can_id = createCanId(Codes::Message_type::Device_bootloader, module, instance);
+    
+    CanHandler canHandler;
+    return canHandler.sendBootloaderRequest(can_id, uid);  
 }

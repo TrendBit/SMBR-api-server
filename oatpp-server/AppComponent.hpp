@@ -26,7 +26,7 @@ public:
   /**
    *  Function to get the local IP address
    */
-  /*
+  
   std::string getLocalIPAddress() {
     try {
       boost::asio::io_service io_service;
@@ -42,21 +42,21 @@ public:
       return "0.0.0.0"; 
     }
   }
-  */
+  
   
   /**
    *  Create ConnectionProvider component which listens on the port
    */
-  /*
+  
   OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, serverConnectionProvider)([this] {
     std::string serverIp = getLocalIPAddress();
     return oatpp::network::tcp::server::ConnectionProvider::createShared({serverIp.c_str(), 8089, oatpp::network::Address::IP_4});
   }());
-  */
-
+  
+/*
   OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, serverConnectionProvider)([] {
     return oatpp::network::tcp::server::ConnectionProvider::createShared({"127.0.0.1", 8089, oatpp::network::Address::IP_4});
-  }());
+  }());*/
 
   /**
    *  Create Router component

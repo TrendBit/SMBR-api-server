@@ -126,49 +126,56 @@ uint32_t CanHandler::extractCanIdFromResponse(const std::string& response) {
 }
 
 float CanHandler::sendLoadRequest(uint32_t can_id) {
+    sendCanMessage(can_id, nullptr, 0);
     return 0.0f;
 }
 
 float CanHandler::sendTemperatureRequest(uint32_t can_id) {
+    sendCanMessage(can_id, nullptr, 0);
     return 0.0f;
 }
 
 bool CanHandler::sendRestartRequest(uint32_t can_id, const std::string& uid) {
-    return false;
+    return sendCanMessage(can_id, reinterpret_cast<const uint8_t*>(uid.data()), uid.size());
 }
 
 bool CanHandler::sendBootloaderRequest(uint32_t can_id, const std::string& uid) {
-    return false;
+    return sendCanMessage(can_id, reinterpret_cast<const uint8_t*>(uid.data()), uid.size());
 }
 
 bool CanHandler::sendHeaterTemperatureRequest(uint32_t can_id, float temperature) {
-    return false;
+    return sendCanMessage(can_id, reinterpret_cast<const uint8_t*>(&temperature), sizeof(temperature));
 }
 
 float CanHandler::sendGetHeaterTemperatureRequest(uint32_t can_id) {
+    sendCanMessage(can_id, nullptr, 0);
     return 0.0f;
 }
 
 bool CanHandler::sendDisableHeaterRequest(uint32_t can_id) {
-    return false;
+    return sendCanMessage(can_id, nullptr, 0);
 }
 
 float CanHandler::sendTopSensorTemperatureRequest(uint32_t can_id) {
+    sendCanMessage(can_id, nullptr, 0);
     return 0.0f;
 }
 
 float CanHandler::sendBottomSensorTemperatureRequest(uint32_t can_id) {
+    sendCanMessage(can_id, nullptr, 0);
     return 0.0f;
 }
 
 bool CanHandler::sendSupplyTypeRequest(uint32_t can_id) {
-    return false;
+    return sendCanMessage(can_id, nullptr, 0);
 }
 
 std::vector<std::string> CanHandler::sendAvailableModulesRequest(uint32_t can_id) {
+    sendCanMessage(can_id, nullptr, 0);
     return {};
 }
 
 float CanHandler::sendSystemTemperatureRequest(uint32_t can_id) {
+    sendCanMessage(can_id, nullptr, 0);
     return 0.0f;
 }

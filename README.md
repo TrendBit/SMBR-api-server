@@ -11,14 +11,14 @@ SMBR-api.server
 │   │   ├── MyController.cpp
 │   │   └── MyController.hpp
 │   ├── dto/
-│   │   ├── ModuleListDto.hpp             
-│   │   ├── TemperatureDto.hpp           
-│   │   ├── PingResponseDto.hpp          
-│   │   ├── LoadDto.hpp                  
-│   │   ├── CoreTemperatureDto.hpp       
-│   │   ├── RestartDto.hpp               
-│   │   ├── BootloaderDto.hpp             
-│   │   └── PowerSupplyTypeDto.hpp        
+│   │   ├── ModuleEnum.hpp             
+│   │   ├── MyPingResponseDto.hpp           
+│   │   ├── MyLoadResponseDto.hpp          
+│   │   ├── MyCoreTempResponseDto.hpp                  
+│   │   ├── MyModuleActionRequestDto.hpp       
+│   │   ├── MyModuleInfoDto.hpp               
+│   │   ├── MySupplyTypeResponseDto.hpp             
+│   │   └── MyTempDto.hpp        
 │   ├── interceptors/
 │   │   └── MyResponseInterceptor.hpp
 │   ├── AppComponent.hpp
@@ -28,17 +28,6 @@ SMBR-api.server
 │   │   ├── codes.hpp
 │   │   ├── CommonModule.cpp   
 │   │   ├── CommonModule.hpp
-│   │   └── endpoints/
-│   │       ├── CommonPingApi.cpp        
-│   │       ├── CommonPingApi.hpp        
-│   │       ├── CommonLoadApi.cpp        
-│   │       ├── CommonLoadApi.hpp        
-│   │       ├── CommonCoreTempApi.cpp     
-│   │       ├── CommonCoreTempApi.hpp    
-│   │       ├── CommonRestartApi.cpp     
-│   │       ├── CommonRestartApi.hpp     
-│   │       ├── CommonBootloaderApi.cpp  
-│   │       └── CommonBootloaderApi.hpp  
 │   ├── core/
 │   │   ├── CoreModule.cpp               
 │   │   └── CoreModule.hpp
@@ -50,12 +39,7 @@ SMBR-api.server
 │   │   └── SensorModule.hpp
 │   ├── system/
 │   │   ├── SystemModule.cpp             
-│   │   ├── SystemModule.hpp             
-│   │   └── endpoints/
-│   │       ├── SystemModulesApi.cpp     
-│   │       ├── SystemModulesApi.hpp     
-│   │       ├── SystemTemperatureApi.cpp 
-│   │       └── SystemTemperatureApi.hpp 
+│   │   └──SystemModule.hpp             
 │   ├── can/
 │   │   ├── CanMessage.hpp               
 │   │   ├── CanMessage.cpp               
