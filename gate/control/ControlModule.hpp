@@ -1,5 +1,4 @@
-#ifndef CONTROLMODULE_HPP
-#define CONTROLMODULE_HPP
+#pragma once
 
 #include "base/CommonModule.hpp"
 
@@ -14,4 +13,3 @@ private:
     ~ControlModule() = default;
 };
 
-#endif // CONTROLMODULE_HPP

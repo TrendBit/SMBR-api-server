@@ -1,5 +1,4 @@
-#ifndef SystemModule_hpp
-#define SystemModule_hpp
+#pragma once
 
 #include "base/CommonModule.hpp" 
 #include <vector>
@@ -18,4 +17,3 @@ public:
 
 };
 
-#endif /* SystemModule_hpp */
