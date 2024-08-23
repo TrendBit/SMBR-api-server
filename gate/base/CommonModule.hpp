@@ -1,6 +1,6 @@
 #pragma once
 #include "can/CanHandler.hpp"
-#include "base/codes.hpp"
+#include "codes/codes.hpp"
 #include <string>
 
 class CommonModule {

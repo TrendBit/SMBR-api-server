@@ -1,6 +1,6 @@
 #include "system/SystemModule.hpp"
 #include "can/CanHandler.hpp"
-#include "base/codes.hpp"
+#include "codes/codes.hpp"
 #include "can/CanUtils.hpp" 
 
 SystemModule::SystemModule() {}

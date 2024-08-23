@@ -20,12 +20,12 @@ target_include_directories(GateLibrary
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/gate>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/oatpp-server/dto>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-        /usr/local/include/oatpp-1.4.0   # Cesta k Oat++ hlavičkovým souborům
+        /usr/local/include/oatpp-1.4.0   
 )
 
 target_link_libraries(GateLibrary
     PUBLIC
-        oatpp::oatpp    # Přidání Oat++ knihovny
+        oatpp::oatpp  
 )
 
 install(
@@ -67,7 +67,7 @@ target_include_directories(ServerLibrary
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/oatpp-server
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/oatpp-server/dto 
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/gate
-    PUBLIC /usr/local/include/oatpp-1.4.0  # Cesta k Oat++ hlavičkovým souborům
+    PUBLIC /usr/local/include/oatpp-1.4.0  
 )
 
 target_link_libraries(ServerLibrary
