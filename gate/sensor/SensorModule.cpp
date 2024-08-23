@@ -1,4 +1,4 @@
-#include "SensorModule.hpp"
+/*#include "SensorModule.hpp"
 
 SensorModule::SensorModule() 
     : CommonModule(Codes::Module::Sensor_board, Codes::Instance::Exclusive) {}
@@ -23,7 +23,7 @@ bool SensorModule::restart(const std::string& uid) {
 
 bool SensorModule::bootloader(const std::string& uid) {
     return false;
-}*/
+}
 
 oatpp::Object<MyTempDto> SensorModule::getTopSensorTemperature() {
 
@@ -38,3 +38,4 @@ oatpp::Object<MyTempDto> SensorModule::getBottomSensorTemperature() {
     dto->temperature = 24.8; 
     return dto;
 }
+*/

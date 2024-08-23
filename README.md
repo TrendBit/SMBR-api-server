@@ -97,10 +97,11 @@ SMBR-api.server
 │   ├── AppComponent.hpp
 │   └── App.cpp                      
 ├──gate
+│   ├── codes/
+│   │   └── codes.hpp
 │   ├── base/
-│   │   ├── codes.hpp
 │   │   ├── CommonModule.cpp   
-│   │   ├── CommonModule.hpp
+│   │   └── CommonModule.hpp
 │   ├── core/
 │   │   ├── CoreModule.cpp               
 │   │   └── CoreModule.hpp

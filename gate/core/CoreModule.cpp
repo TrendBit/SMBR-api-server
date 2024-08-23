@@ -1,4 +1,4 @@
-#include "core/CoreModule.hpp"
+/*#include "core/CoreModule.hpp"
 
 CoreModule::CoreModule()
     : CommonModule(Codes::Module::Core_device, Codes::Instance::Exclusive) {}
@@ -23,7 +23,7 @@ bool CoreModule::restart(const std::string& uid) {
 
 bool CoreModule::bootloader(const std::string& uid) {
     return false;
-}*/
+}
 
 oatpp::Object<MySupplyTypeResponseDto> CoreModule::getSupplyType() {
     uint32_t can_id = createCanId(Codes::Message_type::Supply_type_request, Codes::Module::Core_device, Codes::Instance::Instance_6);
@@ -44,3 +44,4 @@ oatpp::Object<MySupplyTypeResponseDto> CoreModule::getSupplyType() {
 
     return dto;
 }
+*/

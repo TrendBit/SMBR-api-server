@@ -1,24 +1,19 @@
-#pragma once
-#include "can/CanHandler.hpp"
-#include "codes/codes.hpp"
+#ifndef COMMONMODULE_HPP
+#define COMMONMODULE_HPP
+
+#include <cstdint>
 #include <string>
+#include "codes/codes.hpp"
 
 class CommonModule {
 public:
-    CommonModule(Codes::Module module, Codes::Instance instance);
+    CommonModule(Codes::Module mod, Codes::Instance inst);
     virtual ~CommonModule();
-
-    virtual float ping();                        
-    virtual float getLoad();
-    virtual float getCoreTemperature();
-    virtual int getCoreCount();
-    virtual bool restart(const std::string& uid);
-    virtual bool bootloader(const std::string& uid);
+    float ping();
 
 protected:
-    CanHandler canHandler;
     Codes::Module module;
     Codes::Instance instance;
-
-
 };
+
+#endif // COMMONMODULE_HPP

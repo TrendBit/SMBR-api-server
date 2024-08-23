@@ -11,8 +11,11 @@ add_library(GateLibrary
   gate/control/ControlModule.cpp
   gate/sensor/SensorModule.cpp
   gate/system/SystemModule.cpp
-  gate/can/CanHandler.cpp
   gate/can/CanUtils.cpp
+  gate/can/CanMessage.cpp
+  gate/can/CanBus.cpp
+  gate/can/CanRequest.cpp
+  gate/can/CanService.cpp
 )
 
 target_include_directories(GateLibrary

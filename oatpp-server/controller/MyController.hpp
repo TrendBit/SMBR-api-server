@@ -38,10 +38,38 @@ public:
   {}
 
 public:
+
+ENDPOINT("GET", "/{module}/ping", ping,
+           PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module)) {
+
+    float responseTime = -1.0f;
+
+    if (module == dto::ModuleEnum::core) {
+        // CoreModule coreModule;
+        // responseTime = coreModule.ping();
+    } else if (module == dto::ModuleEnum::control) {
+        ControlModule controlModule;
+        responseTime = controlModule.ping();
+    } else if (module == dto::ModuleEnum::sensor) {
+        // SensorModule sensorModule;
+        // responseTime = sensorModule.ping();
+    } else {
+        return createResponse(Status::CODE_404, "Module not found");
+    }
+
+    if (responseTime < 0) {
+        return createResponse(Status::CODE_500, "Ping failed");
+    }
+
+    auto dto = MyPingResponseDto::createShared();
+    dto->time_ms = responseTime;
+
+    return createDtoResponse(Status::CODE_200, dto);
+}
 // ==========================================
 // System Endpoints
 // ==========================================
-
+/*
 ENDPOINT_INFO(getAvailableModules) {
         info->summary = "Determines which all modules are available on the device and their respective unique CAN IDs";
         info->addTag("System");
@@ -364,7 +392,7 @@ ENDPOINT("GET", "/sensor/temperature_bottom", getBottomSensorTemperature) {
 
     return createDtoResponse(Status::CODE_200, dto);
 }
-
+*/
 
 
 };

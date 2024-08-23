@@ -1,4 +1,4 @@
-#pragma once
+/*#pragma once
 #include "base/CommonModule.hpp"
 #include "../../oatpp-server/dto/MySupplyTypeResponseDto.hpp"
 #include "oatpp/macro/codegen.hpp" 
@@ -18,5 +18,6 @@ public:
     float getCoreTemperature() override;
     bool restart(const std::string& uid) override;
     bool bootloader(const std::string& uid) override;
-    */
+    
 };
+*/
