@@ -24,12 +24,12 @@ public:
     CanRequest(CanBus& canBus);
 
     /**
-     * @brief Sends a ping request over the CAN bus and waits for a response.
-     * @param can_id The identifier of the CAN request.
-     * @param seq_number The sequence number for the ping request.
+     * @brief Sends a CAN message over the CAN bus and waits for a response.
+     * @param can_id The identifier of the CAN message.
+     * @param data The payload data of the CAN message.
      * @return A pair containing a success flag and the response time in milliseconds.
      */
-    std::pair<bool, float> sendPing(uint32_t can_id, uint8_t seq_number);
+    std::pair<bool, float> sendMessage(uint32_t can_id, const std::vector<uint8_t>& data);
 
 private:
     /**

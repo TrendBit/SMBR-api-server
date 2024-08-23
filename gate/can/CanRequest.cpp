@@ -1,26 +1,23 @@
 #include "CanRequest.hpp"
 #include <chrono>
 
-CanRequest::CanRequest(CanBus& canBus)
-    : canBus(canBus) {}
+CanRequest::CanRequest(CanBus& canBus) : canBus(canBus) {}
 
-std::pair<bool, float> CanRequest::sendPing(uint32_t can_id, uint8_t seq_number) {
-    CanMessage request(can_id, { seq_number });
+std::pair<bool, float> CanRequest::sendMessage(uint32_t can_id, const std::vector<uint8_t>& data) {
+    CanMessage request(can_id, data);
     auto start_time = std::chrono::steady_clock::now();
 
     if (!sendRequest(request)) {
         return {false, -1.0f};
     }
 
-    CanMessage response(0, {});
-    if (!receiveResponse(response)) {
-        return {false, -1.0f};
+    CanMessage response(0, {});  
+    if (receiveResponse(response)) {
+        auto response_time = std::chrono::duration<float, std::milli>(std::chrono::steady_clock::now() - start_time).count();
+        return {true, response_time};
     }
 
-    auto end_time = std::chrono::steady_clock::now();
-    float elapsed = std::chrono::duration<float, std::milli>(end_time - start_time).count();
-
-    return {true, elapsed};
+    return {false, -1.0f};
 }
 
 bool CanRequest::sendRequest(const CanMessage& request) {

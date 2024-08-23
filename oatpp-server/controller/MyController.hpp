@@ -39,27 +39,7 @@ public:
 
 public:
 
-ENDPOINT("GET", "/{module}/ping", ping,
-           PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module)) {
 
-    float responseTime = -1.0f;
-
-    if (module == dto::ModuleEnum::control) {
-        ControlModule& controlModule = ControlModule::getInstance();
-        responseTime = controlModule.ping();
-    } else {
-        return createResponse(Status::CODE_404, "Module not found");
-    }
-
-    if (responseTime < 0) {
-        return createResponse(Status::CODE_500, "Ping failed");
-    }
-
-    auto dto = MyPingResponseDto::createShared();
-    dto->time_ms = responseTime;
-
-    return createDtoResponse(Status::CODE_200, dto);
-}
 // ==========================================
 // System Endpoints
 // ==========================================
@@ -88,7 +68,7 @@ ENDPOINT_INFO(getAvailableModules) {
         return createDtoResponse(Status::CODE_200, dto);
     }
 
-
+*/
 // ==========================================
 // Common Endpoints
 // ==========================================
@@ -107,29 +87,29 @@ ENDPOINT_INFO(getAvailableModules) {
 
     float responseTime = -1.0f;
 
-    if (module == dto::ModuleEnum::core) {
-      CoreModule coreModule;
-      responseTime = coreModule.ping();
-    } else if (module == dto::ModuleEnum::control) {
-      ControlModule controlModule;
-      responseTime = controlModule.ping();
+    if (module == dto::ModuleEnum::control) {
+        ControlModule& controlModule = ControlModule::getInstance();
+        responseTime = controlModule.ping();
+    } else if (module == dto::ModuleEnum::core) {
+        CoreModule& coreModule = CoreModule::getInstance();
+        responseTime = coreModule.ping();
     } else if (module == dto::ModuleEnum::sensor) {
-      SensorModule sensorModule;
-      responseTime = sensorModule.ping();
+        SensorModule& sensorModule = SensorModule::getInstance();
+        responseTime = sensorModule.ping();
     } else {
-      return createResponse(Status::CODE_404, "Module not found");
+        return createResponse(Status::CODE_404, "Module not found");
     }
 
     if (responseTime < 0) {
-      return createResponse(Status::CODE_500, "Ping failed");
+        return createResponse(Status::CODE_500, "Ping failed");
     }
 
     auto dto = MyPingResponseDto::createShared();
     dto->time_ms = responseTime;
 
     return createDtoResponse(Status::CODE_200, dto);
-  }
-
+}
+/*
 ENDPOINT_INFO(getModuleLoad) {
     info->summary = "Get module CPU/MCU load";
     info->addTag("Common");

@@ -23,12 +23,12 @@ public:
     static CanRequestManager& getInstance();
 
     /**
-     * @brief Sends a ping request to a CAN device and measures the response time.
-     * @param can_id The identifier of the CAN request.
-     * @param seq_number The sequence number for the ping request.
+     * @brief Sends a CAN message with the given ID and data.
+     * @param can_id The identifier of the CAN message.
+     * @param data The payload data of the CAN message.
      * @return The response time in milliseconds, or -1.0f if the request failed.
      */
-    float ping(uint32_t can_id, uint8_t seq_number);
+    float sendMessage(uint32_t can_id, const std::vector<uint8_t>& data);
 
 private:
     /**

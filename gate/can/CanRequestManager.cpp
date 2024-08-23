@@ -10,7 +10,7 @@ CanRequestManager& CanRequestManager::getInstance() {
     return instance;
 }
 
-float CanRequestManager::ping(uint32_t can_id, uint8_t seq_number) {
-    auto [success, responseTime] = canRequest->sendPing(can_id, seq_number);
-    return success ? responseTime : -1.0f;
+float CanRequestManager::sendMessage(uint32_t can_id, const std::vector<uint8_t>& data) {
+    auto [success, response_time] = canRequest->sendMessage(can_id, data);
+    return success ? response_time : -1.0f;
 }

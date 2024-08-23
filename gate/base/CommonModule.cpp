@@ -8,6 +8,10 @@ CommonModule::CommonModule(Codes::Module mod, Codes::Instance inst)
 CommonModule::~CommonModule() {}
 
 float CommonModule::ping() {
-    CanRequestManager& canRequestManager = CanRequestManager::getInstance();
-    return canRequestManager.ping(createCanId(Codes::Message_type::Ping_request, module, instance, false), 0x00);
+    uint32_t can_id = createCanId(Codes::Message_type::Ping_request, module, instance, false);
+    uint8_t seq_number = 0x00;
+    std::vector<uint8_t> data = {seq_number};
+
+    return CanRequestManager::getInstance().sendMessage(can_id, data);
 }
+

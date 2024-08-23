@@ -1,23 +1,46 @@
-/*#pragma once
+#pragma once
+
 #include "base/CommonModule.hpp"
-#include "../../oatpp-server/dto/MySupplyTypeResponseDto.hpp"
-#include "oatpp/macro/codegen.hpp" 
-#include "oatpp/Types.hpp" 
-#include "can/CanUtils.hpp"
 
-
+/**
+ * @class CoreModule
+ * @brief Singleton class representing the core module in the system.
+ * 
+ * This class inherits from CommonModule and provides specific functionality for the core module.
+ */
 class CoreModule : public CommonModule {
 public:
+    /**
+     * @brief Provides access to the singleton instance of CoreModule.
+     * 
+     * This method ensures that there is only one instance of CoreModule.
+     * 
+     * @return Reference to the singleton instance of CoreModule.
+     */
+    static CoreModule& getInstance();
+
+private:
+    /**
+     * @brief Private constructor to enforce the singleton pattern.
+     * 
+     * The constructor is private to prevent direct instantiation of the class.
+     */
     CoreModule();
-    virtual ~CoreModule();
 
-    oatpp::Object<MySupplyTypeResponseDto> getSupplyType();
+    /**
+     * @brief Deleted copy constructor to prevent copying of the singleton instance.
+     */
+    CoreModule(const CoreModule&) = delete;
 
-    float ping() override;  
-    /*float getLoad() override;
-    float getCoreTemperature() override;
-    bool restart(const std::string& uid) override;
-    bool bootloader(const std::string& uid) override;
-    
+    /**
+     * @brief Deleted assignment operator to prevent copying of the singleton instance.
+     * 
+     * @return Reference to the CoreModule instance.
+     */
+    CoreModule& operator=(const CoreModule&) = delete;
+
+    /**
+     * @brief Default destructor.
+     */
+    ~CoreModule() = default;
 };
-*/
