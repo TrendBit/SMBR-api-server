@@ -93,6 +93,8 @@ SMBR-api.server
 │   │   ├── SystemModule.cpp             
 │   │   └──SystemModule.hpp             
 │   ├── can/
+│   │   ├── CanIdGenerator.hpp               
+│   │   ├── CanIdGenerator.cpp   
 │   │   ├── CanMessage.hpp               
 │   │   ├── CanMessage.cpp                            
 │   │   ├── CanBus.hpp                   
