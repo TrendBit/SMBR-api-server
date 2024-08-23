@@ -44,15 +44,9 @@ ENDPOINT("GET", "/{module}/ping", ping,
 
     float responseTime = -1.0f;
 
-    if (module == dto::ModuleEnum::core) {
-        // CoreModule coreModule;
-        // responseTime = coreModule.ping();
-    } else if (module == dto::ModuleEnum::control) {
-        ControlModule controlModule;
+    if (module == dto::ModuleEnum::control) {
+        ControlModule& controlModule = ControlModule::getInstance();
         responseTime = controlModule.ping();
-    } else if (module == dto::ModuleEnum::sensor) {
-        // SensorModule sensorModule;
-        // responseTime = sensorModule.ping();
     } else {
         return createResponse(Status::CODE_404, "Module not found");
     }

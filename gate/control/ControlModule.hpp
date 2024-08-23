@@ -5,8 +5,13 @@
 
 class ControlModule : public CommonModule {
 public:
-    ControlModule();
-    ~ControlModule();
+    static ControlModule& getInstance(); 
+
+private:
+    ControlModule();  
+    ControlModule(const ControlModule&) = delete;
+    ControlModule& operator=(const ControlModule&) = delete;
+    ~ControlModule() = default;
 };
 
 #endif // CONTROLMODULE_HPP

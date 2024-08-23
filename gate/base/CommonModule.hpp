@@ -2,7 +2,6 @@
 #define COMMONMODULE_HPP
 
 #include <cstdint>
-#include <string>
 #include "codes/codes.hpp"
 
 class CommonModule {

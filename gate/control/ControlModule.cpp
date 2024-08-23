@@ -3,4 +3,7 @@
 ControlModule::ControlModule() 
     : CommonModule(Codes::Module::Control_board, Codes::Instance::Exclusive) {}
 
-ControlModule::~ControlModule() {}
+ControlModule& ControlModule::getInstance() {
+    static ControlModule instance;
+    return instance;
+}
