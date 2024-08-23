@@ -54,29 +54,7 @@ This is the `dev` branch, where active development and testing are taking place.
 1. Verify that the application is running on the correct port (default is 8089):
     Open a web browser on the device you are connected to via SSH and go to URL: `http://ip_address_of_rpi:8089/swagger/ui` and test endpoints.
 
-## Project Diagram
-```
-+--------------------+         +----------------+         +------------------+      +-------------------------+
-|     Swagger UI     |         |  oatpp-server  |         |      gate        |      | Hardware (Raspberry Pi) |
-+--------------------+         +----------------+         +------------------+      +-------------------------+
-           |                             |                         |                            |
-           |                             |                         |                            |
-           |----1.HTTP Request --------> |                         |                            |
-           |                             |                         |                            |
-           |                             |----2.Controller ----->  |                            |
-           |                             |    (call API methods)   |                            |
-           |                             |                         |                            |
-           |                             |                         |                            |
-           |                             |                         |----3.Send CAN Message ---> |
-           |                             |                         |                            |
-           |                             |                         |<---4.CAN Response -------- |
-           |                             |                         |                            |
-           |                             |<---5.Return Response -- |                            |
-           |<---6.HTTP Response ---------|                         |                            |
-           |                             |                         |                            |
-```
-
-## Planned Project Structure
+## Project Structure
 ```
 SMBR-api.server
 ├── oatpp-server/
@@ -122,12 +100,38 @@ SMBR-api.server
 │   │   ├── CanRequest.hpp               
 │   │   ├── CanRequest.cpp               
 │   │   ├── CanRequestManager.hpp        
-│   │   ├── CanRequestManager.cpp        
-│   │   ├── CanError.hpp                 
-│   │   └── CanError.cpp                 
+│   │   └── CanRequestManager.cpp                  
 │   └── error/
 │       ├── ApiError.cpp                 
 │       └── ApiError.hpp                                   
 └── CMakeLists.txt  
 ```
+## Class Diagram
 
+This diagram was created using PlantUML.
+
+![Class Diagram](./images/class_diagram.svg)
+
+
+
+## Project Diagram
+```
++--------------------+         +----------------+         +------------------+      +-------------------------+
+|     Swagger UI     |         |  oatpp-server  |         |      gate        |      | Hardware (Raspberry Pi) |
++--------------------+         +----------------+         +------------------+      +-------------------------+
+           |                             |                         |                            |
+           |                             |                         |                            |
+           |----1.HTTP Request --------> |                         |                            |
+           |                             |                         |                            |
+           |                             |----2.Controller ----->  |                            |
+           |                             |    (call API methods)   |                            |
+           |                             |                         |                            |
+           |                             |                         |                            |
+           |                             |                         |----3.Send CAN Message ---> |
+           |                             |                         |                            |
+           |                             |                         |<---4.CAN Response -------- |
+           |                             |                         |                            |
+           |                             |<---5.Return Response -- |                            |
+           |<---6.HTTP Response ---------|                         |                            |
+           |                             |                         |                            |
+```
