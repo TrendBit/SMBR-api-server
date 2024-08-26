@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include "codes/codes.hpp"
+#include <string>
 
 /**
  * @class CommonModule
@@ -34,7 +35,37 @@ public:
      */
     float ping();
 
+    /**
+     * @brief Sends a load request to the associated module over the CAN bus and processes the response data.
+     * @param load Reference to a float where the load value will be stored.
+     * @param cores Reference to an integer where the number of cores will be stored.
+     * @return True if the request was successful and data was processed, false otherwise.
+     */
+    bool getLoad(float& load, int& cores);
+
+    /**
+     * @brief Sends a core temperature request to the associated module over the CAN bus and processes the response data.
+     * @param core_temp Reference to a float where the core temperature value will be stored.
+     * @return True if the request was successful and data was processed, false otherwise.
+     */
+    bool getCoreTemp(float& core_temp);
+
+    /**
+     * @brief Sends a restart request to the associated module over the CAN bus.
+     * @param uid The UID of the module to be restarted.
+     * @return True if the request was successful, false otherwise.
+     */
+    bool restart(const std::string& uid);
+
+    /**
+     * @brief Sends a bootloader request to the associated module over the CAN bus.
+     * @param uid The UID of the module to be booted into bootloader mode.
+     * @return True if the request was successful, false otherwise.
+     */
+    bool bootloader(const std::string& uid);
+
 protected:
     Codes::Module module; ///< The module identifier.
     Codes::Instance instance; ///< The instance identifier.
 };
+

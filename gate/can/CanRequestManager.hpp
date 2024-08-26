@@ -1,14 +1,10 @@
-/**
- * @file CanRequestManager.hpp
- * @author Vojtěch Mucha
- * @version 0.1
- * @date 23.08.2024
- */
-
-#pragma once
+#ifndef CANREQUESTMANAGER_HPP
+#define CANREQUESTMANAGER_HPP
 
 #include "CanBus.hpp"
 #include "CanRequest.hpp"
+#include <utility>
+#include <vector>
 
 /**
  * @class CanRequestManager
@@ -26,9 +22,9 @@ public:
      * @brief Sends a CAN message with the given ID and data.
      * @param can_id The identifier of the CAN message.
      * @param data The payload data of the CAN message.
-     * @return The response time in milliseconds, or -1.0f if the request failed.
+     * @return A pair containing a success flag and the received data as a vector of bytes.
      */
-    float sendMessage(uint32_t can_id, const std::vector<uint8_t>& data);
+    std::pair<bool, std::vector<uint8_t>> sendMessage(uint32_t can_id, const std::vector<uint8_t>& data);
 
 private:
     /**
@@ -40,3 +36,4 @@ private:
     CanRequest* canRequest; ///< Pointer to the CanRequest object used for creating and sending requests.
 };
 
+#endif // CANREQUESTMANAGER_HPP

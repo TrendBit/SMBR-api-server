@@ -4,6 +4,7 @@
 #include "oatpp/macro/component.hpp"
 #include "oatpp/web/server/api/ApiController.hpp"
 #include "oatpp/macro/codegen.hpp"
+#include <sstream>
 
 #include "dto/ModuleEnum.hpp"
 #include "dto/MyPingResponseDto.hpp"
@@ -25,8 +26,6 @@
 
 class MyController : public oatpp::web::server::api::ApiController {
 
-private:
-    SystemModule systemModule;
 
 public:
   /**
@@ -43,32 +42,50 @@ public:
 // ==========================================
 // System Endpoints
 // ==========================================
-/*
-ENDPOINT_INFO(getAvailableModules) {
-        info->summary = "Determines which all modules are available on the device and their respective unique CAN IDs";
-        info->addTag("System");
-        info->description = "Returns a list of all modules that have responded to the identification message and can therefore be considered available on the device.";
-        info->addResponse<List<Object<MyModuleInfoDto>>>(Status::CODE_200, "application/json");
+
+ENDPOINT_INFO(getSystemModules) {
+    info->summary = "Determines which all modules are available on the device and their respective unique CAN IDs";
+    info->addTag("System");
+    info->description = "Returns a list of all modules that have responded to the identification message and can therefore be considered available on the device.";
+    info->addResponse<List<Object<MyModuleInfoDto>>>(Status::CODE_200, "application/json");
+}
+
+ENDPOINT("GET", "/system/modules", getSystemModules) {
+    SystemModule& systemModule = SystemModule::getInstance();
+    auto moduleData = systemModule.getAvailableModules();
+
+    if (!moduleData) {
+        return createResponse(Status::CODE_500, "Failed to retrieve modules");
     }
 
-    ENDPOINT("GET", "/system/modules", getAvailableModules) {
-        auto modules = systemModule.getAvailableModules(); 
-        return createDtoResponse(Status::CODE_200, modules);
-    }
+    auto dto = oatpp::List<Object<MyModuleInfoDto>>::createShared();
 
-    ENDPOINT_INFO(getSystemTemperature) {
-        info->summary = "Get the main temperature of the system/bottle";
-        info->addTag("System");
-        info->description = "This temperature could be obtained by different means based on configuration. Configured module (sensor module at default) will periodically calculate temperature of system and will it broadcast it via CAN. On side of gateway this last temperature value is saved and supplied to API.";
-        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
-    }
+    // TODO - data processing
 
-    ENDPOINT("GET", "/system/temperature", getSystemTemperature) {
-        auto dto = systemModule.getSystemTemperature(); 
+    return createDtoResponse(Status::CODE_200, dto);
+}
+
+ENDPOINT_INFO(getSystemTemperature) {
+    info->summary = "Get the main temperature of the system/bottle";
+    info->addTag("System");
+    info->description = "This temperature could be obtained by different means based on configuration. Configured module (sensor module at default) will periodically calculate temperature of system and will it broadcast it via CAN. On side of gateway this last temperature value is saved and supplied to API.";
+    info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+}
+
+ENDPOINT("GET", "/system/temperature", getSystemTemperature) {
+        auto dto = MyTempDto::createShared();
+
+        SystemModule& systemModule = SystemModule::getInstance();
+        float temperature = systemModule.getSystemTemperature();
+
+        if (temperature < 0.0f) {
+            return createResponse(Status::CODE_500, "Failed to retrieve system temperature");
+        }
+
+        dto->temperature = temperature;
         return createDtoResponse(Status::CODE_200, dto);
     }
 
-*/
 // ==========================================
 // Common Endpoints
 // ==========================================
@@ -109,8 +126,8 @@ ENDPOINT_INFO(getAvailableModules) {
 
     return createDtoResponse(Status::CODE_200, dto);
 }
-/*
-ENDPOINT_INFO(getModuleLoad) {
+
+ENDPOINT_INFO(getLoad) {
     info->summary = "Get module CPU/MCU load";
     info->addTag("Common");
     info->description = "Gets the current workload values of the computing unit, including the average utilization and number of cores.";
@@ -118,40 +135,39 @@ ENDPOINT_INFO(getModuleLoad) {
     info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
 }
 
-ENDPOINT("GET", "/{module}/load", getModuleLoad,
-         PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module)) {
+ENDPOINT("GET", "/{module}/load", getLoad,
+           PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module)) {
 
-    float loadValue = -1.0f;
+    auto dto = MyLoadResponseDto::createShared();
+    bool success = false;
+    
+    float load = 0.0f;
     int cores = 0;
 
-    if (module == dto::ModuleEnum::core) {
-        CoreModule coreModule;
-        loadValue = coreModule.getLoad();
-        cores = coreModule.getCoreCount();
-    } else if (module == dto::ModuleEnum::control) {
-        ControlModule controlModule;
-        loadValue = controlModule.getLoad();
-        cores = controlModule.getCoreCount();
+    if (module == dto::ModuleEnum::control) {
+        ControlModule& controlModule = ControlModule::getInstance();
+        success = controlModule.getLoad(load, cores);
+    } else if (module == dto::ModuleEnum::core) {
+        CoreModule& coreModule = CoreModule::getInstance();
+        success = coreModule.getLoad(load, cores);
     } else if (module == dto::ModuleEnum::sensor) {
-        SensorModule sensorModule;
-        loadValue = sensorModule.getLoad();
-        cores = sensorModule.getCoreCount();
+        SensorModule& sensorModule = SensorModule::getInstance();
+        success = sensorModule.getLoad(load, cores);
     } else {
         return createResponse(Status::CODE_404, "Module not found");
     }
 
-    if (loadValue < 0) {
-        return createResponse(Status::CODE_500, "Failed to retrieve load");
+    if (!success) {
+        return createResponse(Status::CODE_500, "Failed to get load");
     }
 
-    auto dto = MyLoadResponseDto::createShared();
-    dto->load = loadValue;
+    dto->load = load;
     dto->cores = cores;
 
     return createDtoResponse(Status::CODE_200, dto);
 }
 
-ENDPOINT_INFO(getModuleCoreTemperature) {
+ENDPOINT_INFO(getCoreTemp) {
     info->summary = "Get module CPU/MCU temperature";
     info->addTag("Common");
     info->description = "Gets the current temperature of CPU/MCU core values of the computing unit.";
@@ -159,30 +175,32 @@ ENDPOINT_INFO(getModuleCoreTemperature) {
     info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
 }
 
-ENDPOINT("GET", "/{module}/core_temp", getModuleCoreTemperature,
-         PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module)) {
+ENDPOINT("GET", "/{module}/core_temp", getCoreTemp,
+           PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module)) {
 
-    float coreTemp = -1.0f;
+    auto dto = MyCoreTempResponseDto::createShared();
+    bool success = false;
+    
+    float core_temp = 0.0f;
 
-    if (module == dto::ModuleEnum::core) {
-        CoreModule coreModule;
-        coreTemp = coreModule.getCoreTemperature();
-    } else if (module == dto::ModuleEnum::control) {
-        ControlModule controlModule;
-        coreTemp = controlModule.getCoreTemperature();
+    if (module == dto::ModuleEnum::control) {
+        ControlModule& controlModule = ControlModule::getInstance();
+        success = controlModule.getCoreTemp(core_temp);
+    } else if (module == dto::ModuleEnum::core) {
+        CoreModule& coreModule = CoreModule::getInstance();
+        success = coreModule.getCoreTemp(core_temp);
     } else if (module == dto::ModuleEnum::sensor) {
-        SensorModule sensorModule;
-        coreTemp = sensorModule.getCoreTemperature();
+        SensorModule& sensorModule = SensorModule::getInstance();
+        success = sensorModule.getCoreTemp(core_temp);
     } else {
         return createResponse(Status::CODE_404, "Module not found");
     }
 
-    if (coreTemp < 0) {
-        return createResponse(Status::CODE_500, "Failed to retrieve core temperature");
+    if (!success) {
+        return createResponse(Status::CODE_500, "Failed to get core temperature");
     }
 
-    auto dto = MyCoreTempResponseDto::createShared();
-    dto->core_temp = coreTemp;
+    dto->core_temp = core_temp;
 
     return createDtoResponse(Status::CODE_200, dto);
 }
@@ -201,29 +219,31 @@ ENDPOINT("POST", "/{module}/restart", restartModule,
 
     bool success = false;
 
-    std::string uid = std::to_string(body->uid);  
+    std::stringstream ss;
+    ss << body->uid;
+    std::string uid_str = ss.str();
 
-    if (module == dto::ModuleEnum::core) {
-        CoreModule coreModule;
-        success = coreModule.restart(uid);
-    } else if (module == dto::ModuleEnum::control) {
-        ControlModule controlModule;
-        success = controlModule.restart(uid);
+    if (module == dto::ModuleEnum::control) {
+        ControlModule& controlModule = ControlModule::getInstance();
+        success = controlModule.restart(uid_str);
+    } else if (module == dto::ModuleEnum::core) {
+        CoreModule& coreModule = CoreModule::getInstance();
+        success = coreModule.restart(uid_str);
     } else if (module == dto::ModuleEnum::sensor) {
-        SensorModule sensorModule;
-        success = sensorModule.restart(uid);
+        SensorModule& sensorModule = SensorModule::getInstance();
+        success = sensorModule.restart(uid_str);
     } else {
         return createResponse(Status::CODE_404, "Module not found");
     }
 
-    if (success) {
-        return createResponse(Status::CODE_200, "Successfully restarted module");
-    } else {
+    if (!success) {
         return createResponse(Status::CODE_500, "Failed to restart module");
     }
+
+    return createResponse(Status::CODE_200, "Module restarted successfully");
 }
 
-ENDPOINT_INFO(restartModuleBootloader) {
+ENDPOINT_INFO(bootloaderModule) {
     info->summary = "Reboot module in bootloader (katapult) mode";
     info->addTag("Common");
     info->addConsumes<Object<MyModuleActionRequestDto>>("application/json");
@@ -231,34 +251,36 @@ ENDPOINT_INFO(restartModuleBootloader) {
     info->addResponse<String>(Status::CODE_404, "application/json");
 }
 
-ENDPOINT("POST", "/{module}/bootloader", restartModuleBootloader,
+ENDPOINT("POST", "/{module}/bootloader", bootloaderModule,
          PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
          BODY_DTO(Object<MyModuleActionRequestDto>, body)) {
 
     bool success = false;
 
-    std::string uid = std::to_string(body->uid);  
+    std::stringstream ss;
+    ss << body->uid;
+    std::string uid_str = ss.str();
 
-    if (module == dto::ModuleEnum::core) {
-        CoreModule coreModule;
-        success = coreModule.bootloader(uid);
-    } else if (module == dto::ModuleEnum::control) {
-        ControlModule controlModule;
-        success = controlModule.bootloader(uid);
+    if (module == dto::ModuleEnum::control) {
+        ControlModule& controlModule = ControlModule::getInstance();
+        success = controlModule.bootloader(uid_str);
+    } else if (module == dto::ModuleEnum::core) {
+        CoreModule& coreModule = CoreModule::getInstance();
+        success = coreModule.bootloader(uid_str);
     } else if (module == dto::ModuleEnum::sensor) {
-        SensorModule sensorModule;
-        success = sensorModule.bootloader(uid);
+        SensorModule& sensorModule = SensorModule::getInstance();
+        success = sensorModule.bootloader(uid_str);
     } else {
         return createResponse(Status::CODE_404, "Module not found");
     }
 
-    if (success) {
-        return createResponse(Status::CODE_200, "Successfully restarted module in bootloader mode");
-    } else {
-        return createResponse(Status::CODE_500, "Failed to restart module in bootloader mode");
+    if (!success) {
+        return createResponse(Status::CODE_500, "Failed to boot module into bootloader mode");
     }
-}
 
+    return createResponse(Status::CODE_200, "Module booted into bootloader mode successfully");
+}
+/*
 
 // ==========================================
 // Core module

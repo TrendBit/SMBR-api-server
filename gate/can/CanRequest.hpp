@@ -1,15 +1,10 @@
-/**
- * @file CanRequest.hpp
- * @author Vojtěch Mucha
- * @version 0.1
- * @date 23.08.2024
- */
-
-#pragma once
+#ifndef CANREQUEST_HPP
+#define CANREQUEST_HPP
 
 #include "CanBus.hpp"
 #include <utility>
-#include <string>
+#include <vector>
+#include <cstdint>
 
 /**
  * @class CanRequest
@@ -27,9 +22,9 @@ public:
      * @brief Sends a CAN message over the CAN bus and waits for a response.
      * @param can_id The identifier of the CAN message.
      * @param data The payload data of the CAN message.
-     * @return A pair containing a success flag and the response time in milliseconds.
+     * @return A pair containing a success flag and the received data as a vector of bytes.
      */
-    std::pair<bool, float> sendMessage(uint32_t can_id, const std::vector<uint8_t>& data);
+    std::pair<bool, std::vector<uint8_t>> sendMessage(uint32_t can_id, const std::vector<uint8_t>& data);
 
 private:
     /**
@@ -49,3 +44,4 @@ private:
     CanBus& canBus; ///< Reference to the CanBus interface used for communication.
 };
 
+#endif // CANREQUEST_HPP
