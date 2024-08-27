@@ -20,7 +20,7 @@ std::optional<std::vector<uint8_t>> SystemModule::getAvailableModules() {
 
 float SystemModule::getSystemTemperature() {
     // TODO - change Message_type by codes.hpp
-    uint32_t can_id = createCanId(Codes::Message_type::Probe_modules_response, Codes::Module::Sensor_board, Codes::Instance::Exclusive, false);
+    uint32_t can_id = createCanId(Codes::Message_type::Undefined, Codes::Module::Sensor_board, Codes::Instance::Exclusive, false);
     std::vector<uint8_t> data = {};  
 
     auto [success, response_data] = CanRequestManager::getInstance().sendMessage(can_id, data);

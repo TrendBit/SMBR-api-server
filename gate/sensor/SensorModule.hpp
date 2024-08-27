@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/CommonModule.hpp"
+#include <cstring> 
 
 /**
  * @class SensorModule
@@ -18,6 +19,20 @@ public:
      * @return Reference to the singleton instance of SensorModule.
      */
     static SensorModule& getInstance();
+
+    /**
+     * @brief Retrieves the temperature from the top sensor on the cultivation bottle.
+     * 
+     * @return The temperature from the top sensor, or -1.0f if the request failed.
+     */
+    float getTopTemperature();
+
+    /**
+     * @brief Retrieves the temperature from the bottom sensor on the cultivation bottle.
+     * 
+     * @return The temperature from the bottom sensor, or -1.0f if the request failed.
+     */
+    float getBottomTemperature();
 
 private:
     /**

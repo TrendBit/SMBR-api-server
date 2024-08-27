@@ -1,6 +1,10 @@
 #pragma once
 
 #include "base/CommonModule.hpp"
+#include "can/CanRequestManager.hpp"
+#include "can/CanIdGenerator.hpp"
+#include <cstring>
+
 
 /**
  * @class ControlModule
@@ -18,6 +22,30 @@ public:
      * @return Reference to the singleton instance of ControlModule.
      */
     static ControlModule& getInstance();
+
+    /**
+     * @brief Sets the heater temperature for the control module.
+     * @param temperature The target temperature to set.
+     * @return True if the request was successful, false otherwise.
+     */
+    bool setHeaterTemperature(float temperature);
+
+    /**
+     * @brief Gets the current heater temperature from the control module.
+     * @return The current heater temperature, or -1.0f if the request failed.
+     */
+    float getHeaterTemperature();
+
+    /**
+     * @brief Disables the heater in the control module.
+     * @return True if the request was successful, false otherwise.
+     */
+    bool disableHeater();
+
+    /**
+     * @brief Default destructor for ControlModule.
+     */
+    ~ControlModule() = default;
 
 private:
     /**
@@ -39,8 +67,4 @@ private:
      */
     ControlModule& operator=(const ControlModule&) = delete;
 
-    /**
-     * @brief Default destructor.
-     */
-    ~ControlModule() = default;
 };

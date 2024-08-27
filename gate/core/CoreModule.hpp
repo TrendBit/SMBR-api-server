@@ -1,6 +1,9 @@
 #pragma once
 
+#include <optional>
 #include "base/CommonModule.hpp"
+#include "can/CanRequestManager.hpp"
+#include "can/CanIdGenerator.hpp"
 
 /**
  * @class CoreModule
@@ -18,6 +21,19 @@ public:
      * @return Reference to the singleton instance of CoreModule.
      */
     static CoreModule& getInstance();
+
+    /**
+     * @brief Sends a request to determine the power supply type (Adapter/PoE) and processes the response data.
+     * @param adapter Reference to a boolean where the adapter status will be stored.
+     * @param poe Reference to a boolean where the PoE status will be stored.
+     * @return True if the request was successful and data was processed, false otherwise.
+     */
+    bool getSupplyType(bool& adapter, bool& poe);
+
+    /**
+     * @brief Default destructor for CoreModule.
+     */
+    ~CoreModule() = default;
 
 private:
     /**
@@ -39,8 +55,5 @@ private:
      */
     CoreModule& operator=(const CoreModule&) = delete;
 
-    /**
-     * @brief Default destructor.
-     */
-    ~CoreModule() = default;
+    
 };
