@@ -1,34 +1,47 @@
+/**
+ * @file CoreModule.hpp
+ * @author Vojtěch Mucha
+ * @version 0.1
+ * @date 28.08.2024
+ */
+
 #pragma once
 
-#include <optional>
 #include "base/CommonModule.hpp"
-#include "can/CanRequestManager.hpp"
 #include "can/CanIdGenerator.hpp"
+#include "can/CanRequestManager.hpp"
+#include <future>
 
 /**
  * @class CoreModule
  * @brief Singleton class representing the core module in the system.
  * 
- * This class inherits from CommonModule and provides specific functionality for the core module.
+ * The CoreModule class inherits from CommonModule and provides specific functionality for interacting with
+ * the core module of the system, such as determining the power supply type.
  */
 class CoreModule : public CommonModule {
 public:
     /**
-     * @brief Provides access to the singleton instance of CoreModule.
+     * @brief Retrieves the singleton instance of CoreModule.
      * 
-     * This method ensures that there is only one instance of CoreModule.
+     * This method ensures that only one instance of CoreModule exists throughout the application.
      * 
      * @return Reference to the singleton instance of CoreModule.
      */
     static CoreModule& getInstance();
 
     /**
-     * @brief Sends a request to determine the power supply type (Adapter/PoE) and processes the response data.
+     * @brief Asynchronously retrieves the power supply type (Adapter/PoE).
+     * 
+     * This method sends a request over the CAN bus to determine the power supply type and returns
+     * a `std::future` containing a boolean indicating the success of the operation. The results for adapter and PoE
+     * are stored in the provided references.
+     * 
      * @param adapter Reference to a boolean where the adapter status will be stored.
      * @param poe Reference to a boolean where the PoE status will be stored.
-     * @return True if the request was successful and data was processed, false otherwise.
+     * @return `std::future<bool>` indicating the success of the operation.
      */
-    bool getSupplyType(bool& adapter, bool& poe);
+    std::future<bool> getSupplyType(bool& adapter, bool& poe);
 
     /**
      * @brief Default destructor for CoreModule.
@@ -38,8 +51,6 @@ public:
 private:
     /**
      * @brief Private constructor to enforce the singleton pattern.
-     * 
-     * The constructor is private to prevent direct instantiation of the class.
      */
     CoreModule();
 
@@ -54,6 +65,4 @@ private:
      * @return Reference to the CoreModule instance.
      */
     CoreModule& operator=(const CoreModule&) = delete;
-
-    
 };

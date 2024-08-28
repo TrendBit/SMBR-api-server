@@ -1,44 +1,64 @@
+/**
+ * @file SensorModule.hpp
+ * @author Vojtěch Mucha
+ * @version 0.1
+ * @date 28.08.2024
+ */
+
 #pragma once
 
 #include "base/CommonModule.hpp"
-#include <cstring> 
+#include "can/CanIdGenerator.hpp"
+#include "can/CanRequestManager.hpp"
+#include <cstring>
+#include <future>
 
 /**
  * @class SensorModule
  * @brief Singleton class representing the sensor module in the system.
  * 
- * This class inherits from CommonModule and provides specific functionality for the sensor module.
+ * The SensorModule class inherits from CommonModule and provides specific functionality for retrieving temperature
+ * data from sensors attached to the system. It supports asynchronous operations.
  */
 class SensorModule : public CommonModule {
 public:
     /**
-     * @brief Provides access to the singleton instance of SensorModule.
+     * @brief Retrieves the singleton instance of SensorModule.
      * 
-     * This method ensures that there is only one instance of SensorModule.
+     * This method ensures that only one instance of SensorModule exists throughout the application.
      * 
      * @return Reference to the singleton instance of SensorModule.
      */
     static SensorModule& getInstance();
 
     /**
-     * @brief Retrieves the temperature from the top sensor on the cultivation bottle.
+     * @brief Asynchronously retrieves the temperature from the top sensor on the cultivation bottle.
      * 
-     * @return The temperature from the top sensor, or -1.0f if the request failed.
+     * This method sends a request over the CAN bus to get the temperature from the top sensor and returns
+     * a `std::future` containing the temperature as a float value.
+     * 
+     * @return `std::future<float>` containing the top sensor temperature. If the request fails, the value will be negative.
      */
-    float getTopTemperature();
+    std::future<float> getTopTemperature();
 
     /**
-     * @brief Retrieves the temperature from the bottom sensor on the cultivation bottle.
+     * @brief Asynchronously retrieves the temperature from the bottom sensor on the cultivation bottle.
      * 
-     * @return The temperature from the bottom sensor, or -1.0f if the request failed.
+     * This method sends a request over the CAN bus to get the temperature from the bottom sensor and returns
+     * a `std::future` containing the temperature as a float value.
+     * 
+     * @return `std::future<float>` containing the bottom sensor temperature. If the request fails, the value will be negative.
      */
-    float getBottomTemperature();
+    std::future<float> getBottomTemperature();
+
+    /**
+     * @brief Default destructor for SensorModule.
+     */
+    ~SensorModule() = default;
 
 private:
     /**
      * @brief Private constructor to enforce the singleton pattern.
-     * 
-     * The constructor is private to prevent direct instantiation of the class.
      */
     SensorModule();
 
@@ -53,9 +73,4 @@ private:
      * @return Reference to the SensorModule instance.
      */
     SensorModule& operator=(const SensorModule&) = delete;
-
-    /**
-     * @brief Default destructor.
-     */
-    ~SensorModule() = default;
 };
