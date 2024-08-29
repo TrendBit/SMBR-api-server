@@ -1,6 +1,5 @@
 #include "CoreModule.hpp"
 
-
 CoreModule::CoreModule()
     : CommonModule(Codes::Module::Core_device, Codes::Instance::Exclusive) {}
 
@@ -9,19 +8,17 @@ CoreModule& CoreModule::getInstance() {
     return instance;
 }
 
-std::future<bool> CoreModule::getSupplyType(bool& adapter, bool& poe) {
-    return std::async(std::launch::async, [this, &adapter, &poe]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Supply_type_request, module, instance, false);
-        std::vector<uint8_t> data = {};
+void CoreModule::getSupplyType(boost::asio::io_context& io_context, std::function<void(bool, bool, bool)> handler) {
+    uint32_t can_id = createCanId(Codes::Message_type::Supply_type_request, module, instance, false);
+    std::vector<uint8_t> data = {};
 
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
-
+    CanRequestManager::getInstance(io_context).addRequest(can_id, data, [handler](bool success, const std::vector<uint8_t>& response_data) {
         if (success && response_data.size() >= 2) {
-            adapter = response_data[0] == 0x01;
-            poe = response_data[1] == 0x01;
-            return true;
+            bool adapter = response_data[0] == 0x01;
+            bool poe = response_data[1] == 0x01;
+            handler(true, adapter, poe);
+        } else {
+            handler(false, false, false);
         }
-
-        return false;
     });
 }

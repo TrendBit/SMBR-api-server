@@ -39,9 +39,12 @@ public:
    * Initializes the controller with the provided content mappers for JSON serialization and deserialization.
    * 
    * @param apiContentMappers - Mappers used for serializing and deserializing DTOs.
+   * @param ioContext - Reference to the Boost ASIO io_context.
    */
-  MyController(OATPP_COMPONENT(std::shared_ptr<oatpp::web::mime::ContentMappers>, apiContentMappers))
+  MyController(const std::shared_ptr<oatpp::web::mime::ContentMappers>& apiContentMappers,
+               boost::asio::io_context& ioContext)
     : oatpp::web::server::api::ApiController(apiContentMappers)
+    , m_ioContext(ioContext)
   {}
 
 public:
@@ -50,11 +53,6 @@ public:
   // System Endpoints
   // ==========================================
 
-  /**
-   * @brief Endpoint information for retrieving available system modules.
-   * 
-   * Provides metadata for the `getSystemModules` endpoint, including its summary, description, and response format.
-   */
   ENDPOINT_INFO(getSystemModules) {
     info->summary = "Determines which all modules are available on the device and their respective unique CAN IDs";
     info->addTag("System");
@@ -64,11 +62,6 @@ public:
   ADD_CORS(getSystemModules)
   ENDPOINT("GET", "/system/modules", getSystemModules);
 
-  /**
-   * @brief Endpoint information for retrieving the system's temperature.
-   * 
-   * Provides metadata for the `getSystemTemperature` endpoint, including its summary, description, and response format.
-   */
   ENDPOINT_INFO(getSystemTemperature) {
     info->summary = "Get the main temperature of the system/bottle";
     info->addTag("System");
@@ -82,11 +75,6 @@ public:
   // Common Endpoints
   // ==========================================
 
-  /**
-   * @brief Endpoint information for sending a ping request to a target module.
-   * 
-   * Provides metadata for the `ping` endpoint, including its summary, description, and response format.
-   */
   ENDPOINT_INFO(ping) {
     info->summary = "Send ping to target module";
     info->addTag("Common");
@@ -98,11 +86,6 @@ public:
   ADD_CORS(ping)
   ENDPOINT("GET", "/{module}/ping", ping, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
 
-  /**
-   * @brief Endpoint information for retrieving the CPU/MCU load of a module.
-   * 
-   * Provides metadata for the `getLoad` endpoint, including its summary, description, and response format.
-   */
   ENDPOINT_INFO(getLoad) {
     info->summary = "Get module CPU/MCU load";
     info->addTag("Common");
@@ -113,11 +96,6 @@ public:
   ADD_CORS(getLoad)
   ENDPOINT("GET", "/{module}/load", getLoad, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
 
-  /**
-   * @brief Endpoint information for retrieving the core temperature of a module.
-   * 
-   * Provides metadata for the `getCoreTemp` endpoint, including its summary, description, and response format.
-   */
   ENDPOINT_INFO(getCoreTemp) {
     info->summary = "Get module CPU/MCU temperature";
     info->addTag("Common");
@@ -128,11 +106,6 @@ public:
   ADD_CORS(getCoreTemp)
   ENDPOINT("GET", "/{module}/core_temp", getCoreTemp, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
 
-  /**
-   * @brief Endpoint information for restarting a module into application mode.
-   * 
-   * Provides metadata for the `restartModule` endpoint, including its summary, description, and response format.
-   */
   ENDPOINT_INFO(restartModule) {
     info->summary = "Restart module into application mode";
     info->addTag("Common");
@@ -145,11 +118,6 @@ public:
            PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
            BODY_DTO(Object<MyModuleActionRequestDto>, body));
 
-  /**
-   * @brief Endpoint information for rebooting a module into bootloader (katapult) mode.
-   * 
-   * Provides metadata for the `bootloaderModule` endpoint, including its summary, description, and response format.
-   */
   ENDPOINT_INFO(bootloaderModule) {
     info->summary = "Reboot module in bootloader (katapult) mode";
     info->addTag("Common");
@@ -166,11 +134,6 @@ public:
   // Core module
   // ==========================================
 
-  /**
-   * @brief Endpoint information for determining the current power supply type (Adapter/PoE+).
-   * 
-   * Provides metadata for the `getSupplyType` endpoint, including its summary, description, and response format.
-   */
   ENDPOINT_INFO(getSupplyType) {
     info->summary = "Determine which power supply is currently in use (Adapter/PoE+)";
     info->addTag("Core module");
@@ -184,11 +147,6 @@ public:
   // Control module
   // ==========================================
 
-  /**
-   * @brief Endpoint information for setting the target bottle heating temperature.
-   * 
-   * Provides metadata for the `setHeaterTemperature` endpoint, including its summary, description, and response format.
-   */
   ENDPOINT_INFO(setHeaterTemperature) {
     info->summary = "Set the target bottle heating temperature";
     info->addTag("Control module");
@@ -200,11 +158,6 @@ public:
   ENDPOINT("POST", "/control/heater", setHeaterTemperature,
            BODY_DTO(Object<MyTempDto>, body));
 
-  /**
-   * @brief Endpoint information for retrieving the current target heating temperature.
-   * 
-   * Provides metadata for the `getHeaterTemperature` endpoint, including its summary, description, and response format.
-   */
   ENDPOINT_INFO(getHeaterTemperature) {
     info->summary = "Get the current target heating temperature";
     info->addTag("Control module");
@@ -214,11 +167,6 @@ public:
   ADD_CORS(getHeaterTemperature)
   ENDPOINT("GET", "/control/heater", getHeaterTemperature);
 
-  /**
-   * @brief Endpoint information for disabling the bottle heater.
-   * 
-   * Provides metadata for the `disableHeater` endpoint, including its summary, description, and response format.
-   */
   ENDPOINT_INFO(disableHeater) {
     info->summary = "Disables the bottle heater";
     info->addTag("Control module");
@@ -232,11 +180,6 @@ public:
   // Sensor module
   // ==========================================
 
-  /**
-   * @brief Endpoint information for retrieving the temperature of the top sensor on the cultivation bottle.
-   * 
-   * Provides metadata for the `getTopTemperature` endpoint, including its summary, description, and response format.
-   */
   ENDPOINT_INFO(getTopTemperature) {
     info->summary = "Get the temperature of the top sensor on cultivation bottle";
     info->addTag("Sensor module");
@@ -246,11 +189,6 @@ public:
   ADD_CORS(getTopTemperature)
   ENDPOINT("GET", "/sensor/temperature_top", getTopTemperature);
 
-  /**
-   * @brief Endpoint information for retrieving the temperature of the bottom sensor on the cultivation bottle.
-   * 
-   * Provides metadata for the `getBottomTemperature` endpoint, including its summary, description, and response format.
-   */
   ENDPOINT_INFO(getBottomTemperature) {
     info->summary = "Get the temperature of the bottom sensor on cultivation bottle";
     info->addTag("Sensor module");
@@ -259,6 +197,10 @@ public:
   }
   ADD_CORS(getBottomTemperature)
   ENDPOINT("GET", "/sensor/temperature_bottom", getBottomTemperature);
+
+
+private:
+  boost::asio::io_context& m_ioContext;
 
 };
 

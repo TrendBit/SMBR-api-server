@@ -5,8 +5,9 @@
 #include "oatpp-swagger/Controller.hpp"
 
 #include <iostream>
+#include <boost/asio.hpp>
 
-void run() {
+void run(boost::asio::io_context& io_context) {
 
   /* Register Components in scope of run() method */
   AppComponent components;
@@ -14,8 +15,11 @@ void run() {
   /* Get router component */
   OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
 
+  /* Get the ContentMappers component */
+  OATPP_COMPONENT(std::shared_ptr<oatpp::web::mime::ContentMappers>, contentMappers);
+
   /* Create MyController and add all of its endpoints to router */
-  auto myController = std::make_shared<MyController>();
+  auto myController = std::make_shared<MyController>(contentMappers, io_context);
   auto myControllerEndpoints = myController->getEndpoints();
   router->addController(myController);
 
@@ -39,25 +43,32 @@ void run() {
 
   /* Run server */
   server.run();
-  
 }
-
-/**
- *  main
- */
 int main(int argc, const char * argv[]) {
 
   oatpp::Environment::init();
 
-  run();
+  boost::asio::io_context io_context;
+
+  auto work = std::make_unique<boost::asio::io_context::work>(io_context);
+  std::cout << "Main - Starting io_context.run()" << std::endl;
+
+  std::thread io_thread([&io_context](){
+    io_context.run();
+    std::cout << "Main - io_context.run() completed" << std::endl;
+  });
+
+  /* Run the application */
+  run(io_context);
   
-  /* Print how much objects were created during app running, and what have left-probably leaked */
-  /* Disable object counting for release builds using '-D OATPP_DISABLE_ENV_OBJECT_COUNTERS' flag for better performance */
-  std::cout << "\nEnvironment:\n";
-  std::cout << "objectsCount = " << oatpp::Environment::getObjectsCount() << "\n";
-  std::cout << "objectsCreated = " << oatpp::Environment::getObjectsCreated() << "\n\n";
-  
+  io_thread.join();
+
+  /* Clean-up */
+  work.reset();
   oatpp::Environment::destroy();
   
   return 0;
 }
+
+
+

@@ -1,6 +1,5 @@
 #include "SensorModule.hpp"
 
-
 SensorModule::SensorModule() 
     : CommonModule(Codes::Module::Sensor_board, Codes::Instance::Exclusive) {}
 
@@ -9,36 +8,32 @@ SensorModule& SensorModule::getInstance() {
     return instance;
 }
 
-std::future<float> SensorModule::getTopTemperature() {
-    return std::async(std::launch::async, [this]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Undefined, module, instance, false);  // Upravit Message_type na správnou hodnotu
-        std::vector<uint8_t> data = {};
+void SensorModule::getTopTemperature(boost::asio::io_context& io_context, std::function<void(float)> handler) {
+    uint32_t can_id = createCanId(Codes::Message_type::Undefined, module, instance, false);
+    std::vector<uint8_t> data = {};
 
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
-
+    CanRequestManager::getInstance(io_context).addRequest(can_id, data, [handler](bool success, const std::vector<uint8_t>& response_data) {
         if (success && response_data.size() >= sizeof(float)) {
             float temperature;
             std::memcpy(&temperature, response_data.data(), sizeof(float));
-            return temperature;
+            handler(temperature);
+        } else {
+            handler(-1.0f);
         }
-
-        return -1.0f;
     });
 }
 
-std::future<float> SensorModule::getBottomTemperature() {
-    return std::async(std::launch::async, [this]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Undefined, module, instance, false);  // Upravit Message_type na správnou hodnotu
-        std::vector<uint8_t> data = {};
+void SensorModule::getBottomTemperature(boost::asio::io_context& io_context, std::function<void(float)> handler) {
+    uint32_t can_id = createCanId(Codes::Message_type::Undefined, module, instance, false);
+    std::vector<uint8_t> data = {};
 
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
-
+    CanRequestManager::getInstance(io_context).addRequest(can_id, data, [handler](bool success, const std::vector<uint8_t>& response_data) {
         if (success && response_data.size() >= sizeof(float)) {
             float temperature;
             std::memcpy(&temperature, response_data.data(), sizeof(float));
-            return temperature;
+            handler(temperature);
+        } else {
+            handler(-1.0f);
         }
-
-        return -1.0f;
     });
 }

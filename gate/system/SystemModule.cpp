@@ -5,33 +5,29 @@ SystemModule& SystemModule::getInstance() {
     return instance;
 }
 
-std::future<std::optional<std::vector<uint8_t>>> SystemModule::getAvailableModules() {
-    return std::async(std::launch::async, [this]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Probe_modules_request, Codes::Module::All, Codes::Instance::Undefined, false);
-        std::vector<uint8_t> data = {};  
+void SystemModule::getAvailableModules(boost::asio::io_context& io_context, std::function<void(std::optional<std::vector<uint8_t>>)> handler) {
+    uint32_t can_id = createCanId(Codes::Message_type::Probe_modules_request, Codes::Module::All, Codes::Instance::Undefined, false);
+    std::vector<uint8_t> data = {};  
 
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
-
+    CanRequestManager::getInstance(io_context).addRequest(can_id, data, [handler](bool success, const std::vector<uint8_t>& response_data) {
         if (success && !response_data.empty()) {
-            return std::make_optional(response_data);
+            handler(std::make_optional(response_data));
+        } else {
+            handler(std::nullopt);
         }
-
-        return std::optional<std::vector<uint8_t>>{};
     });
 }
 
-std::future<float> SystemModule::getSystemTemperature() {
-    return std::async(std::launch::async, [this]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Undefined, Codes::Module::Sensor_board, Codes::Instance::Exclusive, false);
-        std::vector<uint8_t> data = {};  
+void SystemModule::getSystemTemperature(boost::asio::io_context& io_context, std::function<void(float)> handler) {
+    uint32_t can_id = createCanId(Codes::Message_type::Undefined, Codes::Module::Sensor_board, Codes::Instance::Exclusive, false);
+    std::vector<uint8_t> data = {};  
 
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
-
+    CanRequestManager::getInstance(io_context).addRequest(can_id, data, [handler](bool success, const std::vector<uint8_t>&) {
         if (success) { 
-            float temp = 40.0f;
-            return temp;
+            float temp = 40.0f; 
+            handler(temp);
+        } else {
+            handler(-1.0f);
         }
-
-        return -1.0f;
     });
 }

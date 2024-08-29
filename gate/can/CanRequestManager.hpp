@@ -1,24 +1,18 @@
-/**
- * @file CanRequestManager.hpp
- * @author Vojtěch Mucha
- * @version 0.1
- * @date 28.08.2024
- */
-
 #pragma once
 
-#include <future>
-#include "CanBus.hpp"
 #include "CanRequest.hpp"
-#include <utility>
-#include <vector>
+#include <boost/asio.hpp>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+#include <functional>
 
 /**
  * @class CanRequestManager
  * @brief Singleton class for managing and processing CAN requests.
  *
  * The CanRequestManager class serves as the main interface for sending requests and receiving responses over the CAN bus.
- * It provides both synchronous and asynchronous methods for sending messages via CAN.
+ * It provides fully asynchronous methods for sending messages via CAN and manages a request queue.
  */
 class CanRequestManager {
 public:
@@ -30,20 +24,18 @@ public:
      * 
      * @return Reference to the CanRequestManager instance.
      */
-    static CanRequestManager& getInstance();
+    static CanRequestManager& getInstance(boost::asio::io_context& io_context);
 
     /**
-     * @brief Asynchronously sends a message over the CAN bus.
+     * @brief Asynchronously sends a message over the CAN bus using a request queue.
      * 
-     * This method sends a message over the CAN bus asynchronously and returns a `std::future` that allows checking the status
-     * of the operation and retrieving the result once it becomes available.
+     * This method sends a message over the CAN bus asynchronously, managing the requests in a queue.
      * 
      * @param can_id CAN identifier of the message.
      * @param data Data to be sent as the content of the CAN message.
-     * @return `std::future` containing a pair of `bool` and `std::vector<uint8_t>`. The `bool` element indicates the success
-     * of the operation, and `std::vector<uint8_t>` contains the response data.
+     * @param handler Callback to handle the result of the operation.
      */
-    std::future<std::pair<bool, std::vector<uint8_t>>> sendMessageAsync(uint32_t can_id, const std::vector<uint8_t>& data);
+    void addRequest(uint32_t can_id, const std::vector<uint8_t>& data, std::function<void(bool, const std::vector<uint8_t>&)> handler);
 
 private:
     /**
@@ -51,21 +43,19 @@ private:
      * 
      * The constructor is private to prevent the creation of multiple instances of the class. It is used only within `getInstance`.
      */
-    CanRequestManager();
+    CanRequestManager(boost::asio::io_context& io_context);
 
     /**
-     * @brief Synchronously sends a message over the CAN bus.
+     * @brief Processes the request queue.
      * 
-     * This method sends a message over the CAN bus and waits for a response. The operation is blocking, meaning that the method
-     * will not return until the response is received or the timeout expires.
-     * 
-     * @param can_id CAN identifier of the message.
-     * @param data Data to be sent as the content of the CAN message.
-     * @return A pair of `bool` and `std::vector<uint8_t>`. The `bool` element indicates the success of the operation,
-     * and `std::vector<uint8_t>` contains the response data.
+     * This method processes requests from the queue in the order they were added and sends them over the CAN bus.
      */
-    std::pair<bool, std::vector<uint8_t>> sendMessage(uint32_t can_id, const std::vector<uint8_t>& data);
+    void processQueue();
 
-    CanBus* canBus; ///< Pointer to the CanBus instance for communicating with the CAN bus.
     CanRequest* canRequest; ///< Pointer to the CanRequest instance for sending and receiving CAN messages.
+
+    std::queue<std::tuple<uint32_t, std::vector<uint8_t>, std::function<void(bool, const std::vector<uint8_t>&)>>> requestQueue; ///< Queue of CAN requests.
+    std::mutex queueMutex; ///< Mutex for synchronizing access to the request queue.
+    std::condition_variable queueCondition; ///< Condition variable to signal when there are requests in the queue.
+    bool processing; ///< Flag indicating whether the request queue is being processed.
 };

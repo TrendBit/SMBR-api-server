@@ -1,52 +1,42 @@
-/**
- * @file CanBus.hpp
- * @author Vojtěch Mucha
- * @version 0.1
- * @date 23.08.2024
- */
-
-#pragma once
+#ifndef CANBUS_HPP
+#define CANBUS_HPP
 
 #include "CanMessage.hpp"
-#include <string>
+#include <boost/asio.hpp>
 #include <linux/can.h>
-#include <net/if.h>
+#include <linux/can/raw.h>
 
 /**
  * @class CanBus
- * @brief Manages communication over the CAN bus.
+ * @brief Handles CAN bus communication via socketCAN with async operations using boost::asio.
  */
 class CanBus {
 public:
     /**
-     * @brief Constructs a CanBus object and initializes the CAN bus interface.
-     * @exception std::runtime_error Thrown if the CAN socket cannot be created or bound.
+     * @brief Constructs a CanBus object and initializes the CAN interface.
+     * @param io_context The io_context used for asynchronous operations.
      */
-    CanBus();
+    CanBus(boost::asio::io_context& io_context);
 
     /**
-     * @brief Destructs the CanBus object and closes the CAN socket.
+     * @brief Sends a CAN message asynchronously.
+     * @param message The CAN message to send.
+     * @param handler A handler to be called once the operation is complete.
      */
-    ~CanBus();
+    void asyncSend(const CanMessage& message, std::function<void(bool)> handler);
 
     /**
-     * @brief Sends a CAN message over the CAN bus.
-     * @param message The CanMessage object containing the message to send.
-     * @return True if the message was successfully sent, false otherwise.
+     * @brief Receives a CAN message asynchronously.
+     * @param handler A handler to be called once a message is received.
      */
-    bool send(const CanMessage& message);
-
-    /**
-     * @brief Receives a CAN message from the CAN bus.
-     * @param message The CanMessage object to store the received message.
-     * @return True if a message was successfully received, false otherwise.
-     */
-    bool receive(CanMessage& message);
+    void asyncReceive(std::function<void(bool, const CanMessage&)> handler);
 
 private:
-    int socketFd; ///< File descriptor for the CAN socket.
-    struct sockaddr_can addr; ///< Address structure for the CAN socket.
-    struct ifreq ifr; ///< Interface request structure for the CAN interface.
+    int socketFd; ///< Socket file descriptor for CAN communication.
+    boost::asio::posix::stream_descriptor socket; ///< Asio wrapper for CAN socket.
+    struct ifreq ifr; ///< Interface request structure for CAN.
+    struct sockaddr_can addr; ///< Socket address structure for CAN.
+    boost::asio::io_context& ioContext; ///< Reference to the io_context used for asynchronous operations.
 };
 
-
+#endif // CANBUS_HPP

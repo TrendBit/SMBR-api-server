@@ -1,7 +1,5 @@
 #include "ControlModule.hpp"
 
-
-
 ControlModule::ControlModule() 
     : CommonModule(Codes::Module::Control_board, Codes::Instance::Exclusive) {}
 
@@ -10,40 +8,42 @@ ControlModule& ControlModule::getInstance() {
     return instance;
 }
 
-std::future<bool> ControlModule::setHeaterTemperature(float temperature) {
-    return std::async(std::launch::async, [this, temperature]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Undefined, module, instance, false);
-        std::vector<uint8_t> data(sizeof(float));
-        std::memcpy(data.data(), &temperature, sizeof(float)); 
+void ControlModule::setHeaterTemperature(boost::asio::io_context& io_context, float temperature, std::function<void(bool)> handler) {
+    uint32_t can_id = createCanId(Codes::Message_type::Undefined, module, instance, false);
+    std::vector<uint8_t> data(sizeof(float));
+    std::memcpy(data.data(), &temperature, sizeof(float)); 
 
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
-        return success;
-    });
-}
-
-std::future<float> ControlModule::getHeaterTemperature() {
-    return std::async(std::launch::async, [this]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Undefined, module, instance, false);
-        std::vector<uint8_t> data = {};
-
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
-
-        if (success && response_data.size() >= sizeof(float)) {
-            float temperature;
-            std::memcpy(&temperature, response_data.data(), sizeof(float));
-            return temperature;
+    CanRequestManager::getInstance(io_context).addRequest(can_id, data, 
+        [handler](bool success, const std::vector<uint8_t>&) {
+            handler(success);
         }
-
-        return -1.0f;
-    });
+    );
 }
 
-std::future<bool> ControlModule::disableHeater() {
-    return std::async(std::launch::async, [this]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Undefined, module, instance, false);
-        std::vector<uint8_t> data = {};
+void ControlModule::getHeaterTemperature(boost::asio::io_context& io_context, std::function<void(float)> handler) {
+    uint32_t can_id = createCanId(Codes::Message_type::Undefined, module, instance, false);
+    std::vector<uint8_t> data = {};
 
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
-        return success;
-    });
+    CanRequestManager::getInstance(io_context).addRequest(can_id, data, 
+        [handler](bool success, const std::vector<uint8_t>& response_data) {
+            if (success && response_data.size() >= sizeof(float)) {
+                float temperature;
+                std::memcpy(&temperature, response_data.data(), sizeof(float));
+                handler(temperature);
+            } else {
+                handler(-1.0f);
+            }
+        }
+    );
+}
+
+void ControlModule::disableHeater(boost::asio::io_context& io_context, std::function<void(bool)> handler) {
+    uint32_t can_id = createCanId(Codes::Message_type::Undefined, module, instance, false);
+    std::vector<uint8_t> data = {};
+
+    CanRequestManager::getInstance(io_context).addRequest(can_id, data, 
+        [handler](bool success, const std::vector<uint8_t>&) {
+            handler(success);
+        }
+    );
 }
