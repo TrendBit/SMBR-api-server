@@ -8,6 +8,7 @@ This is the `dev` branch, where active development and testing are taking place.
 - OATPP 1.4.0
 - OATPP-Swagger 1.4.0
 - SocketCAN
+- Boost Asio
 
 ## Installing Dependencies
 1. Install OATPP:
@@ -30,12 +31,17 @@ This is the `dev` branch, where active development and testing are taking place.
     ```sh
     sudo apt install can-utils
     ```
+4. Install Boost Asio:
+    ```sh
+    sudo apt-get install libboost-all-dev
+    ```
 
 ## Building the Project
 1. Clone this repository:
     ```sh
-    git clone https://github.com/TrendBit/SMBR-api-server
+    git clone git@github.com:TrendBit/SMBR-api-server.git
     cd SMBR-api-server
+    git submodule update --init --recursive
     ```
 2. Create a build directory and compile the project:
     ```sh
