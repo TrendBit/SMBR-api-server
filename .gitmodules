@@ -1,3 +1,3 @@
 [submodule "gate/codes"]
 	path = gate/codes
-	url = git@github.com:TrendBit/SMBR-some-submodule.git
+	url = git@github.com:TrendBit/SMBR-CANBUS-Codes.git
