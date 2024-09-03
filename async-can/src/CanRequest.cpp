@@ -1,23 +1,32 @@
 #include "CanRequest.hpp"
 #include <iostream>
 
-CanRequest::CanRequest(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, int timeoutSeconds)
-    : canBus_(&canBus), requestMessage_(requestId, data), expectedResponseId_(responseId), timeoutTimer_(io_context), timeoutSeconds_(timeoutSeconds), responses_(std::make_shared<std::vector<CanMessage>>()) {
-    responseMask_ = 0x0FFF0000;
+CanRequest::CanRequest(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, int timeoutSeconds, bool compareFullId)
+    : canBus_(&canBus), requestMessage_(requestId, data), expectedResponseId_(responseId), timeoutTimer_(io_context), timeoutSeconds_(timeoutSeconds), compareFullId_(compareFullId), responses_(std::make_shared<std::vector<CanMessage>>()) {
 }
 
-void CanRequest::initialize(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, int timeoutSeconds) {
-    canBus_ = &canBus;  // Přiřazení ukazatele
+void CanRequest::initialize(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, int timeoutSeconds, bool compareFullId) {
+    canBus_ = &canBus;  
     requestMessage_ = CanMessage(requestId, data);
     expectedResponseId_ = responseId;
     timeoutSeconds_ = timeoutSeconds;
+    compareFullId_ = compareFullId;
     responses_->clear();
     timeoutTimer_ = boost::asio::steady_timer(io_context);
 }
 
-
 bool CanRequest::matchesResponse(uint32_t responseId) const {
-    return (responseId & responseMask_) == (expectedResponseId_ & responseMask_);
+    if (compareFullId_) {
+        return responseId == expectedResponseId_;
+    } else {
+        return matchesResponseByMessageType(responseId);
+    }
+}
+
+bool CanRequest::matchesResponseByMessageType(uint32_t responseId) const {
+    uint32_t responseMessageType = responseId & 0xFFFF0000;
+    uint32_t expectedMessageType = expectedResponseId_ & 0xFFFF0000;
+    return responseMessageType == expectedMessageType;
 }
 
 void CanRequest::send(std::function<void(CanRequestStatus, const CanMessage&)> responseHandler) {

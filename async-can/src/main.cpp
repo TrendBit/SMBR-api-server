@@ -15,6 +15,7 @@ uint32_t createCanId(Codes::Message_type messageType, Codes::Module module, Code
     id |= static_cast<uint32_t>(instance);
     return id;
 }
+
 void sendPingControlRequest(CanRequestManager& manager) {
     uint32_t ping_can_id = createCanId(Codes::Message_type::Ping_request, 
                                        Codes::Module::Control_board, 
@@ -25,7 +26,7 @@ void sendPingControlRequest(CanRequestManager& manager) {
                                             Codes::Instance::Exclusive, 
                                             false);
     std::vector<uint8_t> ping_data = {0x01};  
-    int timeoutSeconds = 3;
+    int timeoutSeconds = 4;
 
     manager.addRequest(ping_can_id, ping_data, ping_response_id, [](CanRequestStatus status, const CanMessage& response) {
         if (status == CanRequestStatus::Success) {
@@ -42,7 +43,6 @@ void sendPingControlRequest(CanRequestManager& manager) {
     }, timeoutSeconds);
 }
 
-
 void sendPingSenzorRequest(CanRequestManager& manager) {
     uint32_t ping_can_id = createCanId(Codes::Message_type::Ping_request, 
                                        Codes::Module::Sensor_board, 
@@ -53,7 +53,7 @@ void sendPingSenzorRequest(CanRequestManager& manager) {
                                             Codes::Instance::Exclusive, 
                                             false);
     std::vector<uint8_t> ping_data = {0x05};
-    int timeoutSeconds = 2; 
+    int timeoutSeconds = 4; 
 
     manager.addRequest(ping_can_id, ping_data, ping_response_id, [](CanRequestStatus status, const CanMessage& response) {
         if (status == CanRequestStatus::Success) {
@@ -80,7 +80,7 @@ void sendTempRequest(CanRequestManager& manager) {
                                             Codes::Instance::Exclusive, 
                                             false);
     std::vector<uint8_t> temp_data = {};  
-    int timeoutSeconds = 15;
+    int timeoutSeconds = 10;
 
     manager.addRequest(temp_can_id, temp_data, 0x203, [](CanRequestStatus status, const CanMessage& response) {
         if (status == CanRequestStatus::Success) {
@@ -127,11 +127,6 @@ void sendProbeModulesRequest(CanRequestManager& manager) {
     }, timeoutSeconds);
 }
 
-
-
-
-
-
 int main() {
     try {
         boost::asio::io_context io_context;
@@ -145,13 +140,19 @@ int main() {
             std::cout << "io_context.run() finished" << std::endl;
         });
 
+        sendPingControlRequest(manager);
+        std::this_thread::sleep_for(std::chrono::milliseconds(300)); 
         sendPingSenzorRequest(manager);
-        std::this_thread::sleep_for(std::chrono::milliseconds(300)); 
-        sendPingControlRequest(manager);  
-        std::this_thread::sleep_for(std::chrono::milliseconds(300)); 
+        std::this_thread::sleep_for(std::chrono::milliseconds(500)); 
         sendProbeModulesRequest(manager);
         std::this_thread::sleep_for(std::chrono::milliseconds(300)); 
+        sendPingSenzorRequest(manager);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500)); 
         sendTempRequest(manager);
+        std::this_thread::sleep_for(std::chrono::milliseconds(300)); 
+        sendPingControlRequest(manager);
+        std::this_thread::sleep_for(std::chrono::milliseconds(300)); 
+
 
         ioThread.join();
     } catch (std::exception& e) {
@@ -160,4 +161,3 @@ int main() {
 
     return 0;
 }
-

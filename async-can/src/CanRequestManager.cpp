@@ -35,7 +35,7 @@ void CanRequestManager::releaseRequest(std::shared_ptr<CanRequest> request) {
 
 void CanRequestManager::addRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, int timeoutSeconds) {
     auto request = acquireRequest();
-    request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds);
+    request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds, true); 
 
     activeRequests_[responseId].push(request);
 
@@ -56,7 +56,7 @@ void CanRequestManager::addRequest(uint32_t requestId, const std::vector<uint8_t
 
 void CanRequestManager::addMultiResponseRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const std::vector<CanMessage>&)> multiResponseHandler, int timeoutSeconds) {
     auto request = acquireRequest();
-    request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds);
+    request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds, false); 
 
     activeRequests_[responseId].push(request);
 
@@ -76,14 +76,13 @@ void CanRequestManager::addMultiResponseRequest(uint32_t requestId, const std::v
 }
 
 void CanRequestManager::handleIncomingMessage(const CanMessage& message) {
-    uint32_t maskedId = message.getId() & 0x0FFF0000;
+    uint32_t receivedId = message.getId();
 
     for (auto& pair : activeRequests_) {
-        uint32_t expectedMaskedId = pair.first & 0x0FFF0000;
-
-        if (maskedId == expectedMaskedId) {
-            if (!pair.second.empty()) {
-                auto request = pair.second.front();
+        auto& queue = pair.second;
+        if (!queue.empty()) {
+            auto request = queue.front();
+            if (request->matchesResponse(receivedId)) {
                 request->handleResponse(message);
                 return;
             }

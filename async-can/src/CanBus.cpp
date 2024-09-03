@@ -58,12 +58,6 @@ void CanBus::asyncSend(const CanMessage& message, std::function<void(bool)> hand
                     std::cerr << std::hex << static_cast<int>(frame->data[i]) << " ";
                 }
                 std::cerr << std::endl;
-            } else {
-                //std::cout << "Successfully sent CAN message with ID: 0x" << std::hex << (frame->can_id & CAN_EFF_MASK) << " and data: ";
-                /*for (size_t i = 0; i < frame->can_dlc; ++i) {
-                    std::cout << std::hex << static_cast<int>(frame->data[i]) << " ";
-                }
-                std::cout << std::endl;*/
             }
             handler(!ec);
         }
@@ -78,11 +72,6 @@ void CanBus::asyncReceive(std::function<void(bool, const CanMessage&)> handler) 
             if (!ec) {
                 std::vector<uint8_t> data(frame->data, frame->data + frame->can_dlc);
                 CanMessage message(frame->can_id & CAN_EFF_MASK, data);
-                //std::cout << "Received CAN message with ID: 0x" << std::hex << message.getId() << " and data: ";
-                /*for (const auto& byte : data) {
-                    std::cout << std::hex << static_cast<int>(byte) << " ";
-                }
-                std::cout << std::endl;*/
                 handler(true, message);
             } else {
                 std::cerr << "Failed to receive CAN message" << std::endl;

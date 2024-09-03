@@ -16,4 +16,4 @@ private:
     std::vector<uint8_t> data;
 };
 
-#endif // CANMESSAGE_HPP
+#endif 
