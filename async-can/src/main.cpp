@@ -25,6 +25,7 @@ void sendPingControlRequest(CanRequestManager& manager) {
                                             Codes::Instance::Exclusive, 
                                             false);
     std::vector<uint8_t> ping_data = {0x01};  
+    int timeoutSeconds = 3;
 
     manager.addRequest(ping_can_id, ping_data, ping_response_id, [](CanRequestStatus status, const CanMessage& response) {
         if (status == CanRequestStatus::Success) {
@@ -38,60 +39,9 @@ void sendPingControlRequest(CanRequestManager& manager) {
         } else {
             std::cerr << "Ping Control - Failed to receive response." << std::endl;
         }
-    });
+    }, timeoutSeconds);
 }
 
-void sendPingControl2Request(CanRequestManager& manager) {
-    uint32_t ping_can_id = createCanId(Codes::Message_type::Ping_request, 
-                                       Codes::Module::Control_board, 
-                                       Codes::Instance::Exclusive, 
-                                       false);
-    uint32_t ping_response_id = createCanId(Codes::Message_type::Ping_response, 
-                                            Codes::Module::Control_board, 
-                                            Codes::Instance::Exclusive, 
-                                            false);
-    std::vector<uint8_t> ping_data = {0x02}; 
-
-    manager.addRequest(ping_can_id, ping_data, ping_response_id, [](CanRequestStatus status, const CanMessage& response) {
-        if (status == CanRequestStatus::Success) {
-            std::cout << "Ping Control2 - Received response with ID: 0x" << std::hex << response.getId() << " and data: ";
-            for (const auto& byte : response.getData()) {
-                std::cout << std::hex << static_cast<int>(byte) << " ";
-            }
-            std::cout << std::endl;
-        } else if (status == CanRequestStatus::Timeout) {
-            std::cerr << "Ping Control2 - Request timed out." << std::endl;
-        } else {
-            std::cerr << "Ping Control2 - Failed to receive response." << std::endl;
-        }
-    });
-}
-
-void sendPingControl3Request(CanRequestManager& manager) {
-    uint32_t ping_can_id = createCanId(Codes::Message_type::Ping_request, 
-                                       Codes::Module::Control_board, 
-                                       Codes::Instance::Exclusive, 
-                                       false);
-    uint32_t ping_response_id = createCanId(Codes::Message_type::Ping_response, 
-                                            Codes::Module::Control_board, 
-                                            Codes::Instance::Exclusive, 
-                                            false);
-    std::vector<uint8_t> ping_data = {0x03};  
-
-    manager.addRequest(ping_can_id, ping_data, ping_response_id, [](CanRequestStatus status, const CanMessage& response) {
-        if (status == CanRequestStatus::Success) {
-            std::cout << "Ping Control3 - Received response with ID: 0x" << std::hex << response.getId() << " and data: ";
-            for (const auto& byte : response.getData()) {
-                std::cout << std::hex << static_cast<int>(byte) << " ";
-            }
-            std::cout << std::endl;
-        } else if (status == CanRequestStatus::Timeout) {
-            std::cerr << "Ping Control3 - Request timed out." << std::endl;
-        } else {
-            std::cerr << "Ping Control3 - Failed to receive response." << std::endl;
-        }
-    });
-}
 
 void sendPingSenzorRequest(CanRequestManager& manager) {
     uint32_t ping_can_id = createCanId(Codes::Message_type::Ping_request, 
@@ -102,7 +52,8 @@ void sendPingSenzorRequest(CanRequestManager& manager) {
                                             Codes::Module::Sensor_board, 
                                             Codes::Instance::Exclusive, 
                                             false);
-    std::vector<uint8_t> ping_data = {0x05}; 
+    std::vector<uint8_t> ping_data = {0x05};
+    int timeoutSeconds = 2; 
 
     manager.addRequest(ping_can_id, ping_data, ping_response_id, [](CanRequestStatus status, const CanMessage& response) {
         if (status == CanRequestStatus::Success) {
@@ -116,7 +67,7 @@ void sendPingSenzorRequest(CanRequestManager& manager) {
         } else {
             std::cerr << "Ping Senzor - Failed to receive response." << std::endl;
         }
-    });
+    }, timeoutSeconds);
 }
 
 void sendTempRequest(CanRequestManager& manager) {
@@ -129,6 +80,7 @@ void sendTempRequest(CanRequestManager& manager) {
                                             Codes::Instance::Exclusive, 
                                             false);
     std::vector<uint8_t> temp_data = {};  
+    int timeoutSeconds = 15;
 
     manager.addRequest(temp_can_id, temp_data, 0x203, [](CanRequestStatus status, const CanMessage& response) {
         if (status == CanRequestStatus::Success) {
@@ -142,8 +94,43 @@ void sendTempRequest(CanRequestManager& manager) {
         } else {
             std::cerr << "Temp - Failed to receive response." << std::endl;
         }
-    });
+    }, timeoutSeconds);
 }
+
+void sendProbeModulesRequest(CanRequestManager& manager) {
+    uint32_t probe_can_id = createCanId(Codes::Message_type::Probe_modules_request, 
+                                        Codes::Module::All, 
+                                        Codes::Instance::Exclusive, 
+                                        false);
+    uint32_t probe_response_id = createCanId(Codes::Message_type::Probe_modules_response, 
+                                             Codes::Module::All, 
+                                             Codes::Instance::Exclusive, 
+                                             false);
+    std::vector<uint8_t> probe_data = {}; 
+    int timeoutSeconds = 5;  
+
+    manager.addMultiResponseRequest(probe_can_id, probe_data, probe_response_id, [](CanRequestStatus status, const std::vector<CanMessage>& responses) {
+        if (status == CanRequestStatus::Success) {
+            std::cout << "Received " << responses.size() << " module responses:" << std::endl;
+            for (const auto& response : responses) {
+                std::cout << "Module response with ID: 0x" << std::hex << response.getId() << " and data: ";
+                for (const auto& byte : response.getData()) {
+                    std::cout << std::hex << static_cast<int>(byte) << " ";
+                }
+                std::cout << std::endl;
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            std::cerr << "ProbeModulesRequest timed out with no responses." << std::endl;
+        } else {
+            std::cerr << "ProbeModulesRequest failed." << std::endl;
+        }
+    }, timeoutSeconds);
+}
+
+
+
+
+
 
 int main() {
     try {
@@ -160,15 +147,9 @@ int main() {
 
         sendPingSenzorRequest(manager);
         std::this_thread::sleep_for(std::chrono::milliseconds(300)); 
-        sendPingControlRequest(manager);
+        sendPingControlRequest(manager);  
         std::this_thread::sleep_for(std::chrono::milliseconds(300)); 
-        sendPingControl2Request(manager);
-        std::this_thread::sleep_for(std::chrono::milliseconds(300)); 
-        sendPingSenzorRequest(manager);
-        std::this_thread::sleep_for(std::chrono::milliseconds(300)); 
-        sendPingControl3Request(manager);
-        std::this_thread::sleep_for(std::chrono::milliseconds(300)); 
-        sendPingSenzorRequest(manager);
+        sendProbeModulesRequest(manager);
         std::this_thread::sleep_for(std::chrono::milliseconds(300)); 
         sendTempRequest(manager);
 
@@ -179,3 +160,4 @@ int main() {
 
     return 0;
 }
+
