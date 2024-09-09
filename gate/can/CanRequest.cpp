@@ -1,5 +1,4 @@
 #include "CanRequest.hpp"
-#include <iostream>
 
 CanRequest::CanRequest(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, int timeoutSeconds, bool compareFullId)
     : canBus_(&canBus), requestMessage_(requestId, data), expectedResponseId_(responseId), timeoutTimer_(io_context), timeoutSeconds_(timeoutSeconds), compareFullId_(compareFullId), responses_(std::make_shared<std::vector<CanMessage>>()) {
@@ -40,10 +39,7 @@ void CanRequest::send(std::function<void(CanRequestStatus, const CanMessage&)> r
     });
 
     canBus_->asyncSend(requestMessage_, [this](bool success) {
-        if (success) {
-            std::cout << "Request sent with ID: 0x" << std::hex << requestMessage_.getId()
-                      << ", waiting for response with ID: 0x" << expectedResponseId_ << std::endl;
-        } else {
+        if (!success) {
             responseHandler_(CanRequestStatus::Fail, CanMessage(0, {}));
         }
     });
@@ -60,10 +56,7 @@ void CanRequest::sendMultiResponse(std::function<void(CanRequestStatus, const st
     });
 
     canBus_->asyncSend(requestMessage_, [this](bool success) {
-        if (success) {
-            std::cout << "Request sent with ID: 0x" << std::hex << requestMessage_.getId()
-                      << ", waiting for responses with ID: 0x" << expectedResponseId_ << std::endl;
-        } else {
+        if (!success) {
             multiResponseHandler_(CanRequestStatus::Fail, {});
         }
     });
@@ -77,8 +70,6 @@ void CanRequest::handleResponse(const CanMessage& message) {
             timeoutTimer_.cancel();
             responseHandler_(CanRequestStatus::Success, message);
         }
-    } else {
-        std::cerr << "Unexpected response received with ID: 0x" << std::hex << message.getId() << std::endl;
     }
 }
 
@@ -87,11 +78,15 @@ void CanRequest::onTimeout() {
         if (!responses_->empty()) {
             multiResponseHandler_(CanRequestStatus::Success, *responses_);
         } else {
-            std::cerr << "Timeout occurred with no responses for request ID: 0x" << std::hex << requestMessage_.getId() << std::endl;
             multiResponseHandler_(CanRequestStatus::Timeout, {});
         }
     } else if (responseHandler_) {
-        std::cerr << "Timeout occurred for request ID: 0x" << std::hex << requestMessage_.getId() << std::endl;
         responseHandler_(CanRequestStatus::Timeout, CanMessage(0, {}));
     }
+}
+
+void CanRequest::reset() {
+    responseHandler_ = nullptr;
+    multiResponseHandler_ = nullptr;
+    responses_->clear();
 }

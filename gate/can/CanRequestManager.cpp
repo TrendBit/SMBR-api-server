@@ -1,14 +1,11 @@
 #include "CanRequestManager.hpp"
-#include <iostream>
 
 CanRequestManager::CanRequestManager(boost::asio::io_context& io_context, CanBus& canBus)
     : io_context_(io_context), canBus_(canBus) {
-
+    
     canBus_.asyncReceive([this](bool success, const CanMessage& message) {
         if (success) {
             handleIncomingMessage(message);
-        } else {
-            std::cerr << "Failed to receive CAN message." << std::endl;
         }
         canBus_.asyncReceive([this](bool success, const CanMessage& message) {
             if (success) {
@@ -29,6 +26,7 @@ std::shared_ptr<CanRequest> CanRequestManager::acquireRequest() {
 }
 
 void CanRequestManager::releaseRequest(std::shared_ptr<CanRequest> request) {
+    request->reset();
     recycledRequests_.push_back(request);
 }
 
@@ -48,7 +46,6 @@ void CanRequestManager::addRequest(uint32_t requestId, const std::vector<uint8_t
                 activeRequests_.erase(responseId);
             }
         }
-
         releaseRequest(request);
     });
 }
@@ -59,8 +56,10 @@ void CanRequestManager::addMultiResponseRequest(uint32_t requestId, const std::v
 
     activeRequests_[responseId].push(request);
 
-    request->sendMultiResponse([this, responseId, multiResponseHandler, request](CanRequestStatus status, const std::vector<CanMessage>& responses) {
-        multiResponseHandler(status, responses);
+    request->sendMultiResponse([this, responseId, multiResponseHandler, request](CanRequestStatus status, const std::vector<CanMessage>& responses) mutable {
+        if (multiResponseHandler) {
+            multiResponseHandler(status, responses);
+        }
 
         auto& queue = activeRequests_[responseId];
         if (!queue.empty() && queue.front() == request) {
@@ -87,6 +86,4 @@ void CanRequestManager::handleIncomingMessage(const CanMessage& message) {
             }
         }
     }
-
-    std::cerr << "Unexpected response received with ID: 0x" << std::hex << message.getId() << std::endl;
 }
