@@ -11,7 +11,6 @@
  * @brief Represents a common module that can send ping requests and handle CAN communication.
  * 
  * This class is responsible for handling common CAN communication tasks like sending a ping request.
- * Derived classes should implement the `getModuleCode` method to provide the specific module code.
  */
 class CommonModule {
 public:
@@ -40,6 +39,20 @@ public:
      *                 A negative value indicates an error (-1 for failure, -2 for timeout).
      */
     void ping(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Sends a request to retrieve the core temperature from the specified CAN module.
+     * 
+     * This method sends a request to the module specified by the `module` parameter to retrieve the core temperature.
+     * The function waits for a response and calls the provided callback with the temperature value or an error code.
+     * 
+     * @param manager Reference to the CanRequestManager used to manage CAN requests.
+     * @param module The module from which the core temperature is being requested (as specified by the `Codes::Module` enum).
+     * @param callback Function to be called with the core temperature value (in degrees Celsius).
+     *                 A negative value indicates an error (-1 for failure, -2 for timeout).
+     */
+    void getCoreTemp(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
 
 protected:
     boost::asio::io_context& m_ioContext; 
