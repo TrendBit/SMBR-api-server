@@ -1,10 +1,3 @@
-/**
- * @file CanIdGenerator.hpp
- * @author Vojtěch Mucha
- * @version 0.1
- * @date 23.08.2024
- */
-
 #pragma once
 
 #include "codes/codes.hpp"

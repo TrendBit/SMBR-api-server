@@ -1,78 +1,51 @@
-/**
- * @file SystemModule.hpp
- * @author Vojtěch Mucha
- * @version 0.1
- * @date 28.08.2024
- */
-
 #pragma once
 
 #include <vector>
-#include <string>
-#include <optional>
-#include <future>
+#include <functional>
 #include "can/CanRequestManager.hpp"
+#include "can/CanMessage.hpp"
 #include "can/CanIdGenerator.hpp"
+#include "codes/codes.hpp"
+#include <boost/asio.hpp>
 
 /**
  * @class SystemModule
- * @brief Singleton class representing the system module, providing information about available modules and system temperature.
+ * @brief Class responsible for managing system-level CAN bus communications.
  * 
- * The SystemModule class is responsible for querying available modules and retrieving the system's temperature.
- * It provides asynchronous methods to perform these operations.
+ * The SystemModule class provides functions for communicating with different modules
+ * on the system over the CAN bus, including probing available modules.
  */
 class SystemModule {
 public:
     /**
-     * @brief Retrieves the singleton instance of SystemModule.
+     * @brief Get the instance of SystemModule.
      * 
-     * This method ensures that only one instance of SystemModule exists throughout the application.
-     * 
-     * @return Reference to the SystemModule instance.
+     * @param io_context Reference to Boost ASIO io_context for asynchronous operations.
+     * @param canRequestManager Reference to CanRequestManager for sending CAN bus requests.
+     * @return SystemModule& Singleton instance of SystemModule.
      */
-    static SystemModule& getInstance();
+    static SystemModule& getInstance(boost::asio::io_context& io_context, CanRequestManager& canRequestManager);
 
     /**
-     * @brief Asynchronously retrieves a list of available modules on the device.
+     * @brief Probe available modules on the system and retrieve their CAN message responses.
      * 
-     * This method sends a request over the CAN bus to determine which modules are available on the device
-     * and returns a `std::future` containing an optional vector of bytes representing the module data.
+     * Sends a CAN request to discover available modules and collects their responses.
+     * The results are passed to the provided callback function.
      * 
-     * @return `std::future` containing an `std::optional<std::vector<uint8_t>>` with the module data.
-     * The optional will be empty if the request fails.
+     * @param callback Function that receives a vector of CanMessage objects containing the module responses.
      */
-    std::future<std::optional<std::vector<uint8_t>>> getAvailableModules();
-
-    /**
-     * @brief Asynchronously retrieves the system temperature.
-     * 
-     * This method sends a request over the CAN bus to retrieve the system's temperature and returns a `std::future`
-     * containing the temperature as a float value.
-     * 
-     * @return `std::future<float>` containing the system temperature. If the request fails, the value will be negative.
-     */
-    std::future<float> getSystemTemperature();
-
-    /**
-     * @brief Default destructor for SystemModule.
-     */
-    ~SystemModule() = default;
+    void getAvailableModules(std::function<void(const std::vector<CanMessage>&)> callback);
 
 private:
     /**
-     * @brief Private constructor to enforce the singleton pattern.
-     */
-    SystemModule() = default;
-
-    /**
-     * @brief Deleted copy constructor to prevent copying of the singleton instance.
-     */
-    SystemModule(const SystemModule&) = delete;
-
-    /**
-     * @brief Deleted assignment operator to prevent copying of the singleton instance.
+     * @brief Constructor for SystemModule.
      * 
-     * @return Reference to the SystemModule instance.
+     * @param io_context Reference to Boost ASIO io_context for asynchronous operations.
+     * @param canRequestManager Reference to CanRequestManager for managing CAN bus requests.
      */
-    SystemModule& operator=(const SystemModule&) = delete;
+    SystemModule(boost::asio::io_context& io_context, CanRequestManager& canRequestManager);
+
+    boost::asio::io_context& m_ioContext; 
+    CanRequestManager& m_canRequestManager; 
 };
+

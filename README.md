@@ -1,8 +1,11 @@
 # SMBR-api-server
 Server providing an API for controlling SMBR and retrieving data.
 
+## Version
+1.0
+
 ## Project Status
-This is the first version where a functional ping to the control module is implemented. The other endpoints are only capable of sending requests but do not receive a response. The timeout for endpoints without a response is also missing.
+The project supports asynchronous communication over CAN. The `/system/modules`, `/{module}/ping`, and `/{module}/core_temp` endpoints are functional, allowing you to retrieve available modules, ping them for response times, and get core temperature readings.
 
 The active development for this project is currently taking place in the `dev` branch. 
 
@@ -38,6 +41,7 @@ The active development for this project is currently taking place in the `dev` b
     ```sh
     sudo apt-get install libboost-all-dev
     ```
+
 ## Building the Project
 1. Clone this repository:
     ```sh

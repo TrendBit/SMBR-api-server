@@ -1,44 +1,60 @@
 #pragma once
 
-#include <cstdint>
-#include <string>
-#include <future>
+#include "can/CanRequestManager.hpp"
 #include "codes/codes.hpp"
+#include "can/CanIdGenerator.hpp"
+#include <functional>
+#include <boost/asio.hpp>
 
 /**
  * @class CommonModule
- * @brief Base class for modules that interact with the CAN bus.
+ * @brief Represents a common module that can send ping requests and handle CAN communication.
+ * 
+ * This class is responsible for handling common CAN communication tasks like sending a ping request.
  */
 class CommonModule {
 public:
-    CommonModule(Codes::Module mod, Codes::Instance inst);
-    virtual ~CommonModule();
+    /**
+     * @brief Virtual destructor for the CommonModule class.
+     */
+    virtual ~CommonModule() = default;
 
     /**
-     * @brief Sends a ping request to the associated module over the CAN bus.
-     * @return The response time in milliseconds, or -1.0f if the request failed.
+     * @brief Constructs a CommonModule object.
+     * 
+     * @param io_context Reference to the Boost ASIO io_context used for asynchronous operations.
+     * @param canRequestManager Reference to the CanRequestManager used for sending and receiving CAN requests.
      */
-    std::future<float> ping();
+    CommonModule(boost::asio::io_context& io_context, CanRequestManager& canRequestManager);
 
     /**
-     * @brief Sends a load request to the associated module over the CAN bus and processes the response data.
-     * @param load Reference to a float where the load value will be stored.
-     * @param cores Reference to an integer where the number of cores will be stored.
-     * @return A future that will contain true if the request was successful and data was processed, false otherwise.
+     * @brief Sends a ping request to the specified CAN module.
+     * 
+     * This method sends a ping request to the module specified by the `module` parameter, waits for a response,
+     * and calls the provided callback with the time taken for the ping or an error code.
+     * 
+     * @param manager Reference to the CanRequestManager used to manage CAN requests.
+     * @param module The module to which the ping request is being sent (as specified by the `Codes::Module` enum).
+     * @param callback Function to be called with the time (in milliseconds) for the ping response. 
+     *                 A negative value indicates an error (-1 for failure, -2 for timeout).
      */
-    std::future<bool> getLoad(float& load, int& cores);
+    void ping(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
     /**
-     * @brief Sends a core temperature request to the associated module over the CAN bus and processes the response data.
-     * @param core_temp Reference to a float where the core temperature value will be stored.
-     * @return A future that will contain true if the request was successful and data was processed, false otherwise.
+     * @brief Sends a request to retrieve the core temperature from the specified CAN module.
+     * 
+     * This method sends a request to the module specified by the `module` parameter to retrieve the core temperature.
+     * The function waits for a response and calls the provided callback with the temperature value or an error code.
+     * 
+     * @param manager Reference to the CanRequestManager used to manage CAN requests.
+     * @param module The module from which the core temperature is being requested (as specified by the `Codes::Module` enum).
+     * @param callback Function to be called with the core temperature value (in degrees Celsius).
+     *                 A negative value indicates an error (-1 for failure, -2 for timeout).
      */
-    std::future<bool> getCoreTemp(float& core_temp);
+    void getCoreTemp(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
-    std::future<bool> restart(const std::string& uid);
-    std::future<bool> bootloader(const std::string& uid);
 
 protected:
-    Codes::Module module;
-    Codes::Instance instance;
+    boost::asio::io_context& m_ioContext; 
+    CanRequestManager& m_canRequestManager; 
 };

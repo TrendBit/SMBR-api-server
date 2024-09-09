@@ -1,52 +1,81 @@
-/**
- * @file CanBus.hpp
- * @author Vojtěch Mucha
- * @version 0.1
- * @date 23.08.2024
- */
+#ifndef CANBUS_HPP
+#define CANBUS_HPP
 
-#pragma once
-
-#include "CanMessage.hpp"
-#include <string>
+#include <boost/asio.hpp>
 #include <linux/can.h>
-#include <net/if.h>
+#include <linux/can/raw.h>
+#include <functional>
+#include <vector>
+#include <memory>
+#include "CanMessage.hpp"
 
 /**
  * @class CanBus
- * @brief Manages communication over the CAN bus.
+ * @brief Class responsible for CAN bus communication.
+ * 
+ * CanBus manages sending and receiving CAN messages asynchronously
+ * using Boost Asio for asynchronous I/O operations.
  */
 class CanBus {
 public:
     /**
-     * @brief Constructs a CanBus object and initializes the CAN bus interface.
-     * @exception std::runtime_error Thrown if the CAN socket cannot be created or bound.
+     * @brief Constructor for CanBus.
+     * 
+     * Initializes the CAN bus on the specified interface (can0) and prepares it for communication.
+     * 
+     * @param io_context Reference to Boost ASIO io_context for asynchronous operations.
      */
-    CanBus();
+    CanBus(boost::asio::io_context& io_context);
 
     /**
-     * @brief Destructs the CanBus object and closes the CAN socket.
+     * @brief Destructor for CanBus.
+     * 
+     * Closes the CAN socket and cleans up resources.
      */
     ~CanBus();
 
     /**
-     * @brief Sends a CAN message over the CAN bus.
-     * @param message The CanMessage object containing the message to send.
-     * @return True if the message was successfully sent, false otherwise.
+     * @brief Asynchronously send a CAN message.
+     * 
+     * Sends the specified CAN message and calls the handler once the operation is complete.
+     * 
+     * @param message The CAN message to send.
+     * @param handler Callback function to handle the result of the send operation.
      */
-    bool send(const CanMessage& message);
+    void asyncSend(const CanMessage& message, std::function<void(bool)> handler);
 
     /**
-     * @brief Receives a CAN message from the CAN bus.
-     * @param message The CanMessage object to store the received message.
-     * @return True if a message was successfully received, false otherwise.
+     * @brief Asynchronously receive CAN messages.
+     * 
+     * Continuously listens for incoming CAN messages and calls the handler with each message received.
+     * 
+     * @param handler Callback function to handle the received messages.
      */
-    bool receive(CanMessage& message);
+    void asyncReceive(std::function<void(bool, const CanMessage&)> handler);
 
 private:
-    int socketFd; ///< File descriptor for the CAN socket.
-    struct sockaddr_can addr; ///< Address structure for the CAN socket.
-    struct ifreq ifr; ///< Interface request structure for the CAN interface.
+    /**
+     * @brief Handle the result of the write operation.
+     * 
+     * @param error Boost system error code.
+     * @param frame CAN frame that was sent.
+     */
+    void handleWrite(const boost::system::error_code& error, const struct can_frame& frame);
+
+    /**
+     * @brief Handle the result of the read operation.
+     * 
+     * @param error Boost system error code.
+     * @param bytes_transferred Number of bytes transferred.
+     * @param frame CAN frame that was received.
+     */
+    void handleRead(const boost::system::error_code& error, std::size_t bytes_transferred, const struct can_frame& frame);
+
+    boost::asio::posix::stream_descriptor socket;
+    int socketFd;
+    struct sockaddr_can addr; 
+    struct ifreq ifr;
+    boost::asio::io_context& ioContext; 
 };
 
-
+#endif 

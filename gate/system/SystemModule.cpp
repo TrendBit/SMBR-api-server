@@ -1,37 +1,31 @@
 #include "SystemModule.hpp"
 
-SystemModule& SystemModule::getInstance() {
-    static SystemModule instance;
+SystemModule& SystemModule::getInstance(boost::asio::io_context& io_context, CanRequestManager& canRequestManager) {
+    static SystemModule instance(io_context, canRequestManager);
     return instance;
 }
 
-std::future<std::optional<std::vector<uint8_t>>> SystemModule::getAvailableModules() {
-    return std::async(std::launch::async, [this]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Probe_modules_request, Codes::Module::All, Codes::Instance::Undefined, false);
-        std::vector<uint8_t> data = {};  
+SystemModule::SystemModule(boost::asio::io_context& io_context, CanRequestManager& canRequestManager)
+    : m_ioContext(io_context), m_canRequestManager(canRequestManager) {}
 
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
+void SystemModule::getAvailableModules(std::function<void(const std::vector<CanMessage>&)> callback) {
+    uint32_t probe_can_id = createCanId(Codes::Message_type::Probe_modules_request, 
+                                        Codes::Module::All, 
+                                        Codes::Instance::Exclusive, 
+                                        false);
+    uint32_t probe_response_id = createCanId(Codes::Message_type::Probe_modules_response, 
+                                             Codes::Module::All, 
+                                             Codes::Instance::Exclusive, 
+                                             false);
+    std::vector<uint8_t> probe_data = {}; 
+    int timeoutSeconds = 2;
 
-        if (success && !response_data.empty()) {
-            return std::make_optional(response_data);
+    m_canRequestManager.addMultiResponseRequest(probe_can_id, probe_data, probe_response_id, [callback](CanRequestStatus status, const std::vector<CanMessage>& responses) {
+        if (status == CanRequestStatus::Success) {
+            callback(responses);  
+        } else {
+            callback({});
         }
-
-        return std::optional<std::vector<uint8_t>>{};
-    });
+    }, timeoutSeconds);
 }
 
-std::future<float> SystemModule::getSystemTemperature() {
-    return std::async(std::launch::async, [this]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Undefined, Codes::Module::Sensor_board, Codes::Instance::Exclusive, false);
-        std::vector<uint8_t> data = {};  
-
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
-
-        if (success) { 
-            float temp = 40.0f;
-            return temp;
-        }
-
-        return -1.0f;
-    });
-}

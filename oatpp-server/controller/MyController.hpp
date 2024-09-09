@@ -2,264 +2,81 @@
 
 #include "oatpp/macro/component.hpp"
 #include "oatpp/web/server/api/ApiController.hpp"
-#include "oatpp/macro/codegen.hpp"
-#include <sstream>
-
 #include "dto/ModuleEnum.hpp"
 #include "dto/MyPingResponseDto.hpp"
-#include "dto/MyLoadResponseDto.hpp"
-#include "dto/MyCoreTempResponseDto.hpp"
-#include "dto/MyModuleActionRequestDto.hpp"
-#include "dto/MyModuleInfoDto.hpp"
-#include "dto/MySupplyTypeResponseDto.hpp"
 #include "dto/MyTempDto.hpp"
-
-#include "core/CoreModule.hpp"
-#include "control/ControlModule.hpp"
-#include "sensor/SensorModule.hpp"
+#include "dto/MyModuleInfoDto.hpp"
+#include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
-
+#include "base/CommonModule.hpp"
 #include "oatpp/data/mapping/ObjectMapper.hpp"
 
-#include OATPP_CODEGEN_BEGIN(ApiController) //<-- Begin Codegen
+#include <future>
+#include <iomanip> 
+
+#include OATPP_CODEGEN_BEGIN(ApiController)
 
 /**
  * @class MyController
- * @brief Controller class handling the API endpoints for system, core, control, and sensor modules.
- * 
- * The MyController class defines the REST API endpoints used to interact with the various modules of the system.
- * It includes endpoints for retrieving system information, controlling the heater, and getting temperature readings.
+ * @brief Defines API endpoints for handling system, core, and sensor module actions.
  */
 class MyController : public oatpp::web::server::api::ApiController {
-
 public:
-  /**
-   * @brief Constructor for MyController.
-   * 
-   * Initializes the controller with the provided content mappers for JSON serialization and deserialization.
-   * 
-   * @param apiContentMappers - Mappers used for serializing and deserializing DTOs.
-   */
-  MyController(OATPP_COMPONENT(std::shared_ptr<oatpp::web::mime::ContentMappers>, apiContentMappers))
-    : oatpp::web::server::api::ApiController(apiContentMappers)
-  {}
+    MyController(const std::shared_ptr<oatpp::web::mime::ContentMappers>& apiContentMappers,
+                 boost::asio::io_context& ioContext,
+                 SystemModule& systemModule,
+                 CommonModule& commonModule,
+                 CanRequestManager& canRequestManager);
 
 public:
 
-  // ==========================================
-  // System Endpoints
-  // ==========================================
+    /**
+     * @brief Retrieves available modules and their unique CAN IDs.
+     */
+    ENDPOINT_INFO(getSystemModules) {
+        info->summary = "Retrieves available modules and their respective unique CAN IDs";
+        info->addTag("System");
+        info->description = "Returns a list of all modules that have responded to the identification message.";
+        info->addResponse<List<Object<MyModuleInfoDto>>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_504, "application/json");
+    }
+    ADD_CORS(getSystemModules)
+    ENDPOINT("GET", "/system/modules", getSystemModules);
 
-  /**
-   * @brief Endpoint information for retrieving available system modules.
-   * 
-   * Provides metadata for the `getSystemModules` endpoint, including its summary, description, and response format.
-   */
-  ENDPOINT_INFO(getSystemModules) {
-    info->summary = "Determines which all modules are available on the device and their respective unique CAN IDs";
-    info->addTag("System");
-    info->description = "Returns a list of all modules that have responded to the identification message and can therefore be considered available on the device.";
-    info->addResponse<List<Object<MyModuleInfoDto>>>(Status::CODE_200, "application/json");
-  }
-  ADD_CORS(getSystemModules)
-  ENDPOINT("GET", "/system/modules", getSystemModules);
+    /**
+     * @brief Sends a ping to the target module and returns the response time.
+     */
+    ENDPOINT_INFO(ping) {
+        info->summary = "Send ping to target module";
+        info->addTag("Common");
+        info->description = "Sends ping request to target module and waits for response.";
+        info->addResponse<Object<MyPingResponseDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json");
+    }
+    ADD_CORS(ping)
+    ENDPOINT("GET", "/{module}/ping", ping, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
 
-  /**
-   * @brief Endpoint information for retrieving the system's temperature.
-   * 
-   * Provides metadata for the `getSystemTemperature` endpoint, including its summary, description, and response format.
-   */
-  ENDPOINT_INFO(getSystemTemperature) {
-    info->summary = "Get the main temperature of the system/bottle";
-    info->addTag("System");
-    info->description = "This temperature could be obtained by different means based on configuration. Configured module (sensor module at default) will periodically calculate temperature of system and will it broadcast it via CAN. On side of gateway this last temperature value is saved and supplied to API.";
-    info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
-  }
-  ADD_CORS(getSystemTemperature)
-  ENDPOINT("GET", "/system/temperature", getSystemTemperature);
+    /**
+     * @brief Retrieves the CPU/MCU temperature of the specified module.
+     */
+    ENDPOINT_INFO(getCoreTemp) {
+        info->summary = "Get module CPU/MCU temperature";
+        info->addTag("Common");
+        info->description = "Gets the current temperature of CPU/MCU core values of the computing unit.";
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getCoreTemp)
+    ENDPOINT("GET", "/{module}/core_temp", getCoreTemp, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
 
-  // ==========================================
-  // Common Endpoints
-  // ==========================================
-
-  /**
-   * @brief Endpoint information for sending a ping request to a target module.
-   * 
-   * Provides metadata for the `ping` endpoint, including its summary, description, and response format.
-   */
-  ENDPOINT_INFO(ping) {
-    info->summary = "Send ping to target module";
-    info->addTag("Common");
-    info->description = "Sends ping request to target module and wait for response. If response is not received in 1 seconds, then timeouts.";
-    info->addResponse<Object<MyPingResponseDto>>(Status::CODE_200, "application/json");
-    info->addResponse<String>(Status::CODE_500, "application/json");
-    info->addResponse<String>(Status::CODE_404, "application/json");
-  }
-  ADD_CORS(ping)
-  ENDPOINT("GET", "/{module}/ping", ping, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
-
-  /**
-   * @brief Endpoint information for retrieving the CPU/MCU load of a module.
-   * 
-   * Provides metadata for the `getLoad` endpoint, including its summary, description, and response format.
-   */
-  ENDPOINT_INFO(getLoad) {
-    info->summary = "Get module CPU/MCU load";
-    info->addTag("Common");
-    info->description = "Gets the current workload values of the computing unit, including the average utilization and number of cores.";
-    info->addResponse<Object<MyLoadResponseDto>>(Status::CODE_200, "application/json");
-    info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
-  }
-  ADD_CORS(getLoad)
-  ENDPOINT("GET", "/{module}/load", getLoad, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
-
-  /**
-   * @brief Endpoint information for retrieving the core temperature of a module.
-   * 
-   * Provides metadata for the `getCoreTemp` endpoint, including its summary, description, and response format.
-   */
-  ENDPOINT_INFO(getCoreTemp) {
-    info->summary = "Get module CPU/MCU temperature";
-    info->addTag("Common");
-    info->description = "Gets the current temperature of CPU/MCU core values of the computing unit.";
-    info->addResponse<Object<MyCoreTempResponseDto>>(Status::CODE_200, "application/json");
-    info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
-  }
-  ADD_CORS(getCoreTemp)
-  ENDPOINT("GET", "/{module}/core_temp", getCoreTemp, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
-
-  /**
-   * @brief Endpoint information for restarting a module into application mode.
-   * 
-   * Provides metadata for the `restartModule` endpoint, including its summary, description, and response format.
-   */
-  ENDPOINT_INFO(restartModule) {
-    info->summary = "Restart module into application mode";
-    info->addTag("Common");
-    info->addConsumes<Object<MyModuleActionRequestDto>>("application/json");
-    info->addResponse(Status::CODE_200, "application/json");
-    info->addResponse<String>(Status::CODE_404, "application/json");
-  }
-  ADD_CORS(restartModule)
-  ENDPOINT("POST", "/{module}/restart", restartModule,
-           PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
-           BODY_DTO(Object<MyModuleActionRequestDto>, body));
-
-  /**
-   * @brief Endpoint information for rebooting a module into bootloader (katapult) mode.
-   * 
-   * Provides metadata for the `bootloaderModule` endpoint, including its summary, description, and response format.
-   */
-  ENDPOINT_INFO(bootloaderModule) {
-    info->summary = "Reboot module in bootloader (katapult) mode";
-    info->addTag("Common");
-    info->addConsumes<Object<MyModuleActionRequestDto>>("application/json");
-    info->addResponse(Status::CODE_200, "application/json");
-    info->addResponse<String>(Status::CODE_404, "application/json");
-  }
-  ADD_CORS(bootloaderModule)
-  ENDPOINT("POST", "/{module}/bootloader", bootloaderModule,
-           PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
-           BODY_DTO(Object<MyModuleActionRequestDto>, body));
-
-  // ==========================================
-  // Core module
-  // ==========================================
-
-  /**
-   * @brief Endpoint information for determining the current power supply type (Adapter/PoE+).
-   * 
-   * Provides metadata for the `getSupplyType` endpoint, including its summary, description, and response format.
-   */
-  ENDPOINT_INFO(getSupplyType) {
-    info->summary = "Determine which power supply is currently in use (Adapter/PoE+)";
-    info->addTag("Core module");
-    info->description = "Device can be powered from two power sources (AC adapter -> 12V or PoE+). This endpoint determines which supply is connected.";
-    info->addResponse<Object<MySupplyTypeResponseDto>>(Status::CODE_200, "application/json");
-  }
-  ADD_CORS(getSupplyType)
-  ENDPOINT("GET", "/core/supply_type", getSupplyType);
-
-  // ==========================================
-  // Control module
-  // ==========================================
-
-  /**
-   * @brief Endpoint information for setting the target bottle heating temperature.
-   * 
-   * Provides metadata for the `setHeaterTemperature` endpoint, including its summary, description, and response format.
-   */
-  ENDPOINT_INFO(setHeaterTemperature) {
-    info->summary = "Set the target bottle heating temperature";
-    info->addTag("Control module");
-    info->description = "Set target temperature for bottle heater which should be reached and maintained.";
-    info->addConsumes<Object<MyTempDto>>("application/json");
-    info->addResponse(Status::CODE_200, "application/json");
-  }
-  ADD_CORS(setHeaterTemperature)
-  ENDPOINT("POST", "/control/heater", setHeaterTemperature,
-           BODY_DTO(Object<MyTempDto>, body));
-
-  /**
-   * @brief Endpoint information for retrieving the current target heating temperature.
-   * 
-   * Provides metadata for the `getHeaterTemperature` endpoint, including its summary, description, and response format.
-   */
-  ENDPOINT_INFO(getHeaterTemperature) {
-    info->summary = "Get the current target heating temperature";
-    info->addTag("Control module");
-    info->description = "Get current target temperature of bottle heater.";
-    info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
-  }
-  ADD_CORS(getHeaterTemperature)
-  ENDPOINT("GET", "/control/heater", getHeaterTemperature);
-
-  /**
-   * @brief Endpoint information for disabling the bottle heater.
-   * 
-   * Provides metadata for the `disableHeater` endpoint, including its summary, description, and response format.
-   */
-  ENDPOINT_INFO(disableHeater) {
-    info->summary = "Disables the bottle heater";
-    info->addTag("Control module");
-    info->description = "Disables the bottle heater, this will stop the heating process.";
-    info->addResponse(Status::CODE_200, "application/json");
-  }
-  ADD_CORS(disableHeater)
-  ENDPOINT("GET", "/control/disable_heater", disableHeater);
-
-  // ==========================================
-  // Sensor module
-  // ==========================================
-
-  /**
-   * @brief Endpoint information for retrieving the temperature of the top sensor on the cultivation bottle.
-   * 
-   * Provides metadata for the `getTopTemperature` endpoint, including its summary, description, and response format.
-   */
-  ENDPOINT_INFO(getTopTemperature) {
-    info->summary = "Get the temperature of the top sensor on cultivation bottle";
-    info->addTag("Sensor module");
-    info->description = "Get the current temperature of the top sensor on cultivation bottle.";
-    info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
-  }
-  ADD_CORS(getTopTemperature)
-  ENDPOINT("GET", "/sensor/temperature_top", getTopTemperature);
-
-  /**
-   * @brief Endpoint information for retrieving the temperature of the bottom sensor on the cultivation bottle.
-   * 
-   * Provides metadata for the `getBottomTemperature` endpoint, including its summary, description, and response format.
-   */
-  ENDPOINT_INFO(getBottomTemperature) {
-    info->summary = "Get the temperature of the bottom sensor on cultivation bottle";
-    info->addTag("Sensor module");
-    info->description = "Get the current temperature of the bottom sensor on cultivation bottle.";
-    info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
-  }
-  ADD_CORS(getBottomTemperature)
-  ENDPOINT("GET", "/sensor/temperature_bottom", getBottomTemperature);
-
+private:
+    boost::asio::io_context& m_ioContext;
+    CanRequestManager& m_canRequestManager;
+    SystemModule& m_systemModule;
+    CommonModule& m_commonModule;
 };
 
 #include OATPP_CODEGEN_END(ApiController)

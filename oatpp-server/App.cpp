@@ -1,62 +1,76 @@
 #include "./controller/MyController.hpp"
 #include "./AppComponent.hpp"
+#include "can/CanBus.hpp"
+#include "can/CanRequestManager.hpp"
 
 #include "oatpp/network/Server.hpp"
 #include "oatpp-swagger/Controller.hpp"
 
 #include <iostream>
+#include <boost/asio.hpp>
+#include <thread>
 
-void run() {
+/**
+ * @brief Run the server and manage the CanBus and CanRequestManager.
+ * 
+ * This function sets up the server, initializes the CAN bus communication, and runs the server loop.
+ * 
+ * @param io_context Reference to Boost ASIO io_context for asynchronous operations.
+ */
+void run(boost::asio::io_context& io_context) {
 
-  /* Register Components in scope of run() method */
   AppComponent components;
 
-  /* Get router component */
   OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
+  OATPP_COMPONENT(std::shared_ptr<oatpp::web::mime::ContentMappers>, contentMappers);
 
-  /* Create MyController and add all of its endpoints to router */
-  auto myController = std::make_shared<MyController>();
-  auto myControllerEndpoints = myController->getEndpoints();
+  CanBus canBus(io_context);
+  CanRequestManager canRequestManager(io_context, canBus);
+
+  SystemModule& systemModule = SystemModule::getInstance(io_context, canRequestManager);
+  CommonModule commonModule(io_context, canRequestManager);
+
+  auto myController = std::make_shared<MyController>(contentMappers, io_context, systemModule, commonModule, canRequestManager);  
   router->addController(myController);
 
-  /* Swagger controller */
-  oatpp::web::server::api::Endpoints docEndpoints;
-  docEndpoints.append(myControllerEndpoints);
+  auto docEndpoints = myController->getEndpoints();
   auto swaggerController = oatpp::swagger::Controller::createShared(docEndpoints);
   router->addController(swaggerController);
 
-  /* Get connection handler component */
   OATPP_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, connectionHandler);
-
-  /* Get connection provider component */
   OATPP_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, connectionProvider);
 
-  /* Create server which takes provided TCP connections and passes them to HTTP connection handler */
   oatpp::network::Server server(connectionProvider, connectionHandler);
 
-  /* Print info about server port */
   OATPP_LOGi("MyApp", "Server running on port {}", connectionProvider->getProperty("port").toString()->c_str());
 
-  /* Run server */
   server.run();
-  
 }
 
 /**
- *  main
+ * @brief Main entry point of the application.
+ * 
+ * Initializes the Oat++ environment, starts the server, and runs the CAN bus communication loop.
+ * 
+ * @return int Exit code.
  */
 int main(int argc, const char * argv[]) {
 
   oatpp::Environment::init();
 
-  run();
+  boost::asio::io_context io_context;
+
+  auto work = std::make_unique<boost::asio::io_context::work>(io_context);
+
+  std::thread io_thread([&io_context](){
+    io_context.run();
+  });
+
+  run(io_context);
   
-  /* Print how much objects were created during app running, and what have left-probably leaked */
-  /* Disable object counting for release builds using '-D OATPP_DISABLE_ENV_OBJECT_COUNTERS' flag for better performance */
-  std::cout << "\nEnvironment:\n";
-  std::cout << "objectsCount = " << oatpp::Environment::getObjectsCount() << "\n";
-  std::cout << "objectsCreated = " << oatpp::Environment::getObjectsCreated() << "\n\n";
-  
+  io_thread.join();
+
+  work.reset();
   oatpp::Environment::destroy();
   
   return 0;

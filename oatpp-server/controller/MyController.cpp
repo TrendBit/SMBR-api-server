@@ -1,239 +1,137 @@
 #include "MyController.hpp"
 
-// ==========================================
-// System Endpoints
-// ==========================================
+
+MyController::MyController(const std::shared_ptr<oatpp::web::mime::ContentMappers>& apiContentMappers,
+                           boost::asio::io_context& ioContext,
+                           SystemModule& systemModule,
+                           CommonModule& commonModule,
+                           CanRequestManager& canRequestManager)
+    : oatpp::web::server::api::ApiController(apiContentMappers)
+    , m_ioContext(ioContext)
+    , m_systemModule(systemModule)
+    , m_commonModule(commonModule)
+    , m_canRequestManager(canRequestManager) {}
+
+  // ==========================================
+  // System Endpoints
+  // ==========================================
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getSystemModules() {
-    SystemModule& systemModule = SystemModule::getInstance();
-    auto moduleDataFuture = systemModule.getAvailableModules();
-    auto moduleData = moduleDataFuture.get();  
+    auto dtoList = oatpp::List<oatpp::Object<MyModuleInfoDto>>::createShared();
+    std::promise<oatpp::List<oatpp::Object<MyModuleInfoDto>>> promise;
+    auto future = promise.get_future();
 
-    if (!moduleData) {
-        return createResponse(Status::CODE_500, "Failed to retrieve modules");
+    m_systemModule.getAvailableModules([&promise, dtoList](const std::vector<CanMessage>& responses) {
+        for (const auto& response : responses) {
+            auto moduleInfoDto = MyModuleInfoDto::createShared();
+            std::stringstream uidHex;
+            uidHex << "0x";
+            for (const auto& byte : response.getData()) {
+                uidHex << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(byte);
+            }
+            moduleInfoDto->uid = uidHex.str();
+            
+            uint32_t modulePart = (response.getId() >> 4) & 0xFF;
+            switch (static_cast<Codes::Module>(modulePart)) {
+                case Codes::Module::Core_device:
+                    moduleInfoDto->module_type = "core";
+                    break;
+                case Codes::Module::Control_board:
+                    moduleInfoDto->module_type = "control";
+                    break;
+                case Codes::Module::Sensor_board:
+                    moduleInfoDto->module_type = "sensor";
+                    break;
+                default:
+                    moduleInfoDto->module_type = "unknown";
+                    break;
+            }
+
+            dtoList->push_back(moduleInfoDto);
+        }
+        promise.set_value(dtoList);
+    });
+
+    future.wait();
+    auto result = future.get();
+
+    if (result->empty()) {
+        return createResponse(Status::CODE_504, "No module responses received (timeout)");
     }
 
-    auto dto = oatpp::List<Object<MyModuleInfoDto>>::createShared();
-
-    // TODO - data processing
-
-    return createDtoResponse(Status::CODE_200, dto);
+    return createDtoResponse(Status::CODE_200, result);
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getSystemTemperature() {
-    auto dto = MyTempDto::createShared();
+  // ==========================================
+  // Common Endpoints
+  // ==========================================
 
-    SystemModule& systemModule = SystemModule::getInstance();
-    float temperature = systemModule.getSystemTemperature().get();  
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ping(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
+    auto pingResponseDto = MyPingResponseDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
 
-    if (temperature < 0.0f) {
-        return createResponse(Status::CODE_500, "Failed to retrieve system temperature");
-    }
+    auto handlePingResult = [&promise](float responseTime) {
+        promise.set_value(responseTime);
+    };
 
-    dto->temperature = temperature;
-    return createDtoResponse(Status::CODE_200, dto);
-}
-
-// ==========================================
-// Common Endpoints
-// ==========================================
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ping(const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false> >::AsString& module) {
-    float responseTime = -1.0f;
-
+    Codes::Module targetModule;
     if (module == dto::ModuleEnum::control) {
-        responseTime = ControlModule::getInstance().ping().get();
-    } else if (module == dto::ModuleEnum::core) {
-        responseTime = CoreModule::getInstance().ping().get();
+        targetModule = Codes::Module::Control_board;
     } else if (module == dto::ModuleEnum::sensor) {
-        responseTime = SensorModule::getInstance().ping().get();
+        targetModule = Codes::Module::Sensor_board;
+    } else if (module == dto::ModuleEnum::core) {
+        targetModule = Codes::Module::Core_device;
     } else {
         return createResponse(Status::CODE_404, "Module not found");
     }
 
-    if (responseTime < 0) {
-        return createResponse(Status::CODE_500, "Ping failed");
+    m_commonModule.ping(m_canRequestManager, targetModule, handlePingResult);
+
+    future.wait();
+    float responseTime = future.get();
+
+    if (responseTime >= 0) {
+        pingResponseDto->time_ms = responseTime;
+        return createDtoResponse(Status::CODE_200, pingResponseDto);  
+    } else if (responseTime == -2) {
+        return createResponse(Status::CODE_504, "Ping timed out"); 
+    } else {
+        return createResponse(Status::CODE_500, "Ping failed"); 
     }
-
-    auto dto = MyPingResponseDto::createShared();
-    dto->time_ms = responseTime;
-
-    return createDtoResponse(Status::CODE_200, dto);
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getLoad(const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false> >::AsString& module) {
-    auto dto = MyLoadResponseDto::createShared();
-    bool success = false;
-    
-    float load = 0.0f;
-    int cores = 0;
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCoreTemp(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
+    auto tempResponseDto = MyTempDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
 
+    auto handleTempResult = [&promise](float temperature) {
+        promise.set_value(temperature);
+    };
+
+    Codes::Module targetModule;
     if (module == dto::ModuleEnum::control) {
-        success = ControlModule::getInstance().getLoad(load, cores).get();
-    } else if (module == dto::ModuleEnum::core) {
-        success = CoreModule::getInstance().getLoad(load, cores).get();
+        targetModule = Codes::Module::Control_board;
     } else if (module == dto::ModuleEnum::sensor) {
-        success = SensorModule::getInstance().getLoad(load, cores).get();
+        targetModule = Codes::Module::Sensor_board;
+    } else if (module == dto::ModuleEnum::core) {
+        targetModule = Codes::Module::Core_device;
     } else {
         return createResponse(Status::CODE_404, "Module not found");
     }
 
-    if (!success) {
-        return createResponse(Status::CODE_500, "Failed to get load");
-    }
+    m_commonModule.getCoreTemp(m_canRequestManager, targetModule, handleTempResult);
 
-    dto->load = load;
-    dto->cores = cores;
+    future.wait();
+    float temperature = future.get();
 
-    return createDtoResponse(Status::CODE_200, dto);
-}
-
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCoreTemp(const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false> >::AsString& module) {
-    auto dto = MyCoreTempResponseDto::createShared();
-    bool success = false;
-    
-    float core_temp = 0.0f;
-
-    if (module == dto::ModuleEnum::control) {
-        success = ControlModule::getInstance().getCoreTemp(core_temp).get();
-    } else if (module == dto::ModuleEnum::core) {
-        success = CoreModule::getInstance().getCoreTemp(core_temp).get();
-    } else if (module == dto::ModuleEnum::sensor) {
-        success = SensorModule::getInstance().getCoreTemp(core_temp).get();
+    if (temperature >= 0) {
+        tempResponseDto->temperature = temperature;
+        return createDtoResponse(Status::CODE_200, tempResponseDto);  
+    } else if (temperature == -2) {
+        return createResponse(Status::CODE_504, "Request timed out"); 
     } else {
-        return createResponse(Status::CODE_404, "Module not found");
-    }
-
-    if (!success) {
-        return createResponse(Status::CODE_500, "Failed to get core temperature");
-    }
-
-    dto->core_temp = core_temp;
-
-    return createDtoResponse(Status::CODE_200, dto);
-}
-
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::restartModule(const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false> >::AsString& module, const oatpp::Object<MyModuleActionRequestDto>& body) {
-    bool success = false;
-
-    std::stringstream ss;
-    ss << body->uid;
-    std::string uid_str = ss.str();
-
-    if (module == dto::ModuleEnum::control) {
-        success = ControlModule::getInstance().restart(uid_str).get();
-    } else if (module == dto::ModuleEnum::core) {
-        success = CoreModule::getInstance().restart(uid_str).get();
-    } else if (module == dto::ModuleEnum::sensor) {
-        success = SensorModule::getInstance().restart(uid_str).get();
-    } else {
-        return createResponse(Status::CODE_404, "Module not found");
-    }
-
-    if (!success) {
-        return createResponse(Status::CODE_500, "Failed to restart module");
-    }
-
-    return createResponse(Status::CODE_200, "Module restarted successfully");
-}
-
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::bootloaderModule(const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false> >::AsString& module, const oatpp::Object<MyModuleActionRequestDto>& body) {
-    bool success = false;
-
-    std::stringstream ss;
-    ss << body->uid;
-    std::string uid_str = ss.str();
-
-    if (module == dto::ModuleEnum::control) {
-        success = ControlModule::getInstance().bootloader(uid_str).get();
-    } else if (module == dto::ModuleEnum::core) {
-        success = CoreModule::getInstance().bootloader(uid_str).get();
-    } else if (module == dto::ModuleEnum::sensor) {
-        success = SensorModule::getInstance().bootloader(uid_str).get();
-    } else {
-        return createResponse(Status::CODE_404, "Module not found");
-    }
-
-    if (!success) {
-        return createResponse(Status::CODE_500, "Failed to boot module into bootloader mode");
-    }
-
-    return createResponse(Status::CODE_200, "Module booted into bootloader mode successfully");
-}
-
-// ==========================================
-// Core module
-// ==========================================
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getSupplyType() {
-    auto dto = MySupplyTypeResponseDto::createShared();
-
-    bool adapter = false;
-    bool poe = false;
-
-    auto result = CoreModule::getInstance().getSupplyType(adapter, poe).get();  
-
-    if (result) {
-        dto->adapter = adapter;
-        dto->poe = poe;
-        return createDtoResponse(Status::CODE_200, dto);
-    } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve supply type");
-    }
-}
-
-// ==========================================
-// Control module
-// ==========================================
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setHeaterTemperature(const oatpp::Object<MyTempDto>& body) {
-    auto result = ControlModule::getInstance().setHeaterTemperature(body->temperature).get();
-    
-    if (!result) {
-        return createResponse(Status::CODE_500, "Failed to set heater temperature");
-    }
-    return createResponse(Status::CODE_200, "Heater temperature set successfully");
-}
-
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHeaterTemperature() {
-    auto temperature = ControlModule::getInstance().getHeaterTemperature().get();  
-
-    if (temperature < 0) {
-        return createResponse(Status::CODE_500, "Failed to get heater temperature");
-    }
-    auto dto = MyTempDto::createShared();
-    dto->temperature = temperature;
-    return createDtoResponse(Status::CODE_200, dto);
-}
-
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::disableHeater() {
-    auto result = ControlModule::getInstance().disableHeater().get();
-
-    if (!result) {
-        return createResponse(Status::CODE_500, "Failed to disable heater");
-    }
-    return createResponse(Status::CODE_200, "Heater disabled successfully");
-}
-
-// ==========================================
-// Sensor module
-// ==========================================
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getTopTemperature() {
-    auto result = SensorModule::getInstance().getTopTemperature().get();  
-
-    if (result >= 0.0f) {
-        auto dto = MyTempDto::createShared();
-        dto->temperature = result;
-        return createDtoResponse(Status::CODE_200, dto);
-    } else {
-        return createResponse(Status::CODE_500, "Failed to get top sensor temperature");
-    }
-}
-
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBottomTemperature() {
-    auto result = SensorModule::getInstance().getBottomTemperature().get(); 
-
-    if (result >= 0.0f) {
-        auto dto = MyTempDto::createShared();
-        dto->temperature = result;
-        return createDtoResponse(Status::CODE_200, dto);
-    } else {
-        return createResponse(Status::CODE_500, "Failed to get bottom sensor temperature");
+        return createResponse(Status::CODE_500, "Failed to retrieve temperature");  
     }
 }

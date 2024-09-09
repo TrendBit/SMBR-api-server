@@ -1,84 +1,53 @@
 #include "CommonModule.hpp"
-#include "can/CanRequestManager.hpp"
-#include "can/CanIdGenerator.hpp"
+#include <iostream>
 #include <chrono>
 
-CommonModule::CommonModule(Codes::Module mod, Codes::Instance inst)
-    : module(mod), instance(inst) {}
+CommonModule::CommonModule(boost::asio::io_context& io_context, CanRequestManager& canRequestManager)
+    : m_ioContext(io_context), m_canRequestManager(canRequestManager) {}
 
-CommonModule::~CommonModule() {}
+void CommonModule::ping(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+    uint32_t ping_can_id = createCanId(Codes::Message_type::Ping_request, module, Codes::Instance::Exclusive, false);
+    uint32_t ping_response_id = createCanId(Codes::Message_type::Ping_response, module, Codes::Instance::Exclusive, false);
+    std::vector<uint8_t> ping_data = {0x01};  
+    int timeoutSeconds = 2;
 
-std::future<float> CommonModule::ping() {
-    return std::async(std::launch::async, [this]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Ping_request, module, instance, false);
-        uint8_t seq_number = 0x00;
-        std::vector<uint8_t> data = {seq_number};
+    auto start_time = std::chrono::steady_clock::now();
 
-        auto start_time = std::chrono::steady_clock::now();
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
-        auto end_time = std::chrono::steady_clock::now();
-
-        if (success) {
-            float elapsed_time = std::chrono::duration<float, std::milli>(end_time - start_time).count();
-            return elapsed_time;
+    manager.addRequest(ping_can_id, ping_data, ping_response_id, [callback, start_time](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            auto end_time = std::chrono::steady_clock::now();
+            float response_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+            callback(response_time_ms); 
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2); 
         } else {
-            return -1.0f;
+            callback(-1); 
         }
-    });
+    }, timeoutSeconds);
 }
 
-std::future<bool> CommonModule::getLoad(float& load, int& cores) {
-    return std::async(std::launch::async, [this, &load, &cores]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Core_load_request, module, instance, false);
-        std::vector<uint8_t> data = {}; 
+void CommonModule::getCoreTemp(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+    uint32_t temp_can_id = createCanId(Codes::Message_type::Core_temperature_request, module, Codes::Instance::Exclusive, false);
+    uint32_t temp_response_id = createCanId(Codes::Message_type::Core_temperature_response, module, Codes::Instance::Exclusive, false);
+    std::vector<uint8_t> temp_data = {};  
+    int timeoutSeconds = 3;
 
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
-
-        if (success) {
-            // Example data processing
-            load = 20.0f;
-            cores = 4;
-            return true;
+    manager.addRequest(temp_can_id, temp_data, 0x203, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            if (response.getData().size() >= 4) {
+                float temperature = *reinterpret_cast<const float*>(response.getData().data());
+                callback(temperature);  
+            } else {
+                callback(-1);  
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2);  
         } else {
-            return false;
+            callback(-1); 
         }
-    });
+    }, timeoutSeconds);
 }
 
-std::future<bool> CommonModule::getCoreTemp(float& core_temp) {
-    return std::async(std::launch::async, [this, &core_temp]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Core_temperature_request, module, instance, false);
-        std::vector<uint8_t> data = {}; 
 
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
 
-        if (success) {
-            core_temp = 35.0f;
-            return true;
-        } else {
-            return false;
-        }
-    });
-}
 
-std::future<bool> CommonModule::restart(const std::string& uid) {
-    return std::async(std::launch::async, [this, uid]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Device_reset, module, instance, false);
-        std::vector<uint8_t> data(uid.begin(), uid.end());
-
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
-
-        return success;
-    });
-}
-
-std::future<bool> CommonModule::bootloader(const std::string& uid) {
-    return std::async(std::launch::async, [this, uid]() {
-        uint32_t can_id = createCanId(Codes::Message_type::Device_bootloader, module, instance, false);
-        std::vector<uint8_t> data(uid.begin(), uid.end());
-
-        auto [success, response_data] = CanRequestManager::getInstance().sendMessageAsync(can_id, data).get();
-
-        return success;
-    });
-}
