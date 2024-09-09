@@ -78,6 +78,7 @@ public:
 
     /**
      * @brief Check if the response matches by message type.
+     * Used, for example, in the system/modules endpoint where the message type is the same for all modules.
      * 
      * @param responseId CAN ID of the received response.
      * @return true if the response matches the expected message type, false otherwise.

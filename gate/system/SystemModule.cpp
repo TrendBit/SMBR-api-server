@@ -1,5 +1,4 @@
 #include "SystemModule.hpp"
-#include <iostream>
 
 SystemModule& SystemModule::getInstance(boost::asio::io_context& io_context, CanRequestManager& canRequestManager) {
     static SystemModule instance(io_context, canRequestManager);
@@ -25,7 +24,6 @@ void SystemModule::getAvailableModules(std::function<void(const std::vector<CanM
         if (status == CanRequestStatus::Success) {
             callback(responses);  
         } else {
-            std::cerr << "ProbeModulesRequest failed or timed out." << std::endl;
             callback({});
         }
     }, timeoutSeconds);
