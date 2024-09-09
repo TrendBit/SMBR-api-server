@@ -1,33 +1,33 @@
 #include "SystemModule.hpp"
+#include <iostream>
 
-SystemModule& SystemModule::getInstance() {
-    static SystemModule instance;
+SystemModule& SystemModule::getInstance(boost::asio::io_context& io_context, CanRequestManager& canRequestManager) {
+    static SystemModule instance(io_context, canRequestManager);
     return instance;
 }
 
-void SystemModule::getAvailableModules(boost::asio::io_context& io_context, std::function<void(std::optional<std::vector<uint8_t>>)> handler) {
-    uint32_t can_id = createCanId(Codes::Message_type::Probe_modules_request, Codes::Module::All, Codes::Instance::Undefined, false);
-    std::vector<uint8_t> data = {};  
+SystemModule::SystemModule(boost::asio::io_context& io_context, CanRequestManager& canRequestManager)
+    : m_ioContext(io_context), m_canRequestManager(canRequestManager) {}
 
-    CanRequestManager::getInstance(io_context).addRequest(can_id, data, [handler](bool success, const std::vector<uint8_t>& response_data) {
-        if (success && !response_data.empty()) {
-            handler(std::make_optional(response_data));
+void SystemModule::getAvailableModules(std::function<void(const std::vector<CanMessage>&)> callback) {
+    uint32_t probe_can_id = createCanId(Codes::Message_type::Probe_modules_request, 
+                                        Codes::Module::All, 
+                                        Codes::Instance::Exclusive, 
+                                        false);
+    uint32_t probe_response_id = createCanId(Codes::Message_type::Probe_modules_response, 
+                                             Codes::Module::All, 
+                                             Codes::Instance::Exclusive, 
+                                             false);
+    std::vector<uint8_t> probe_data = {}; 
+    int timeoutSeconds = 3;
+
+    m_canRequestManager.addMultiResponseRequest(probe_can_id, probe_data, probe_response_id, [callback](CanRequestStatus status, const std::vector<CanMessage>& responses) {
+        if (status == CanRequestStatus::Success) {
+            callback(responses);  
         } else {
-            handler(std::nullopt);
+            std::cerr << "ProbeModulesRequest failed or timed out." << std::endl;
+            callback({});
         }
-    });
+    }, timeoutSeconds);
 }
 
-void SystemModule::getSystemTemperature(boost::asio::io_context& io_context, std::function<void(float)> handler) {
-    uint32_t can_id = createCanId(Codes::Message_type::Undefined, Codes::Module::Sensor_board, Codes::Instance::Exclusive, false);
-    std::vector<uint8_t> data = {};  
-
-    CanRequestManager::getInstance(io_context).addRequest(can_id, data, [handler](bool success, const std::vector<uint8_t>&) {
-        if (success) { 
-            float temp = 40.0f; 
-            handler(temp);
-        } else {
-            handler(-1.0f);
-        }
-    });
-}

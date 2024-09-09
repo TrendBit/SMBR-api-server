@@ -1,44 +1,97 @@
 #include "CanRequest.hpp"
 #include <iostream>
-#include <iomanip>  
 
-CanRequest::CanRequest(CanBus& canBus) : canBus(canBus) {
-    std::cout << "CanRequest::CanRequest - Initialized" << std::endl;
+CanRequest::CanRequest(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, int timeoutSeconds, bool compareFullId)
+    : canBus_(&canBus), requestMessage_(requestId, data), expectedResponseId_(responseId), timeoutTimer_(io_context), timeoutSeconds_(timeoutSeconds), compareFullId_(compareFullId), responses_(std::make_shared<std::vector<CanMessage>>()) {
 }
 
-void CanRequest::sendMessageAsync(uint32_t can_id, const std::vector<uint8_t>& data, std::function<void(bool, const std::vector<uint8_t>&)> handler) {
-    std::cout << "CanRequest::sendMessageAsync - Sending CAN message, CAN ID: 0x" 
-              << std::hex << std::setw(8) << std::setfill('0') << can_id 
-              << " Data Size: " << std::dec << data.size() << std::endl;
+void CanRequest::initialize(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, int timeoutSeconds, bool compareFullId) {
+    canBus_ = &canBus;  
+    requestMessage_ = CanMessage(requestId, data);
+    expectedResponseId_ = responseId;
+    timeoutSeconds_ = timeoutSeconds;
+    compareFullId_ = compareFullId;
+    responses_->clear();
+    timeoutTimer_ = boost::asio::steady_timer(io_context);
+}
 
-    CanMessage request(can_id, data);
+bool CanRequest::matchesResponse(uint32_t responseId) const {
+    if (compareFullId_) {
+        return responseId == expectedResponseId_;
+    } else {
+        return matchesResponseByMessageType(responseId);
+    }
+}
 
-    canBus.asyncSend(request, [this, handler](bool success) {
-        std::cout << "CanRequest::sendMessageAsync - asyncSend handler called, success: " << success << std::endl;
+bool CanRequest::matchesResponseByMessageType(uint32_t responseId) const {
+    uint32_t responseMessageType = responseId & 0xFFFF0000;
+    uint32_t expectedMessageType = expectedResponseId_ & 0xFFFF0000;
+    return responseMessageType == expectedMessageType;
+}
 
-        if (!success) {
-            std::cout << "CanRequest::sendMessageAsync - asyncSend failed" << std::endl;
-            handler(false, {});
-            return;
+void CanRequest::send(std::function<void(CanRequestStatus, const CanMessage&)> responseHandler) {
+    responseHandler_ = responseHandler;
+
+    timeoutTimer_.expires_after(std::chrono::seconds(timeoutSeconds_));
+    timeoutTimer_.async_wait([this](const boost::system::error_code& ec) {
+        if (!ec) {
+            onTimeout();
         }
-
-        std::cout << "CanRequest::sendMessageAsync - asyncSend succeeded, about to call asyncReceive" << std::endl;
-
-        canBus.asyncReceive([handler](bool success, const CanMessage& response) {
-            std::cout << "CanRequest::sendMessageAsync - asyncReceive handler called, success: " << success << std::endl;
-
-            if (success) {
-                std::cout << "CanRequest::sendMessageAsync - Response received, Data Size: " 
-                          << response.getData().size() << std::endl;
-                handler(true, response.getData());
-            } else {
-                std::cout << "CanRequest::sendMessageAsync - asyncReceive failed" << std::endl;
-                handler(false, {});
-            }
-        });
-
-        std::cout << "CanRequest::sendMessageAsync - asyncReceive called" << std::endl;
     });
 
-    std::cout << "CanRequest::sendMessageAsync - asyncSend called" << std::endl;
+    canBus_->asyncSend(requestMessage_, [this](bool success) {
+        if (success) {
+            std::cout << "Request sent with ID: 0x" << std::hex << requestMessage_.getId()
+                      << ", waiting for response with ID: 0x" << expectedResponseId_ << std::endl;
+        } else {
+            responseHandler_(CanRequestStatus::Fail, CanMessage(0, {}));
+        }
+    });
+}
+
+void CanRequest::sendMultiResponse(std::function<void(CanRequestStatus, const std::vector<CanMessage>&)> multiResponseHandler) {
+    multiResponseHandler_ = multiResponseHandler;
+
+    timeoutTimer_.expires_after(std::chrono::seconds(timeoutSeconds_));
+    timeoutTimer_.async_wait([this](const boost::system::error_code& ec) {
+        if (!ec) {
+            onTimeout();
+        }
+    });
+
+    canBus_->asyncSend(requestMessage_, [this](bool success) {
+        if (success) {
+            std::cout << "Request sent with ID: 0x" << std::hex << requestMessage_.getId()
+                      << ", waiting for responses with ID: 0x" << expectedResponseId_ << std::endl;
+        } else {
+            multiResponseHandler_(CanRequestStatus::Fail, {});
+        }
+    });
+}
+
+void CanRequest::handleResponse(const CanMessage& message) {
+    if (matchesResponse(message.getId())) {
+        if (multiResponseHandler_) {
+            responses_->push_back(message);
+        } else if (responseHandler_) {
+            timeoutTimer_.cancel();
+            responseHandler_(CanRequestStatus::Success, message);
+        }
+    } else {
+        std::cerr << "Unexpected response received with ID: 0x" << std::hex << message.getId() << std::endl;
+    }
+}
+
+void CanRequest::onTimeout() {
+    if (multiResponseHandler_) {
+        if (!responses_->empty()) {
+            multiResponseHandler_(CanRequestStatus::Success, *responses_);
+        } else {
+            std::cerr << "Timeout occurred with no responses for request ID: 0x" << std::hex << requestMessage_.getId() << std::endl;
+            multiResponseHandler_(CanRequestStatus::Timeout, {});
+        }
+    } else if (responseHandler_) {
+        std::cerr << "Timeout occurred for request ID: 0x" << std::hex << requestMessage_.getId() << std::endl;
+        responseHandler_(CanRequestStatus::Timeout, CanMessage(0, {}));
+    }
 }
