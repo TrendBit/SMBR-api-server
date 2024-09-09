@@ -4,21 +4,12 @@
 #include "oatpp/web/server/api/ApiController.hpp"
 #include "oatpp/macro/codegen.hpp"
 #include <sstream>
+#include <iostream>
+#include <iomanip>
 
 #include "dto/ModuleEnum.hpp"
-#include "dto/MyPingResponseDto.hpp"
-#include "dto/MyLoadResponseDto.hpp"
-#include "dto/MyCoreTempResponseDto.hpp"
-#include "dto/MyModuleActionRequestDto.hpp"
 #include "dto/MyModuleInfoDto.hpp"
-#include "dto/MySupplyTypeResponseDto.hpp"
-#include "dto/MyTempDto.hpp"
-
-#include "core/CoreModule.hpp"
-#include "control/ControlModule.hpp"
-#include "sensor/SensorModule.hpp"
 #include "system/SystemModule.hpp"
-
 #include "oatpp/data/mapping/ObjectMapper.hpp"
 
 #include OATPP_CODEGEN_BEGIN(ApiController) //<-- Begin Codegen
@@ -40,167 +31,106 @@ public:
    * 
    * @param apiContentMappers - Mappers used for serializing and deserializing DTOs.
    * @param ioContext - Reference to the Boost ASIO io_context.
+   * @param systemModule - Reference to the SystemModule instance.
    */
   MyController(const std::shared_ptr<oatpp::web::mime::ContentMappers>& apiContentMappers,
-               boost::asio::io_context& ioContext)
+               boost::asio::io_context& ioContext,
+               SystemModule& systemModule)
     : oatpp::web::server::api::ApiController(apiContentMappers)
     , m_ioContext(ioContext)
+    , m_systemModule(systemModule)
   {}
 
 public:
 
-  // ==========================================
-  // System Endpoints
-  // ==========================================
-
+  /**
+   * @brief Endpoint that retrieves available modules and their respective unique CAN IDs.
+   * 
+   * This endpoint sends a request to probe the modules on the system and returns their IDs and types.
+   * 
+   * @return A list of available modules, including their type and unique CAN ID.
+   */
   ENDPOINT_INFO(getSystemModules) {
-    info->summary = "Determines which all modules are available on the device and their respective unique CAN IDs";
+    info->summary = "Retrieves available modules and their respective unique CAN IDs";
     info->addTag("System");
-    info->description = "Returns a list of all modules that have responded to the identification message and can therefore be considered available on the device.";
+    info->description = "Returns a list of all modules that have responded to the identification message.";
     info->addResponse<List<Object<MyModuleInfoDto>>>(Status::CODE_200, "application/json");
+    info->addResponse<String>(Status::CODE_504, "application/json");
   }
   ADD_CORS(getSystemModules)
-  ENDPOINT("GET", "/system/modules", getSystemModules);
+  
+  /**
+   * @brief Handles the GET request for retrieving the available modules.
+   * 
+   * This function processes the response from the CAN bus to retrieve module IDs and types,
+   * and then returns the result in JSON format. In case of a timeout, it returns a 504 status.
+   * 
+   * @return A JSON response containing module details or a timeout message.
+   */
+  ENDPOINT("GET", "/system/modules", getSystemModules) {
+    auto dtoList = oatpp::List<oatpp::Object<MyModuleInfoDto>>::createShared();  
 
-  ENDPOINT_INFO(getSystemTemperature) {
-    info->summary = "Get the main temperature of the system/bottle";
-    info->addTag("System");
-    info->description = "This temperature could be obtained by different means based on configuration. Configured module (sensor module at default) will periodically calculate temperature of system and will it broadcast it via CAN. On side of gateway this last temperature value is saved and supplied to API.";
-    info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+    std::shared_ptr<std::promise<oatpp::List<oatpp::Object<MyModuleInfoDto>>>> promise = std::make_shared<std::promise<oatpp::List<oatpp::Object<MyModuleInfoDto>>>>();
+    std::future<oatpp::List<oatpp::Object<MyModuleInfoDto>>> future = promise->get_future();
+
+    m_systemModule.getAvailableModules([promise, dtoList, this](const std::vector<CanMessage>& responses) {
+      if (!responses.empty()) {
+        std::cout << "Received " << responses.size() << " module responses:" << std::endl;
+
+        for (const auto& response : responses) {
+          auto moduleInfoDto = MyModuleInfoDto::createShared();
+
+          std::stringstream uidHex;
+          uidHex << "0x";
+          for (const auto& byte : response.getData()) {
+            uidHex << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(byte);
+          }
+          moduleInfoDto->uid = uidHex.str();
+
+          std::cout << "Module response with ID: 0x" << std::hex << response.getId() << " and data: " << uidHex.str() << std::endl;
+
+          uint32_t modulePart = (response.getId() >> 4) & 0xFF;
+          switch(static_cast<Codes::Module>(modulePart)) {
+            case Codes::Module::Core_device:
+              moduleInfoDto->module_type = "core";
+              break;
+            case Codes::Module::Control_board:
+              moduleInfoDto->module_type = "control";
+              break;
+            case Codes::Module::Sensor_board:
+              moduleInfoDto->module_type = "sensor";
+              break;
+            default:
+              moduleInfoDto->module_type = "unknown";
+              break;
+          }
+
+          dtoList->push_back(moduleInfoDto);
+        }
+
+        promise->set_value(dtoList);
+
+      } else {
+        std::cerr << "No module responses received or request failed. Timeout occurred." << std::endl;
+
+        auto emptyList = oatpp::List<oatpp::Object<MyModuleInfoDto>>::createShared();
+        promise->set_value(emptyList);
+      }
+    });
+
+    future.wait();
+    oatpp::List<oatpp::Object<MyModuleInfoDto>> result = future.get();
+
+    if (result->size() == 0) {
+      return createResponse(Status::CODE_504, "No module responses received (timeout)");
+    }
+
+    return createDtoResponse(Status::CODE_200, result);  
   }
-  ADD_CORS(getSystemTemperature)
-  ENDPOINT("GET", "/system/temperature", getSystemTemperature);
-
-  // ==========================================
-  // Common Endpoints
-  // ==========================================
-
-  ENDPOINT_INFO(ping) {
-    info->summary = "Send ping to target module";
-    info->addTag("Common");
-    info->description = "Sends ping request to target module and wait for response. If response is not received in 1 seconds, then timeouts.";
-    info->addResponse<Object<MyPingResponseDto>>(Status::CODE_200, "application/json");
-    info->addResponse<String>(Status::CODE_500, "application/json");
-    info->addResponse<String>(Status::CODE_404, "application/json");
-  }
-  ADD_CORS(ping)
-  ENDPOINT("GET", "/{module}/ping", ping, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
-
-  ENDPOINT_INFO(getLoad) {
-    info->summary = "Get module CPU/MCU load";
-    info->addTag("Common");
-    info->description = "Gets the current workload values of the computing unit, including the average utilization and number of cores.";
-    info->addResponse<Object<MyLoadResponseDto>>(Status::CODE_200, "application/json");
-    info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
-  }
-  ADD_CORS(getLoad)
-  ENDPOINT("GET", "/{module}/load", getLoad, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
-
-  ENDPOINT_INFO(getCoreTemp) {
-    info->summary = "Get module CPU/MCU temperature";
-    info->addTag("Common");
-    info->description = "Gets the current temperature of CPU/MCU core values of the computing unit.";
-    info->addResponse<Object<MyCoreTempResponseDto>>(Status::CODE_200, "application/json");
-    info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
-  }
-  ADD_CORS(getCoreTemp)
-  ENDPOINT("GET", "/{module}/core_temp", getCoreTemp, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
-
-  ENDPOINT_INFO(restartModule) {
-    info->summary = "Restart module into application mode";
-    info->addTag("Common");
-    info->addConsumes<Object<MyModuleActionRequestDto>>("application/json");
-    info->addResponse(Status::CODE_200, "application/json");
-    info->addResponse<String>(Status::CODE_404, "application/json");
-  }
-  ADD_CORS(restartModule)
-  ENDPOINT("POST", "/{module}/restart", restartModule,
-           PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
-           BODY_DTO(Object<MyModuleActionRequestDto>, body));
-
-  ENDPOINT_INFO(bootloaderModule) {
-    info->summary = "Reboot module in bootloader (katapult) mode";
-    info->addTag("Common");
-    info->addConsumes<Object<MyModuleActionRequestDto>>("application/json");
-    info->addResponse(Status::CODE_200, "application/json");
-    info->addResponse<String>(Status::CODE_404, "application/json");
-  }
-  ADD_CORS(bootloaderModule)
-  ENDPOINT("POST", "/{module}/bootloader", bootloaderModule,
-           PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
-           BODY_DTO(Object<MyModuleActionRequestDto>, body));
-
-  // ==========================================
-  // Core module
-  // ==========================================
-
-  ENDPOINT_INFO(getSupplyType) {
-    info->summary = "Determine which power supply is currently in use (Adapter/PoE+)";
-    info->addTag("Core module");
-    info->description = "Device can be powered from two power sources (AC adapter -> 12V or PoE+). This endpoint determines which supply is connected.";
-    info->addResponse<Object<MySupplyTypeResponseDto>>(Status::CODE_200, "application/json");
-  }
-  ADD_CORS(getSupplyType)
-  ENDPOINT("GET", "/core/supply_type", getSupplyType);
-
-  // ==========================================
-  // Control module
-  // ==========================================
-
-  ENDPOINT_INFO(setHeaterTemperature) {
-    info->summary = "Set the target bottle heating temperature";
-    info->addTag("Control module");
-    info->description = "Set target temperature for bottle heater which should be reached and maintained.";
-    info->addConsumes<Object<MyTempDto>>("application/json");
-    info->addResponse(Status::CODE_200, "application/json");
-  }
-  ADD_CORS(setHeaterTemperature)
-  ENDPOINT("POST", "/control/heater", setHeaterTemperature,
-           BODY_DTO(Object<MyTempDto>, body));
-
-  ENDPOINT_INFO(getHeaterTemperature) {
-    info->summary = "Get the current target heating temperature";
-    info->addTag("Control module");
-    info->description = "Get current target temperature of bottle heater.";
-    info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
-  }
-  ADD_CORS(getHeaterTemperature)
-  ENDPOINT("GET", "/control/heater", getHeaterTemperature);
-
-  ENDPOINT_INFO(disableHeater) {
-    info->summary = "Disables the bottle heater";
-    info->addTag("Control module");
-    info->description = "Disables the bottle heater, this will stop the heating process.";
-    info->addResponse(Status::CODE_200, "application/json");
-  }
-  ADD_CORS(disableHeater)
-  ENDPOINT("GET", "/control/disable_heater", disableHeater);
-
-  // ==========================================
-  // Sensor module
-  // ==========================================
-
-  ENDPOINT_INFO(getTopTemperature) {
-    info->summary = "Get the temperature of the top sensor on cultivation bottle";
-    info->addTag("Sensor module");
-    info->description = "Get the current temperature of the top sensor on cultivation bottle.";
-    info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
-  }
-  ADD_CORS(getTopTemperature)
-  ENDPOINT("GET", "/sensor/temperature_top", getTopTemperature);
-
-  ENDPOINT_INFO(getBottomTemperature) {
-    info->summary = "Get the temperature of the bottom sensor on cultivation bottle";
-    info->addTag("Sensor module");
-    info->description = "Get the current temperature of the bottom sensor on cultivation bottle.";
-    info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
-  }
-  ADD_CORS(getBottomTemperature)
-  ENDPOINT("GET", "/sensor/temperature_bottom", getBottomTemperature);
-
 
 private:
-  boost::asio::io_context& m_ioContext;
+  boost::asio::io_context& m_ioContext;  
+  SystemModule& m_systemModule;  
 
 };
 

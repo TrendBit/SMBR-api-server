@@ -20,7 +20,7 @@ class MyModuleInfoDto : public oatpp::DTO {
   /**
    * @brief Unique identifier for the module.
    */
-  DTO_FIELD(Int64, uid);          
+  DTO_FIELD(String, uid);          
 
 };
 

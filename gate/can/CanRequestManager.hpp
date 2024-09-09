@@ -2,60 +2,79 @@
 
 #include "CanRequest.hpp"
 #include <boost/asio.hpp>
+#include <unordered_map>
 #include <queue>
-#include <mutex>
-#include <condition_variable>
-#include <functional>
+#include <memory>
+#include <vector>
 
 /**
  * @class CanRequestManager
- * @brief Singleton class for managing and processing CAN requests.
- *
- * The CanRequestManager class serves as the main interface for sending requests and receiving responses over the CAN bus.
- * It provides fully asynchronous methods for sending messages via CAN and manages a request queue.
+ * @brief Class responsible for managing CAN bus requests.
+ * 
+ * CanRequestManager provides functionality for sending and receiving single or multiple
+ * CAN bus requests and handling responses.
  */
 class CanRequestManager {
 public:
     /**
-     * @brief Retrieves the singleton instance of CanRequestManager.
+     * @brief Constructor for CanRequestManager.
      * 
-     * This method returns the single instance of the CanRequestManager class, ensuring that only one instance exists
-     * throughout the application.
-     * 
-     * @return Reference to the CanRequestManager instance.
+     * @param io_context Reference to Boost ASIO io_context for asynchronous operations.
+     * @param canBus Reference to the CanBus object for handling CAN communications.
      */
-    static CanRequestManager& getInstance(boost::asio::io_context& io_context);
+    CanRequestManager(boost::asio::io_context& io_context, CanBus& canBus);
 
     /**
-     * @brief Asynchronously sends a message over the CAN bus using a request queue.
+     * @brief Add a request to the CAN bus.
      * 
-     * This method sends a message over the CAN bus asynchronously, managing the requests in a queue.
+     * Sends a CAN request and waits for a single response matching the given response ID.
      * 
-     * @param can_id CAN identifier of the message.
-     * @param data Data to be sent as the content of the CAN message.
-     * @param handler Callback to handle the result of the operation.
+     * @param requestId CAN ID of the request.
+     * @param data Data to send in the request.
+     * @param responseId Expected CAN ID of the response.
+     * @param responseHandler Function to handle the response.
+     * @param timeoutSeconds Timeout in seconds for the request.
      */
-    void addRequest(uint32_t can_id, const std::vector<uint8_t>& data, std::function<void(bool, const std::vector<uint8_t>&)> handler);
+    void addRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, int timeoutSeconds);
+
+    /**
+     * @brief Add a request to the CAN bus expecting multiple responses.
+     * 
+     * Sends a CAN request and waits for multiple responses matching the given response ID.
+     * 
+     * @param requestId CAN ID of the request.
+     * @param data Data to send in the request.
+     * @param responseId Expected CAN ID of the responses.
+     * @param multiResponseHandler Function to handle multiple responses.
+     * @param timeoutSeconds Timeout in seconds for the request.
+     */
+    void addMultiResponseRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const std::vector<CanMessage>&)> multiResponseHandler, int timeoutSeconds);
 
 private:
     /**
-     * @brief Private constructor for CanRequestManager.
+     * @brief Handle incoming CAN messages and match them to active requests.
      * 
-     * The constructor is private to prevent the creation of multiple instances of the class. It is used only within `getInstance`.
+     * @param message The received CAN message.
      */
-    CanRequestManager(boost::asio::io_context& io_context);
+    void handleIncomingMessage(const CanMessage& message);
 
     /**
-     * @brief Processes the request queue.
+     * @brief Acquire a CanRequest object from the recycled pool or create a new one.
      * 
-     * This method processes requests from the queue in the order they were added and sends them over the CAN bus.
+     * @return std::shared_ptr<CanRequest> Pointer to a CanRequest object.
      */
-    void processQueue();
+    std::shared_ptr<CanRequest> acquireRequest();
 
-    CanRequest* canRequest; ///< Pointer to the CanRequest instance for sending and receiving CAN messages.
+    /**
+     * @brief Release a CanRequest object back to the recycled pool.
+     * 
+     * @param request Pointer to the CanRequest object to release.
+     */
+    void releaseRequest(std::shared_ptr<CanRequest> request);
 
-    std::queue<std::tuple<uint32_t, std::vector<uint8_t>, std::function<void(bool, const std::vector<uint8_t>&)>>> requestQueue; ///< Queue of CAN requests.
-    std::mutex queueMutex; ///< Mutex for synchronizing access to the request queue.
-    std::condition_variable queueCondition; ///< Condition variable to signal when there are requests in the queue.
-    bool processing; ///< Flag indicating whether the request queue is being processed.
+    boost::asio::io_context& io_context_; 
+    CanBus& canBus_; 
+    std::unordered_map<uint32_t, std::queue<std::shared_ptr<CanRequest>>> activeRequests_; 
+    std::vector<std::shared_ptr<CanRequest>> recycledRequests_; 
 };
+
