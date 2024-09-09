@@ -19,7 +19,7 @@ void SystemModule::getAvailableModules(std::function<void(const std::vector<CanM
                                              Codes::Instance::Exclusive, 
                                              false);
     std::vector<uint8_t> probe_data = {}; 
-    int timeoutSeconds = 3;
+    int timeoutSeconds = 2;
 
     m_canRequestManager.addMultiResponseRequest(probe_can_id, probe_data, probe_response_id, [callback](CanRequestStatus status, const std::vector<CanMessage>& responses) {
         if (status == CanRequestStatus::Success) {

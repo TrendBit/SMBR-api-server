@@ -84,6 +84,14 @@ public:
      */
     bool matchesResponseByMessageType(uint32_t responseId) const;
 
+    /**
+     * @brief Reset the CanRequest object.
+     * 
+     * Clears the internal handlers and stored responses to prepare the request object
+     * for reuse.
+     */
+    void reset();
+
 private:
     /**
      * @brief Handle the timeout event for the CAN request.
