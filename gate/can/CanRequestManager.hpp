@@ -6,6 +6,7 @@
 #include <queue>
 #include <memory>
 #include <vector>
+#include "codes/codes.hpp"
 
 /**
  * @class CanRequestManager
@@ -16,6 +17,7 @@
  */
 class CanRequestManager {
 public:
+    static constexpr uint32_t PING_RESPONSE_MASK = 0xFFFF0000;
     /**
      * @brief Constructor for CanRequestManager.
      * 
@@ -37,6 +39,9 @@ public:
      */
     void addRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, int timeoutSeconds);
 
+    void addRequestWithSeq(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, uint8_t seq_num, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, int timeoutSeconds);
+    
+
     /**
      * @brief Add a request to the CAN bus expecting multiple responses.
      * 
@@ -57,6 +62,8 @@ private:
      * @param message The received CAN message.
      */
     void handleIncomingMessage(const CanMessage& message);
+    void handlePingMessage(const CanMessage& message);
+   
 
     /**
      * @brief Acquire a CanRequest object from the recycled pool or create a new one.
