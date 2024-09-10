@@ -26,6 +26,29 @@ void CommonModule::ping(CanRequestManager& manager, Codes::Module module, std::f
     }, timeoutSeconds);
 }
 
+void CommonModule::getLoad(CanRequestManager& manager, Codes::Module module, std::function<void(float, int)> callback) {
+    uint32_t load_can_id = createCanId(Codes::Message_type::Core_load_request, module, Codes::Instance::Exclusive, false);
+    uint32_t load_response_id = createCanId(Codes::Message_type::Core_load_response, module, Codes::Instance::Exclusive, false);
+    std::vector<uint8_t> load_data = {};  
+    int timeoutSeconds = 1.5;
+
+    manager.addRequest(load_can_id, load_data, load_response_id, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            if (response.getData().size() >= 8) {
+                float load = *reinterpret_cast<const float*>(response.getData().data());
+                int cores = *reinterpret_cast<const int*>(response.getData().data() + 4);
+                callback(load, cores);  
+            } else {
+                callback(-1, 0);  
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2, 0);  
+        } else {
+            callback(-1, 0); 
+        }
+    }, timeoutSeconds);
+}
+
 void CommonModule::getCoreTemp(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
     uint32_t temp_can_id = createCanId(Codes::Message_type::Core_temperature_request, module, Codes::Instance::Exclusive, false);
     uint32_t temp_response_id = createCanId(Codes::Message_type::Core_temperature_response, module, Codes::Instance::Exclusive, false);
@@ -47,6 +70,27 @@ void CommonModule::getCoreTemp(CanRequestManager& manager, Codes::Module module,
         }
     }, timeoutSeconds);
 }
+
+void CommonModule::restartModule(CanRequestManager& manager, Codes::Module module, const std::string& uid, std::function<void(bool)> callback) {
+    uint32_t restart_can_id = createCanId(Codes::Message_type::Device_reset, module, Codes::Instance::Exclusive, false);
+    std::vector<uint8_t> restart_data(8, 0x00); 
+
+    for (size_t i = 0; i < std::min(uid.size(), static_cast<size_t>(8)); ++i) {
+        restart_data[i] = static_cast<uint8_t>(uid[i]);
+    }
+
+    int timeoutSeconds = 3;
+
+    manager.addRequest(restart_can_id, restart_data, 0x200, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            callback(true);  
+        } else {
+            callback(false); 
+        }
+    }, timeoutSeconds);
+}
+
+
 
 
 

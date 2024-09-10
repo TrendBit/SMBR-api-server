@@ -101,6 +101,42 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getLoad(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
+    auto loadResponseDto = MyLoadResponseDto::createShared();
+    std::promise<std::tuple<float, int>> promise;
+    auto future = promise.get_future();
+
+    auto handleLoadResult = [&promise](float load, int cores) {
+        promise.set_value(std::make_tuple(load, cores));
+    };
+
+    Codes::Module targetModule;
+    if (module == dto::ModuleEnum::control) {
+        targetModule = Codes::Module::Control_board;
+    } else if (module == dto::ModuleEnum::sensor) {
+        targetModule = Codes::Module::Sensor_board;
+    } else if (module == dto::ModuleEnum::core) {
+        targetModule = Codes::Module::Core_device;
+    } else {
+        return createResponse(Status::CODE_404, "Module not found");
+    }
+
+    m_commonModule.getLoad(m_canRequestManager, targetModule, handleLoadResult);
+
+    future.wait();
+    auto [load, cores] = future.get();
+
+    if (load >= 0 && cores > 0) {
+        loadResponseDto->load = load;
+        loadResponseDto->cores = cores;
+        return createDtoResponse(Status::CODE_200, loadResponseDto);  
+    } else if (load == -2) {
+        return createResponse(Status::CODE_504, "Request timed out"); 
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve load");  
+    }
+}
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCoreTemp(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto tempResponseDto = MyTempDto::createShared();
     std::promise<float> promise;
@@ -135,3 +171,44 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         return createResponse(Status::CODE_500, "Failed to retrieve temperature");  
     }
 }
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::restartModule(
+    const oatpp::Enum<dto::ModuleEnum>::AsString& module, 
+    const oatpp::Object<MyModuleActionRequestDto>& body) {
+    
+    if (!body || !body->uid) {
+        return createResponse(Status::CODE_400, "Invalid request. UID is required.");
+    }
+
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handleRestartResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    Codes::Module targetModule;
+    if (module == dto::ModuleEnum::control) {
+        targetModule = Codes::Module::Control_board;
+    } else if (module == dto::ModuleEnum::sensor) {
+        targetModule = Codes::Module::Sensor_board;
+    } else if (module == dto::ModuleEnum::core) {
+        targetModule = Codes::Module::Core_device;
+    } else {
+        return createResponse(Status::CODE_404, "Module not found");
+    }
+
+    m_commonModule.restartModule(m_canRequestManager, targetModule, body->uid->c_str(), handleRestartResult);
+
+    future.wait();
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Module successfully restarted");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to restart module");
+    }
+}
+
+
+

@@ -41,6 +41,19 @@ public:
     void ping(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
     /**
+     * @brief Sends a request to retrieve the load and core count from the specified CAN module.
+     * 
+     * This method sends a request to the module specified by the `module` parameter to retrieve the load and core count.
+     * The function waits for a response and calls the provided callback with the load (in percentage) and the core count.
+     * 
+     * @param manager Reference to the CanRequestManager used to manage CAN requests.
+     * @param module The module from which the load and core count is being requested (as specified by the `Codes::Module` enum).
+     * @param callback Function to be called with the load value (in percentage) and core count (as integer).
+     *                 A negative value for load indicates an error (-1 for failure, -2 for timeout).
+     */
+    void getLoad(CanRequestManager& manager, Codes::Module module, std::function<void(float, int)> callback);
+
+    /**
      * @brief Sends a request to retrieve the core temperature from the specified CAN module.
      * 
      * This method sends a request to the module specified by the `module` parameter to retrieve the core temperature.
@@ -52,6 +65,20 @@ public:
      *                 A negative value indicates an error (-1 for failure, -2 for timeout).
      */
     void getCoreTemp(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Sends a request to restart the specified module based on its UID.
+     * 
+     * This method sends a CAN message to restart the module with the provided UID.
+     * 
+     * @param manager Reference to the CanRequestManager used to manage CAN requests.
+     * @param module The module to restart (as specified by the `Codes::Module` enum).
+     * @param uid The unique identifier (UID) of the module to be restarted.
+     * @param callback Function to be called with a boolean indicating success or failure.
+     */
+    void restartModule(CanRequestManager& manager, Codes::Module module, const std::string& uid, std::function<void(bool)> callback);
+
+
 
 
 protected:
