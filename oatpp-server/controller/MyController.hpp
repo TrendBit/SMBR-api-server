@@ -6,6 +6,8 @@
 #include "dto/MyPingResponseDto.hpp"
 #include "dto/MyTempDto.hpp"
 #include "dto/MyModuleInfoDto.hpp"
+#include "dto/MyLoadResponseDto.hpp"
+#include "dto/MyModuleActionRequestDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -58,6 +60,21 @@ public:
     ENDPOINT("GET", "/{module}/ping", ping, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
 
     /**
+     * @brief Retrieves the CPU/MCU load and core count of the specified module.
+     */
+    ENDPOINT_INFO(getLoad) {
+        info->summary = "Get module CPU/MCU load";
+        info->addTag("Common");
+        info->description = "Gets the current workload values of the computing unit, including the average utilization and number of cores.";
+        info->addResponse<Object<MyLoadResponseDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve load");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getLoad)
+    ENDPOINT("GET", "/{module}/load", getLoad, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
+
+    /**
      * @brief Retrieves the CPU/MCU temperature of the specified module.
      */
     ENDPOINT_INFO(getCoreTemp) {
@@ -71,6 +88,25 @@ public:
     }
     ADD_CORS(getCoreTemp)
     ENDPOINT("GET", "/{module}/core_temp", getCoreTemp, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
+
+    /**
+     * @brief Restarts the specified module into application mode.
+     */
+    ENDPOINT_INFO(restartModule) {
+        info->summary = "Restart module into application mode";
+        info->addTag("Common");
+        info->description = "Resets the module and it will start main application firmware again. UID of the module is required.";
+        info->addConsumes<Object<MyModuleActionRequestDto>>("application/json");
+        info->addResponse(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to restart module");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(restartModule)
+    ENDPOINT("POST", "/{module}/restart", restartModule,
+             PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
+             BODY_DTO(Object<MyModuleActionRequestDto>, body));
+
 
 private:
     boost::asio::io_context& m_ioContext;
