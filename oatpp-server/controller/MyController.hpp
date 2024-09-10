@@ -15,6 +15,7 @@
 
 #include <future>
 #include <iomanip> 
+#include <cstdint>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
@@ -58,6 +59,10 @@ public:
     }
     ADD_CORS(ping)
     ENDPOINT("GET", "/{module}/ping", ping, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
+
+    ENDPOINT("GET", "/{module}/ping-with-seq/{seq}", pingWithSeq,
+             PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
+             PATH(oatpp::Int32, seq));
 
     /**
      * @brief Retrieves the CPU/MCU load and core count of the specified module.

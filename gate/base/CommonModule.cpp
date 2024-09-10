@@ -26,6 +26,29 @@ void CommonModule::ping(CanRequestManager& manager, Codes::Module module, std::f
     }, timeoutSeconds);
 }
 
+void CommonModule::pingWithSeq(CanRequestManager& manager, Codes::Module module, uint8_t seq_num, std::function<void(float)> callback) {
+    uint32_t ping_can_id = createCanId(Codes::Message_type::Ping_request, module, Codes::Instance::Exclusive, false);
+    uint32_t ping_response_id = createCanId(Codes::Message_type::Ping_response, module, Codes::Instance::Exclusive, false);
+    
+    std::vector<uint8_t> ping_data = { seq_num };  
+    int timeoutSeconds = 1;
+
+    auto start_time = std::chrono::steady_clock::now();
+
+    manager.addRequestWithSeq(ping_can_id, ping_data, ping_response_id, seq_num, [callback, start_time](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            auto end_time = std::chrono::steady_clock::now();
+            float response_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+            callback(response_time_ms); 
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2); 
+        } else {
+            callback(-1); 
+        }
+    }, timeoutSeconds);
+}
+
+
 void CommonModule::getLoad(CanRequestManager& manager, Codes::Module module, std::function<void(float, int)> callback) {
     uint32_t load_can_id = createCanId(Codes::Message_type::Core_load_request, module, Codes::Instance::Exclusive, false);
     uint32_t load_response_id = createCanId(Codes::Message_type::Core_load_response, module, Codes::Instance::Exclusive, false);

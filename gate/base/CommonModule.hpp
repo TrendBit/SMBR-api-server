@@ -40,6 +40,8 @@ public:
      */
     void ping(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
+    void pingWithSeq(CanRequestManager& manager, Codes::Module module, uint8_t seq_num, std::function<void(float)> callback);
+
     /**
      * @brief Sends a request to retrieve the load and core count from the specified CAN module.
      * 
