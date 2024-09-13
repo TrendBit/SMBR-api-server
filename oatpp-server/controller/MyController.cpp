@@ -66,7 +66,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
   // Common Endpoints
   // ==========================================
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ping(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ping(const oatpp::Enum<dto::ModuleEnum>::AsString& module, const oatpp::Int32& seq_num) {
     auto pingResponseDto = MyPingResponseDto::createShared();
     std::promise<float> promise;
     auto future = promise.get_future();
@@ -86,42 +86,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
         return createResponse(Status::CODE_404, "Module not found");
     }
 
-    m_commonModule.ping(m_canRequestManager, targetModule, handlePingResult);
-
-    future.wait();
-    float responseTime = future.get();
-
-    if (responseTime >= 0) {
-        pingResponseDto->time_ms = responseTime;
-        return createDtoResponse(Status::CODE_200, pingResponseDto);  
-    } else if (responseTime == -2) {
-        return createResponse(Status::CODE_504, "Ping timed out"); 
-    } else {
-        return createResponse(Status::CODE_500, "Ping failed"); 
-    }
-}
-
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pingWithSeq(const oatpp::Enum<dto::ModuleEnum>::AsString& module, const oatpp::Int32& seq_num) {
-    auto pingResponseDto = MyPingResponseDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
-
-    auto handlePingResult = [&promise](float responseTime) {
-        promise.set_value(responseTime);
-    };
-
-    Codes::Module targetModule;
-    if (module == dto::ModuleEnum::control) {
-        targetModule = Codes::Module::Control_board;
-    } else if (module == dto::ModuleEnum::sensor) {
-        targetModule = Codes::Module::Sensor_board;
-    } else if (module == dto::ModuleEnum::core) {
-        targetModule = Codes::Module::Core_device;
-    } else {
-        return createResponse(Status::CODE_404, "Module not found");
-    }
-
-    m_commonModule.pingWithSeq(m_canRequestManager, targetModule, static_cast<uint8_t>(seq_num), handlePingResult);
+    m_commonModule.ping(m_canRequestManager, targetModule, static_cast<uint8_t>(seq_num), handlePingResult);
 
     future.wait();
     float responseTime = future.get();
@@ -244,6 +209,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::re
         return createResponse(Status::CODE_500, "Failed to restart module");
     }
 }
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pingDirect() {
+    oatpp::String response = "{\"message\": \"Ping direct response successful\"}";
+
+    return createResponse(Status::CODE_200, response);
+}
+
+
 
 
 
