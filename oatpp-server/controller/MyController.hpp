@@ -58,9 +58,7 @@ public:
         info->addResponse<String>(Status::CODE_404, "application/json");
     }
     ADD_CORS(ping)
-    ENDPOINT("GET", "/{module}/ping/{seq}", ping, 
-            PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
-            PATH(oatpp::Int32, seq));
+    ENDPOINT("GET", "/{module}/ping", ping, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
 
     /**
      * @brief Retrieves the CPU/MCU load and core count of the specified module.
@@ -125,10 +123,16 @@ public:
 
 
 private:
+    /**
+     * @brief Increments the sequence number and resets to 0 after 255.
+     */
+    uint8_t getNextSeqNumber();
+
     boost::asio::io_context& m_ioContext;
     CanRequestManager& m_canRequestManager;
     SystemModule& m_systemModule;
     CommonModule& m_commonModule;
+    std::atomic<uint8_t> m_seqNum{0};  
 };
 
 #include OATPP_CODEGEN_END(ApiController)
