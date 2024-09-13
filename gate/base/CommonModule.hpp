@@ -28,19 +28,20 @@ public:
     CommonModule(boost::asio::io_context& io_context, CanRequestManager& canRequestManager);
 
     /**
-     * @brief Sends a ping request to the specified CAN module.
+     * @brief Sends a ping request to the specified CAN module with a sequence number.
      * 
-     * This method sends a ping request to the module specified by the `module` parameter, waits for a response,
-     * and calls the provided callback with the time taken for the ping or an error code.
+     * This method sends a ping request to the module specified by the `module` parameter with the provided 
+     * sequence number (`seq_num`), waits for a response, and calls the provided callback with the time 
+     * taken for the ping or an error code.
      * 
      * @param manager Reference to the CanRequestManager used to manage CAN requests.
      * @param module The module to which the ping request is being sent (as specified by the `Codes::Module` enum).
+     * @param seq_num Sequence number for the ping request.
      * @param callback Function to be called with the time (in milliseconds) for the ping response. 
      *                 A negative value indicates an error (-1 for failure, -2 for timeout).
      */
-    void ping(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+    void ping(CanRequestManager& manager, Codes::Module module, uint8_t seq_num, std::function<void(float)> callback);
 
-    void pingWithSeq(CanRequestManager& manager, Codes::Module module, uint8_t seq_num, std::function<void(float)> callback);
 
     /**
      * @brief Sends a request to retrieve the load and core count from the specified CAN module.

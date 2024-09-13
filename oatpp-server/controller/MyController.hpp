@@ -58,11 +58,9 @@ public:
         info->addResponse<String>(Status::CODE_404, "application/json");
     }
     ADD_CORS(ping)
-    ENDPOINT("GET", "/{module}/ping", ping, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
-
-    ENDPOINT("GET", "/{module}/ping-with-seq/{seq}", pingWithSeq,
-             PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
-             PATH(oatpp::Int32, seq));
+    ENDPOINT("GET", "/{module}/ping/{seq}", ping, 
+            PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
+            PATH(oatpp::Int32, seq));
 
     /**
      * @brief Retrieves the CPU/MCU load and core count of the specified module.
@@ -111,6 +109,19 @@ public:
     ENDPOINT("POST", "/{module}/restart", restartModule,
              PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
              BODY_DTO(Object<MyModuleActionRequestDto>, body));
+
+    /**
+        * @brief Measures API response time without communication with RPI/CAN bus.
+        */
+    ENDPOINT_INFO(pingDirect) {
+        info->summary = "Measure API response time. Used for testing.";
+        info->addTag("Test");
+        info->description = "Measures the time it takes for the API to respond without communication with RPI/CAN bus.";
+        info->addResponse<String>(Status::CODE_200, "application/json");
+}
+    ADD_CORS(pingDirect)
+    ENDPOINT("GET", "/ping-direct", pingDirect);
+
 
 
 private:
