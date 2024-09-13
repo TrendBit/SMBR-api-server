@@ -66,7 +66,15 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
   // Common Endpoints
   // ==========================================
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ping(const oatpp::Enum<dto::ModuleEnum>::AsString& module, const oatpp::Int32& seq_num) {
+uint8_t MyController::getNextSeqNumber() {
+    uint8_t currentSeq = m_seqNum.fetch_add(1);
+    if (currentSeq == 255) {
+        m_seqNum = 0;  
+    }
+    return currentSeq;
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ping(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto pingResponseDto = MyPingResponseDto::createShared();
     std::promise<float> promise;
     auto future = promise.get_future();
@@ -86,7 +94,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
         return createResponse(Status::CODE_404, "Module not found");
     }
 
-    m_commonModule.ping(m_canRequestManager, targetModule, static_cast<uint8_t>(seq_num), handlePingResult);
+    uint8_t seq_num = getNextSeqNumber();
+
+    m_commonModule.ping(m_canRequestManager, targetModule, seq_num, handlePingResult);
 
     future.wait();
     float responseTime = future.get();
@@ -100,6 +110,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
         return createResponse(Status::CODE_500, "Ping failed"); 
     }
 }
+
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getLoad(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto loadResponseDto = MyLoadResponseDto::createShared();
