@@ -1,33 +1,47 @@
 import requests
 import time
 
-BASE_URL = "http://192.168.0.209:8089/control/ping-with-seq/"
+BASE_URL = "http://192.168.0.209:8089/control/ping/"
 
+session = requests.Session()
 
-def send_ping_with_seq(seq_num):
+def send_ping(session):
     try:
-        url = f"{BASE_URL}{seq_num}"
-        response = requests.get(url, timeout=2) 
+        response = session.get(BASE_URL, timeout=1)  
         if response.status_code == 200:
-            print(f"Ping {seq_num}: Response: {response.json()}")
+            return True  
         else:
-            print(f"Ping {seq_num}: Error, status code {response.status_code}")
+            return False  
     except requests.exceptions.Timeout:
-        print(f"Ping {seq_num}: Timeout - no response received.")
-    except requests.exceptions.RequestException as e:
-        print(f"Ping {seq_num}: Error sending ping: {e}")
+        return False  
+    except requests.exceptions.RequestException:
+        return False  
 
 def test_ping_sequence_for_duration(duration=10):
     start_time = time.time()
     count = 0
-    seq_num = 1
+    success_count = 0
+    total_time = 0
 
     while time.time() - start_time < duration:
-        send_ping_with_seq(seq_num)
-        count += 1
-        seq_num += 1
+        request_start = time.time()
+        if send_ping(session):  
+            success_count += 1
+        request_end = time.time()
 
-    print(f"Number of pings sent in {duration} seconds: {count}")
+        total_time += (request_end - request_start)
+        count += 1
+
+    if count > 0:
+        avg_time_per_request = (total_time / count) * 1000  
+    else:
+        avg_time_per_request = 0
+
+    print(f"Number of ping attempts in {duration} seconds: {count}")
+    print(f"Successful pings: {success_count}")
+    print(f"Failed pings: {count - success_count}")
+    print(f"Average processing time per request: {avg_time_per_request:.2f} ms")
 
 if __name__ == "__main__":
-    test_ping_sequence_for_duration(10)
+    test_ping_sequence_for_duration(5)
+
