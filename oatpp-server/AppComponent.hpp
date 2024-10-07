@@ -26,6 +26,7 @@ public:
    * 
    * @return The local IP address as a string. Returns "0.0.0.0" in case of failure.
    */
+  /*
   std::string getLocalIPAddress() {
     try {
       boost::asio::io_service io_service;
@@ -41,11 +42,7 @@ public:
       return "0.0.0.0"; 
     }
   }
-
-  /*
-  OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, serverConnectionProvider)([] {
-    return oatpp::network::tcp::server::ConnectionProvider::createShared({"127.0.0.1", 8089, oatpp::network::Address::IP_4});
-  }());*/
+  */
   
   /**
    * @brief Create ConnectionProvider component which listens on a specific port.
@@ -53,8 +50,8 @@ public:
    * This component creates a TCP connection provider bound to the local IP address determined by `getLocalIPAddress()`.
    */
   OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ServerConnectionProvider>, serverConnectionProvider)([this] {
-    std::string serverIp = getLocalIPAddress();
-    return oatpp::network::tcp::server::ConnectionProvider::createShared({serverIp.c_str(), 8089, oatpp::network::Address::IP_4});
+    //std::string serverIp = getLocalIPAddress();
+    return oatpp::network::tcp::server::ConnectionProvider::createShared({/*serverIp.c_str()*/"0.0.0.0", 8089, oatpp::network::Address::IP_4});
   }());
   
   /**
@@ -72,7 +69,7 @@ public:
    * This component handles incoming connections and delegates the requests to the appropriate route.
    */
   OATPP_CREATE_COMPONENT(std::shared_ptr<oatpp::network::ConnectionHandler>, serverConnectionHandler)([] {
-    OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router); // Get Router component
+    OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router); 
   
     auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
     return connectionHandler;
@@ -113,7 +110,6 @@ public:
       .setContactName("Your Name")
       .setLicenseName("Apache License, Version 2.0")
       .setLicenseUrl("http://www.apache.org/licenses/LICENSE-2.0");
-      //.setTermsOfServiceUrl("https://example.com/terms/");
     return builder.build();
   }());
 
