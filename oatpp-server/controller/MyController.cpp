@@ -1,15 +1,16 @@
 #include "MyController.hpp"
 
-
 MyController::MyController(const std::shared_ptr<oatpp::web::mime::ContentMappers>& apiContentMappers,
                            boost::asio::io_context& ioContext,
                            SystemModule& systemModule,
                            CommonModule& commonModule,
+                           ControlModule& controlModule,
                            CanRequestManager& canRequestManager)
     : oatpp::web::server::api::ApiController(apiContentMappers)
     , m_ioContext(ioContext)
     , m_systemModule(systemModule)
     , m_commonModule(commonModule)
+    , m_controlModule(controlModule)
     , m_canRequestManager(canRequestManager) {}
 
   // ==========================================
@@ -221,11 +222,43 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::re
     }
 }
 
+// ==========================================
+// Control module
+// ==========================================
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setIntensity(const oatpp::Object<MyIntensityDto>& body) {
+
+    if (body->intensity < 0 || body->intensity > 100) {
+        return createResponse(Status::CODE_400, "Invalid intensity. Must be between 0 and 100.");
+    }
+
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handleSetIntensityResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+
+    m_controlModule.setIntensity(Codes::Module::Control_board, body->intensity, handleSetIntensityResult);
+
+    future.wait();
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Intensity set successfully.");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to set intensity.");
+    }
+}
+
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pingDirect() {
     oatpp::String response = "{\"message\": \"Ping direct response successful\"}";
 
     return createResponse(Status::CODE_200, response);
 }
+
+
 
 
 
