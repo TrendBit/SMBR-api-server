@@ -8,13 +8,15 @@
 #include "dto/MyModuleInfoDto.hpp"
 #include "dto/MyLoadResponseDto.hpp"
 #include "dto/MyModuleActionRequestDto.hpp"
+#include "dto/MyIntensityDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
+#include "control/ControlModule.hpp"
 #include "oatpp/data/mapping/ObjectMapper.hpp"
 
 #include <future>
-#include <iomanip> 
+#include <iomanip>
 #include <cstdint>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
@@ -29,6 +31,7 @@ public:
                  boost::asio::io_context& ioContext,
                  SystemModule& systemModule,
                  CommonModule& commonModule,
+                 ControlModule& controlModule,
                  CanRequestManager& canRequestManager);
 
 public:
@@ -109,16 +112,40 @@ public:
              BODY_DTO(Object<MyModuleActionRequestDto>, body));
 
     /**
-        * @brief Measures API response time without communication with RPI/CAN bus.
-        */
+    * @brief Sets the intensity of the LED lighting.
+    */
+    ENDPOINT_INFO(setIntensity) {
+        info->summary = "Set the intensity of LED lighting.";
+        info->description = "This endpoint allows the user to set the intensity of the LED lighting. "
+                            "The intensity value should be a float between 0 and 100, "
+                            "where 0 represents off and 100 represents maximum brightness.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyIntensityDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Intensity set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid intensity value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set intensity.");
+    }
+    ADD_CORS(setIntensity)
+    ENDPOINT("POST", "/control/set-led-intensity", setIntensity, BODY_DTO(Object<MyIntensityDto>, body));         
+
+    /**
+    * @brief Measures API response time without communication with RPI/CAN bus.
+    */
     ENDPOINT_INFO(pingDirect) {
         info->summary = "Measure API response time. Used for testing.";
         info->addTag("Test");
         info->description = "Measures the time it takes for the API to respond without communication with RPI/CAN bus.";
         info->addResponse<String>(Status::CODE_200, "application/json");
-}
+    }   
     ADD_CORS(pingDirect)
     ENDPOINT("GET", "/ping-direct", pingDirect);
+
+
+
+    
+
+
+
 
 
 
@@ -128,10 +155,11 @@ private:
      */
     uint8_t getNextSeqNumber();
 
-    boost::asio::io_context& m_ioContext;
-    CanRequestManager& m_canRequestManager;
+     boost::asio::io_context& m_ioContext;
     SystemModule& m_systemModule;
     CommonModule& m_commonModule;
+    ControlModule& m_controlModule;
+    CanRequestManager& m_canRequestManager;
     std::atomic<uint8_t> m_seqNum{0};  
 };
 
