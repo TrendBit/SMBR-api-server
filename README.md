@@ -41,6 +41,7 @@ This is the `dev` branch, where active development and testing are taking place.
     ```sh
     git clone git@github.com:TrendBit/SMBR-api-server.git
     cd SMBR-api-server
+    git checkout dev
     git submodule update --init --recursive
     ```
 2. Create a build directory and compile the project:
@@ -74,7 +75,8 @@ SMBR-api.server
 │   │   ├── MyCoreTempResponseDto.hpp                  
 │   │   ├── MyModuleActionRequestDto.hpp       
 │   │   ├── MyModuleInfoDto.hpp               
-│   │   ├── MySupplyTypeResponseDto.hpp             
+│   │   ├── MySupplyTypeResponseDto.hpp   
+│   │   ├── MyIntensityDto.hpp   
 │   │   └── MyTempDto.hpp        
 │   ├── interceptors/
 │   │   └── MyResponseInterceptor.hpp
@@ -97,7 +99,7 @@ SMBR-api.server
 │   │   └── SensorModule.hpp
 │   ├── system/
 │   │   ├── SystemModule.cpp             
-│   │   └──SystemModule.hpp             
+│   │   └── SystemModule.hpp             
 │   ├── can/
 │   │   ├── CanIdGenerator.hpp               
 │   │   ├── CanIdGenerator.cpp   
