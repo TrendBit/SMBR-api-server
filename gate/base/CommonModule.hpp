@@ -9,6 +9,9 @@
 #include "codes/messages/ping_request.hpp"
 #include "codes/messages/ping_response.hpp"
 
+#include "codes/messages/core_temp_request.hpp"
+#include "codes/messages/core_temp_response.hpp"
+
 /**
  * @class CommonModule
  * @brief Represents a common module that can send ping requests and handle CAN communication.

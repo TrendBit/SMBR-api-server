@@ -1,6 +1,9 @@
 #include "CommonModule.hpp"
 #include <iostream>
+#include <iomanip> 
 #include <chrono>
+
+
 
 CommonModule::CommonModule(boost::asio::io_context& io_context, CanRequestManager& canRequestManager)
     : m_ioContext(io_context), m_canRequestManager(canRequestManager) {}
@@ -56,26 +59,33 @@ void CommonModule::getLoad(CanRequestManager& manager, Codes::Module module, std
 }
 
 void CommonModule::getCoreTemp(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
-    uint32_t temp_can_id = createCanId(Codes::Message_type::Core_temperature_request, module, Codes::Instance::Exclusive, false);
-    uint32_t temp_response_id = createCanId(Codes::Message_type::Core_temperature_response, module, Codes::Instance::Exclusive, false);
-    std::vector<uint8_t> temp_data = {};  
-    int timeoutSeconds = 3;
+    App_messages::Core_temp_request set_coreTempReq;
 
-    manager.addRequest(temp_can_id, temp_data, 0x203, [callback](CanRequestStatus status, const CanMessage& response) {
+    uint32_t temp_can_id = createCanId(set_coreTempReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t temp_response_id = createCanId(set_coreTempReq.Type(), module, Codes::Instance::Exclusive, false);
+
+    int timeoutSeconds = 2;
+
+    manager.addRequest(temp_can_id, set_coreTempReq.Export_data(), temp_response_id, [callback](CanRequestStatus status, const CanMessage& response) {
         if (status == CanRequestStatus::Success) {
-            if (response.getData().size() >= 4) {
-                float temperature = *reinterpret_cast<const float*>(response.getData().data());
-                callback(temperature);  
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::Core_temp_response coreTempRes;
+            if (coreTempRes.Interpret_data(dataCopy)) {
+                callback(coreTempRes.temperature);
             } else {
-                callback(-1);  
+                callback(-1);
             }
         } else if (status == CanRequestStatus::Timeout) {
             callback(-2);  
         } else {
-            callback(-1); 
+            callback(-1);  
         }
     }, timeoutSeconds);
 }
+
+
+
 
 void CommonModule::restartModule(CanRequestManager& manager, Codes::Module module, const std::string& uid, std::function<void(bool)> callback) {
     uint32_t restart_can_id = createCanId(Codes::Message_type::Device_reset, module, Codes::Instance::Exclusive, false);

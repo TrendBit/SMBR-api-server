@@ -182,7 +182,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     future.wait();
     float temperature = future.get();
 
-    if (temperature >= 0) {
+    if (true/*temperature >= 0*/) {
         tempResponseDto->temperature = temperature;
         return createDtoResponse(Status::CODE_200, tempResponseDto);  
     } else if (temperature == -2) {
