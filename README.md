@@ -11,7 +11,11 @@ This is the `dev` branch, where active development and testing are taking place.
 - Boost Asio
 
 ## Installing Dependencies
-1. Install OATPP:
+1. Install CMake:
+    ```sh
+    sudo apt install cmake
+    ```
+2. Install OATPP:
     ```sh
     git clone https://github.com/oatpp/oatpp
     cd oatpp
@@ -19,7 +23,7 @@ This is the `dev` branch, where active development and testing are taking place.
     cmake ..
     make install
     ```
-2. Install OATPP-Swagger:
+3. Install OATPP-Swagger:
     ```sh
     git clone https://github.com/oatpp/oatpp-swagger
     cd oatpp-swagger
@@ -27,11 +31,11 @@ This is the `dev` branch, where active development and testing are taking place.
     cmake ..
     make install
     ```
-3. Install SocketCAN:
+4. Install SocketCAN:
     ```sh
     sudo apt install can-utils
     ```
-4. Install Boost Asio:
+5. Install Boost Asio:
     ```sh
     sudo apt-get install libboost-all-dev
     ```
