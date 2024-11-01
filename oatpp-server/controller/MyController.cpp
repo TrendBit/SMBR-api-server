@@ -228,8 +228,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::re
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setIntensity(const oatpp::Object<MyIntensityDto>& body) {
 
    
-    if (body->intensity < 0 || body->intensity > 100) {
-        return createResponse(Status::CODE_400, "Invalid intensity. Must be between 0 and 100.");
+    if (body->intensity < 0 || body->intensity > 1) {
+        return createResponse(Status::CODE_400, "Invalid intensity. Must be between 0 and 1.");
     }
 
     

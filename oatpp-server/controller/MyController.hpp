@@ -117,8 +117,8 @@ public:
     ENDPOINT_INFO(setIntensity) {
         info->summary = "Set the intensity and the channel of LED lighting.";
         info->description = "This endpoint allows the user to set the intensity of the LED lighting and the channel. "
-                            "The intensity value should be a float between 0 and 100, "
-                            "where 0 represents off and 100 represents maximum brightness. "
+                            "The intensity value should be a float between 0 and 1, "
+                            "where 0 represents off and 1 represents maximum brightness. "
                             "The channel value must be an integer that can be 0, 1, 2, or 3, "
                             "representing the specific LED channel to control.";
         info->addTag("Control module");
