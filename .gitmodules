@@ -1,5 +1,4 @@
 [submodule "gate/codes"]
-	path = gate/codes
-	url = git@github.com:TrendBit/SMBR-CANBUS-Codes
-[submodule "codes"]
-	branch = message_templates
+    path = gate/codes
+    url = git@github.com:TrendBit/SMBR-CANBUS-Codes
+    branch = message_templates
