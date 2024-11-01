@@ -21,8 +21,9 @@ public:
      * 
      * @param module Target module.
      * @param intensity Value between 0 and 100.
+     * @param channel Channel to light up.
      */
-    void setIntensity(Codes::Module module, float intensity, std::function<void(bool)> callback);
+    void setIntensity(Codes::Module module, float intensity, int channel, std::function<void(bool)> callback);
 
 protected:
     boost::asio::io_context& m_ioContext; 

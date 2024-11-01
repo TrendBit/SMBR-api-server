@@ -227,8 +227,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::re
 // ==========================================
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setIntensity(const oatpp::Object<MyIntensityDto>& body) {
 
+   
     if (body->intensity < 0 || body->intensity > 100) {
         return createResponse(Status::CODE_400, "Invalid intensity. Must be between 0 and 100.");
+    }
+
+    
+    if (body->channel < 0 || body->channel > 3) { 
+        return createResponse(Status::CODE_400, "Invalid channel. Must be 0, 1, 2, or 3.");
     }
 
     std::promise<bool> promise;
@@ -238,8 +244,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
         promise.set_value(success);
     };
 
-
-    m_controlModule.setIntensity(Codes::Module::Control_board, body->intensity, handleSetIntensityResult);
+    
+    m_controlModule.setIntensity(Codes::Module::Control_board, body->intensity, body->channel, handleSetIntensityResult);
 
     future.wait();
     bool success = future.get();
@@ -250,6 +256,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
         return createResponse(Status::CODE_500, "Failed to set intensity.");
     }
 }
+
 
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pingDirect() {
