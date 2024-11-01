@@ -7,15 +7,18 @@ CommonModule::CommonModule(boost::asio::io_context& io_context, CanRequestManage
 
 
 void CommonModule::ping(CanRequestManager& manager, Codes::Module module, uint8_t seq_num, std::function<void(float)> callback) {
-    uint32_t ping_can_id = createCanId(Codes::Message_type::Ping_request, module, Codes::Instance::Exclusive, false);
-    uint32_t ping_response_id = createCanId(Codes::Message_type::Ping_response, module, Codes::Instance::Exclusive, false);
     
-    std::vector<uint8_t> ping_data = { seq_num };  
+    App_messages::Ping_request set_pingReq((uint8_t)seq_num);
+    App_messages::Ping_response set_pingRes;
+    
+    uint32_t ping_can_id = createCanId(set_pingReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t ping_response_id = createCanId(set_pingRes.Type(), module, Codes::Instance::Exclusive, false);
+     
     int timeoutSeconds = 1;
 
     auto start_time = std::chrono::steady_clock::now();
 
-    manager.addRequestWithSeq(ping_can_id, ping_data, ping_response_id, seq_num, [callback, start_time](CanRequestStatus status, const CanMessage& response) {
+    manager.addRequestWithSeq(ping_can_id, set_pingReq.Export_data(), ping_response_id, seq_num, [callback, start_time](CanRequestStatus status, const CanMessage& response) {
         if (status == CanRequestStatus::Success) {
             auto end_time = std::chrono::steady_clock::now();
             float response_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();

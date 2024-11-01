@@ -23,15 +23,20 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     auto future = promise.get_future();
 
     m_systemModule.getAvailableModules([&promise, dtoList](const std::vector<CanMessage>& responses) {
-        for (const auto& response : responses) {
+    for (const auto& response : responses) {
+        App_messages::Probe_modules_response moduleResponse;
+
+        auto dataCopy = response.getData();
+        if (moduleResponse.Interpret_data(dataCopy)) {
             auto moduleInfoDto = MyModuleInfoDto::createShared();
+
             std::stringstream uidHex;
             uidHex << "0x";
-            for (const auto& byte : response.getData()) {
+            for (const auto& byte : moduleResponse.uid) {
                 uidHex << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(byte);
             }
             moduleInfoDto->uid = uidHex.str();
-            
+
             uint32_t modulePart = (response.getId() >> 4) & 0xFF;
             switch (static_cast<Codes::Module>(modulePart)) {
                 case Codes::Module::Core_device:
@@ -50,8 +55,10 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
             dtoList->push_back(moduleInfoDto);
         }
+    }
         promise.set_value(dtoList);
     });
+
 
     future.wait();
     auto result = future.get();
@@ -62,6 +69,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     return createDtoResponse(Status::CODE_200, result);
 }
+
 
   // ==========================================
   // Common Endpoints

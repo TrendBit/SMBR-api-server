@@ -6,6 +6,9 @@
 #include <functional>
 #include <boost/asio.hpp>
 
+#include "codes/messages/ping_request.hpp"
+#include "codes/messages/ping_response.hpp"
+
 /**
  * @class CommonModule
  * @brief Represents a common module that can send ping requests and handle CAN communication.
