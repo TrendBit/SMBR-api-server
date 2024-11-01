@@ -8,6 +8,8 @@
 #include <iomanip>
 #include <sstream>
 
+#include "codes/messages/led_set_intensity.hpp"
+
 /**
  * @class ControlModule
  * @brief Handles control operations including setting intensity.
@@ -20,7 +22,7 @@ public:
      * @brief Asynchronously sets the intensity of LEDs on a module.
      * 
      * @param module Target module.
-     * @param intensity Value between 0 and 100.
+     * @param intensity Value between 0 and 1.
      * @param channel Channel to light up.
      */
     void setIntensity(Codes::Module module, float intensity, int channel, std::function<void(bool)> callback);
