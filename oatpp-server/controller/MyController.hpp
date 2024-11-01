@@ -15,6 +15,7 @@
 #include "control/ControlModule.hpp"
 #include "oatpp/data/mapping/ObjectMapper.hpp"
 
+
 #include <future>
 #include <iomanip>
 #include <cstdint>
@@ -141,14 +142,6 @@ public:
     }   
     ADD_CORS(pingDirect)
     ENDPOINT("GET", "/ping-direct", pingDirect);
-
-
-
-    
-
-
-
-
 
 
 private:

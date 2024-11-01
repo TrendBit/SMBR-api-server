@@ -8,6 +8,8 @@
 #include "codes/codes.hpp"
 #include <boost/asio.hpp>
 
+#include "codes/messages/probe_modules_request.hpp"
+#include "codes/messages/probe_modules_response.hpp"
 /**
  * @class SystemModule
  * @brief Class responsible for managing system-level CAN bus communications.

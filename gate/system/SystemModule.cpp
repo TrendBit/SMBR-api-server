@@ -9,18 +9,22 @@ SystemModule::SystemModule(boost::asio::io_context& io_context, CanRequestManage
     : m_ioContext(io_context), m_canRequestManager(canRequestManager) {}
 
 void SystemModule::getAvailableModules(std::function<void(const std::vector<CanMessage>&)> callback) {
-    uint32_t probe_can_id = createCanId(Codes::Message_type::Probe_modules_request, 
+
+    App_messages::Probe_modules_request set_moduleReq;
+    App_messages::Probe_modules_response set_moduleRes;
+
+    uint32_t probe_can_id = createCanId(set_moduleReq.Type(), 
                                         Codes::Module::All, 
                                         Codes::Instance::Exclusive, 
                                         false);
-    uint32_t probe_response_id = createCanId(Codes::Message_type::Probe_modules_response, 
+    uint32_t probe_response_id = createCanId(set_moduleRes.Type(), 
                                              Codes::Module::All, 
                                              Codes::Instance::Exclusive, 
                                              false);
-    std::vector<uint8_t> probe_data = {}; 
+   
     int timeoutSeconds = 2;
 
-    m_canRequestManager.addMultiResponseRequest(probe_can_id, probe_data, probe_response_id, [callback](CanRequestStatus status, const std::vector<CanMessage>& responses) {
+    m_canRequestManager.addMultiResponseRequest(probe_can_id, set_moduleReq.Export_data(), probe_response_id, [callback](CanRequestStatus status, const std::vector<CanMessage>& responses) {
         if (status == CanRequestStatus::Success) {
             callback(responses);  
         } else {
