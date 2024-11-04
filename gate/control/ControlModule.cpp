@@ -13,7 +13,7 @@ void ControlModule::setIntensity(Codes::Module module, float intensity, int chan
     uint32_t intensity_can_id = createCanId(set_intensity.Type(), module, Codes::Instance::Exclusive, false);
     uint32_t intensity_response_id = createCanId(set_intensity.Type(), module, Codes::Instance::Undefined, false);
 
-    int timeoutSeconds = 0;
+    double timeoutSeconds = 0;
 
     m_canRequestManager.addRequest(intensity_can_id, set_intensity.Export_data(), intensity_response_id, [callback](CanRequestStatus status, const CanMessage& response) {
         callback(true);

@@ -30,7 +30,7 @@ void CanRequestManager::releaseRequest(std::shared_ptr<CanRequest> request) {
     recycledRequests_.push_back(request);
 }
 
-void CanRequestManager::addRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, int timeoutSeconds) {
+void CanRequestManager::addRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, double timeoutSeconds) {
     auto request = acquireRequest();
     request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds, true); 
 
@@ -50,7 +50,7 @@ void CanRequestManager::addRequest(uint32_t requestId, const std::vector<uint8_t
     });
 }
 
-void CanRequestManager::addRequestWithSeq(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, uint8_t seq_num, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, int timeoutSeconds) {
+void CanRequestManager::addRequestWithSeq(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, uint8_t seq_num, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, double timeoutSeconds) {
     auto request = acquireRequest();
     request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds, true); 
 
@@ -71,7 +71,7 @@ void CanRequestManager::addRequestWithSeq(uint32_t requestId, const std::vector<
     });
 }
 
-void CanRequestManager::addMultiResponseRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const std::vector<CanMessage>&)> multiResponseHandler, int timeoutSeconds) {
+void CanRequestManager::addMultiResponseRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const std::vector<CanMessage>&)> multiResponseHandler, double timeoutSeconds) {
     auto request = acquireRequest();
     request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds, false); 
 

@@ -17,7 +17,7 @@ void CommonModule::ping(CanRequestManager& manager, Codes::Module module, uint8_
     uint32_t ping_can_id = createCanId(set_pingReq.Type(), module, Codes::Instance::Exclusive, false);
     uint32_t ping_response_id = createCanId(set_pingRes.Type(), module, Codes::Instance::Exclusive, false);
      
-    int timeoutSeconds = 1;
+    double timeoutSeconds = 1;
 
     auto start_time = std::chrono::steady_clock::now();
 
@@ -45,7 +45,7 @@ void CommonModule::getCoreLoad(CanRequestManager& manager, Codes::Module module,
     uint32_t load_response_id = createCanId(Codes::Message_type::Core_load_response, module, Codes::Instance::Exclusive, false);
     std::vector<uint8_t> load_data = {};  
 //----------------------------------------
-    int timeoutSeconds = 2;
+    double timeoutSeconds = 2;
 
     manager.addRequest(load_can_id, /*loadRequest.Export_data()*/load_data, load_response_id, [callback](CanRequestStatus status, const CanMessage& response) {
         if (status == CanRequestStatus::Success) {
@@ -74,7 +74,7 @@ void CommonModule::getCoreTemp(CanRequestManager& manager, Codes::Module module,
     uint32_t temp_can_id = createCanId(set_coreTempReq.Type(), module, Codes::Instance::Exclusive, false);
     uint32_t temp_response_id = createCanId(App_messages::Core_temp_response().Type(), module, Codes::Instance::Exclusive, false);
 
-    int timeoutSeconds = 2;
+    double timeoutSeconds = 2;
 
     manager.addRequest(temp_can_id, set_coreTempReq.Export_data(), temp_response_id, [callback](CanRequestStatus status, const CanMessage& response) {
         if (status == CanRequestStatus::Success) {
@@ -101,7 +101,7 @@ void CommonModule::sendDeviceReset(CanRequestManager& manager, Codes::Module mod
     uint32_t reset_can_id = createCanId(resetRequest.Type(), module, Codes::Instance::Exclusive, false);
     uint32_t reset_response_can_id = createCanId(resetRequest.Type(), module, Codes::Instance::Exclusive, false);
 
-    int timeoutSeconds = 0;  
+    double timeoutSeconds = 0;  
 
     manager.addRequest(reset_can_id, resetRequest.Export_data(), reset_response_can_id, [callback](CanRequestStatus status, const CanMessage& response) {
         callback(true);
