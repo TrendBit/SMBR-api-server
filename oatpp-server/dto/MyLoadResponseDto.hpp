@@ -16,11 +16,6 @@ class MyLoadResponseDto : public oatpp::DTO {
    * @brief The current load as a percentage.
    */
   DTO_FIELD(Float32, load); 
-
-  /**
-   * @brief The number of cores.
-   */
-  DTO_FIELD(Int32, cores); 
   
 };
 
