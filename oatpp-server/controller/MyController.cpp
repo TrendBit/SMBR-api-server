@@ -83,6 +83,17 @@ uint8_t MyController::getNextSeqNumber() {
     return currentSeq;
 }
 
+std::optional<Codes::Module> MyController::getTargetModule(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
+    if (module == dto::ModuleEnum::control) {
+        return Codes::Module::Control_board;
+    } else if (module == dto::ModuleEnum::sensor) {
+        return Codes::Module::Sensor_board;
+    } else if (module == dto::ModuleEnum::core) {
+        return Codes::Module::Core_device;
+    }
+    return std::nullopt;
+}
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ping(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto pingResponseDto = MyPingResponseDto::createShared();
     std::promise<float> promise;
@@ -92,16 +103,11 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
         promise.set_value(responseTime);
     };
 
-    Codes::Module targetModule;
-    if (module == dto::ModuleEnum::control) {
-        targetModule = Codes::Module::Control_board;
-    } else if (module == dto::ModuleEnum::sensor) {
-        targetModule = Codes::Module::Sensor_board;
-    } else if (module == dto::ModuleEnum::core) {
-        targetModule = Codes::Module::Core_device;
-    } else {
-        return createResponse(Status::CODE_404, "Module not found");
+    auto targetModuleOpt = getTargetModule(module);  
+    if (!targetModuleOpt.has_value()) {
+        return createResponse(Status::CODE_404, "Module not found");  
     }
+    Codes::Module targetModule = targetModuleOpt.value();
 
     uint8_t seq_num = getNextSeqNumber();
 
@@ -130,16 +136,11 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         promise.set_value(load);
     };
 
-    Codes::Module targetModule;
-    if (module == dto::ModuleEnum::control) {
-        targetModule = Codes::Module::Control_board;
-    } else if (module == dto::ModuleEnum::sensor) {
-        targetModule = Codes::Module::Sensor_board;
-    } else if (module == dto::ModuleEnum::core) {
-        targetModule = Codes::Module::Core_device;
-    } else {
-        return createResponse(Status::CODE_404, "Module not found");
+    auto targetModuleOpt = getTargetModule(module);  
+    if (!targetModuleOpt.has_value()) {
+        return createResponse(Status::CODE_404, "Module not found");  
     }
+    Codes::Module targetModule = targetModuleOpt.value();
 
     m_commonModule.getCoreLoad(m_canRequestManager, targetModule, handleLoadResult);
 
@@ -166,16 +167,11 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         promise.set_value(temperature);
     };
 
-    Codes::Module targetModule;
-    if (module == dto::ModuleEnum::control) {
-        targetModule = Codes::Module::Control_board;
-    } else if (module == dto::ModuleEnum::sensor) {
-        targetModule = Codes::Module::Sensor_board;
-    } else if (module == dto::ModuleEnum::core) {
-        targetModule = Codes::Module::Core_device;
-    } else {
-        return createResponse(Status::CODE_404, "Module not found");
+    auto targetModuleOpt = getTargetModule(module);  
+    if (!targetModuleOpt.has_value()) {
+        return createResponse(Status::CODE_404, "Module not found");  
     }
+    Codes::Module targetModule = targetModuleOpt.value();
 
     m_commonModule.getCoreTemp(m_canRequestManager, targetModule, handleTempResult);
 
@@ -276,16 +272,11 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
         return createResponse(Status::CODE_404, "Module with this UID is not available");
     }
 
-    Codes::Module targetModule;
-    if (module == dto::ModuleEnum::control) {
-        targetModule = Codes::Module::Control_board;
-    } else if (module == dto::ModuleEnum::sensor) {
-        targetModule = Codes::Module::Sensor_board;
-    } else if (module == dto::ModuleEnum::core) {
-        targetModule = Codes::Module::Core_device;
-    } else {
-        return createResponse(Status::CODE_404, "Module not found");
+    auto targetModuleOpt = getTargetModule(module);  
+    if (!targetModuleOpt.has_value()) {
+        return createResponse(Status::CODE_404, "Module not found");  
     }
+    Codes::Module targetModule = targetModuleOpt.value();
 
     std::promise<bool> restartPromise;
     auto restartFuture = restartPromise.get_future();
@@ -294,7 +285,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
         restartPromise.set_value(success);
     };
 
-    m_commonModule.sendDeviceReset(m_canRequestManager, targetModule, inputUid, handlepostRestartResult);
+    m_commonModule.sendDeviceReset(m_canRequestManager, targetModule, handlepostRestartResult);
 
     if (restartFuture.wait_for(std::chrono::seconds(2)) == std::future_status::timeout) {
         return createResponse(Status::CODE_500, "Timeout while restarting module");
@@ -308,6 +299,54 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
         return createResponse(Status::CODE_500, "Failed to restart module.");
     }
 }
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::postUsbBootloader(
+    const oatpp::Enum<dto::ModuleEnum>::AsString& module,
+    const oatpp::Object<MyModuleActionRequestDto>& body) {
+
+    if (!body || !body->uid) {
+        return createResponse(Status::CODE_400, "UID is required");
+    }
+
+    std::string inputUid = body->uid->c_str();
+
+    auto availabilityFuture = checkModuleAndUidAvailability(module, inputUid);
+    if (availabilityFuture.wait_for(std::chrono::seconds(2)) == std::future_status::timeout) {
+        return createResponse(Status::CODE_500, "Timeout while checking availability");
+    }
+
+    if (!availabilityFuture.get()) {
+        return createResponse(Status::CODE_404, "Module with this UID is not available");
+    }
+
+    auto targetModuleOpt = getTargetModule(module);
+    if (!targetModuleOpt.has_value()) {
+        return createResponse(Status::CODE_404, "Module not found");
+    }
+    Codes::Module targetModule = targetModuleOpt.value();
+
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handlepostUsbBootloader = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_commonModule.sendDeviceUsbBootloader(m_canRequestManager, targetModule, handlepostUsbBootloader);
+
+    if (future.wait_for(std::chrono::seconds(2)) == std::future_status::timeout) {
+        return createResponse(Status::CODE_500, "Timeout while starting USB bootloader");
+    }
+
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Successfully restarted module in USB bootloader mode.");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to restart module.");
+    }
+}
+
 
 
 

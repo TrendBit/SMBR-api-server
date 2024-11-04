@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <utility>
 #include <unordered_set>
+#include <optional>
 
 #include <iostream>
 
@@ -131,7 +132,25 @@ ENDPOINT("GET", "/{module}/load", getCoreLoad, PATH(oatpp::Enum<dto::ModuleEnum>
         info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set intensity.");
     }
     ADD_CORS(setIntensity)
-    ENDPOINT("POST", "/control/set-led-intensity", setIntensity, BODY_DTO(Object<MyIntensityDto>, body));         
+    ENDPOINT("POST", "/control/set-led-intensity", setIntensity, BODY_DTO(Object<MyIntensityDto>, body));     
+
+    /**
+    * @brief Reboots the specified module in USB bootloader mode.
+    */
+    ENDPOINT_INFO(postUsbBootloader) {
+        info->summary = "Reboot module in USB bootloader mode";
+        info->addTag("Common");
+        info->description = 
+            "This will reset the module and put it into USB bootloader mode so new firmware can be flashed via USB-C connector on board. "
+            "UID of the module is required in order to confirm that correct module is selected by request.";
+        info->addConsumes<Object<MyModuleActionRequestDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Successfully restarted module in usb bootloader mode");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
+    }
+    ADD_CORS(postUsbBootloader)
+    ENDPOINT("POST", "/{module}/usb_bootloader", postUsbBootloader, 
+         PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module), 
+         BODY_DTO(Object<MyModuleActionRequestDto>, body));    
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
@@ -154,6 +173,8 @@ private:
     std::future<bool> checkModuleAndUidAvailability(
         const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false>>& module,
         const std::string& uid);
+    std::optional<Codes::Module> getTargetModule(const oatpp::Enum<dto::ModuleEnum>::AsString& module);
+
 
 
 
