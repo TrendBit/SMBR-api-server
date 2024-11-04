@@ -192,20 +192,11 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::restartModule(
-    const oatpp::Enum<dto::ModuleEnum>::AsString& module, 
-    const oatpp::Object<MyModuleActionRequestDto>& body) {
-    
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::postRestart(const oatpp::Enum<dto::ModuleEnum>::AsString& module, const oatpp::Object<MyModuleActionRequestDto>& body) {
+
     if (!body || !body->uid) {
-        return createResponse(Status::CODE_400, "Invalid request. UID is required.");
+        return createResponse(Status::CODE_400, "UID is required");
     }
-
-    std::promise<bool> promise;
-    auto future = promise.get_future();
-
-    auto handleRestartResult = [&promise](bool success) {
-        promise.set_value(success);
-    };
 
     Codes::Module targetModule;
     if (module == dto::ModuleEnum::control) {
@@ -218,17 +209,28 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::re
         return createResponse(Status::CODE_404, "Module not found");
     }
 
-    m_commonModule.restartModule(m_canRequestManager, targetModule, body->uid->c_str(), handleRestartResult);
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handlepostRestartResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_commonModule.sendDeviceReset(m_canRequestManager, targetModule, body->uid, handlepostRestartResult);
+
+    
 
     future.wait();
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Module successfully restarted");
+        return createResponse(Status::CODE_200, "Successfully restarted module");
     } else {
-        return createResponse(Status::CODE_500, "Failed to restart module");
+        return createResponse(Status::CODE_500, "Failed to restart module.");
     }
 }
+
+
 
 // ==========================================
 // Control module
