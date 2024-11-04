@@ -29,10 +29,10 @@ public:
      * @param requestId CAN ID of the request.
      * @param data Data to send in the request.
      * @param responseId Expected CAN ID of the response.
-     * @param timeoutSeconds Timeout in seconds for the request.
+     * @param timeoutMilliseconds Timeout in milliseconds for the request.
      * @param compareFullId Flag indicating whether to compare the full CAN ID.
      */
-    CanRequest(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, int timeoutSeconds, bool compareFullId = true);
+    CanRequest(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId = true);
 
     /**
      * @brief Initialize the CAN request object.
@@ -42,10 +42,10 @@ public:
      * @param requestId CAN ID of the request.
      * @param data Data to send in the request.
      * @param responseId Expected CAN ID of the response.
-     * @param timeoutSeconds Timeout in seconds for the request.
+     * @param timeoutMilliseconds Timeout in milliseconds for the request.
      * @param compareFullId Flag indicating whether to compare the full CAN ID.
      */
-    void initialize(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, int timeoutSeconds, bool compareFullId = true);
+    void initialize(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId = true);
 
     /**
      * @brief Send the CAN request and wait for a single response.
@@ -102,11 +102,10 @@ private:
     CanBus* canBus_;
     CanMessage requestMessage_; 
     uint32_t expectedResponseId_;
-    int timeoutSeconds_; 
+    double timeoutSeconds_;
     bool compareFullId_; 
     std::shared_ptr<std::vector<CanMessage>> responses_; 
     boost::asio::steady_timer timeoutTimer_; 
     std::function<void(CanRequestStatus, const CanMessage&)> responseHandler_;
     std::function<void(CanRequestStatus, const std::vector<CanMessage>&)> multiResponseHandler_;
 };
-

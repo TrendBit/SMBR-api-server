@@ -19,6 +19,10 @@
 #include <future>
 #include <iomanip>
 #include <cstdint>
+#include <utility>
+#include <unordered_set>
+
+#include <iostream>
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
@@ -109,6 +113,7 @@ ENDPOINT("GET", "/{module}/load", getCoreLoad, PATH(oatpp::Enum<dto::ModuleEnum>
     ADD_CORS(postRestart)
     ENDPOINT("POST", "/{module}/restart", postRestart, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module), BODY_DTO(Object<MyModuleActionRequestDto>, body));
 
+
     /**
     * @brief Sets the intensity and the channel of the LED lighting.
     */
@@ -146,6 +151,11 @@ private:
      * @brief Increments the sequence number and resets to 0 after 255.
      */
     uint8_t getNextSeqNumber();
+    std::future<bool> checkModuleAndUidAvailability(
+        const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false>>& module,
+        const std::string& uid);
+
+
 
     boost::asio::io_context& m_ioContext;
     SystemModule& m_systemModule;
