@@ -96,22 +96,18 @@ ENDPOINT("GET", "/{module}/load", getCoreLoad, PATH(oatpp::Enum<dto::ModuleEnum>
     ENDPOINT("GET", "/{module}/core_temp", getCoreTemp, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
 
     /**
-     * @brief Restarts the specified module into application mode.
-     */
-    ENDPOINT_INFO(restartModule) {
+    * @brief Restarts the specified module into application mode.
+    */
+    ENDPOINT_INFO(postRestart) {
         info->summary = "Restart module into application mode";
         info->addTag("Common");
-        info->description = "Resets the module and it will start main application firmware again. UID of the module is required.";
+        info->description = "This will reset the module, starting the main application firmware. Requires module UID for confirmation.";
         info->addConsumes<Object<MyModuleActionRequestDto>>("application/json");
-        info->addResponse(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Successfully restarted module");
         info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to restart module");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
     }
-    ADD_CORS(restartModule)
-    ENDPOINT("POST", "/{module}/restart", restartModule,
-             PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
-             BODY_DTO(Object<MyModuleActionRequestDto>, body));
+    ADD_CORS(postRestart)
+    ENDPOINT("POST", "/{module}/restart", postRestart, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module), BODY_DTO(Object<MyModuleActionRequestDto>, body));
 
     /**
     * @brief Sets the intensity and the channel of the LED lighting.
@@ -151,7 +147,7 @@ private:
      */
     uint8_t getNextSeqNumber();
 
-     boost::asio::io_context& m_ioContext;
+    boost::asio::io_context& m_ioContext;
     SystemModule& m_systemModule;
     CommonModule& m_commonModule;
     ControlModule& m_controlModule;

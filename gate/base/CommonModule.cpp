@@ -94,28 +94,20 @@ void CommonModule::getCoreTemp(CanRequestManager& manager, Codes::Module module,
     }, timeoutSeconds);
 }
 
+void CommonModule::sendDeviceReset(CanRequestManager& manager, Codes::Module module, const std::string& uid, std::function<void(float)> callback) {
+    //uid is not used for anything yet
+    App_messages::Device_reset resetRequest; 
+        
+    uint32_t reset_can_id = createCanId(resetRequest.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t reset_response_can_id = createCanId(resetRequest.Type(), module, Codes::Instance::Exclusive, false);
 
+    int timeoutSeconds = 0;  
 
-
-
-void CommonModule::restartModule(CanRequestManager& manager, Codes::Module module, const std::string& uid, std::function<void(bool)> callback) {
-    uint32_t restart_can_id = createCanId(Codes::Message_type::Device_reset, module, Codes::Instance::Exclusive, false);
-    std::vector<uint8_t> restart_data(8, 0x00); 
-
-    for (size_t i = 0; i < std::min(uid.size(), static_cast<size_t>(8)); ++i) {
-        restart_data[i] = static_cast<uint8_t>(uid[i]);
-    }
-
-    int timeoutSeconds = 3;
-
-    manager.addRequest(restart_can_id, restart_data, 0x200, [callback](CanRequestStatus status, const CanMessage& response) {
-        if (status == CanRequestStatus::Success) {
-            callback(true);  
-        } else {
-            callback(false); 
-        }
+    manager.addRequest(reset_can_id, resetRequest.Export_data(), reset_response_can_id, [callback](CanRequestStatus status, const CanMessage& response) {
+        callback(true);
     }, timeoutSeconds);
 }
+
 
 
 
