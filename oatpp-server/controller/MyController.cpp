@@ -121,13 +121,13 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
 }
 
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getLoad(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCoreLoad(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto loadResponseDto = MyLoadResponseDto::createShared();
-    std::promise<std::tuple<float, int>> promise;
+    std::promise<float> promise;
     auto future = promise.get_future();
 
-    auto handleLoadResult = [&promise](float load, int cores) {
-        promise.set_value(std::make_tuple(load, cores));
+    auto handleLoadResult = [&promise](float load) {
+        promise.set_value(load);
     };
 
     Codes::Module targetModule;
@@ -141,21 +141,21 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         return createResponse(Status::CODE_404, "Module not found");
     }
 
-    m_commonModule.getLoad(m_canRequestManager, targetModule, handleLoadResult);
+    m_commonModule.getCoreLoad(m_canRequestManager, targetModule, handleLoadResult);
 
     future.wait();
-    auto [load, cores] = future.get();
+    float load = future.get();
 
-    if (load >= 0 && cores > 0) {
+    if (load >= 0 && load <= 1.0) {
         loadResponseDto->load = load;
-        loadResponseDto->cores = cores;
-        return createDtoResponse(Status::CODE_200, loadResponseDto);  
+        return createDtoResponse(Status::CODE_200, loadResponseDto);
     } else if (load == -2) {
-        return createResponse(Status::CODE_504, "Request timed out"); 
+        return createResponse(Status::CODE_504, "Request timed out");
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve load");  
+        return createResponse(Status::CODE_500, "Failed to retrieve load");
     }
 }
+
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCoreTemp(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto tempResponseDto = MyTempDto::createShared();
@@ -182,7 +182,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     future.wait();
     float temperature = future.get();
 
-    if (true/*temperature >= 0*/) {
+    if (/*temperature >= 0*/temperature != -2 && temperature != -1) {
         tempResponseDto->temperature = temperature;
         return createDtoResponse(Status::CODE_200, tempResponseDto);  
     } else if (temperature == -2) {

@@ -50,17 +50,17 @@ public:
 
 
     /**
-     * @brief Sends a request to retrieve the load and core count from the specified CAN module.
-     * 
-     * This method sends a request to the module specified by the `module` parameter to retrieve the load and core count.
-     * The function waits for a response and calls the provided callback with the load (in percentage) and the core count.
-     * 
-     * @param manager Reference to the CanRequestManager used to manage CAN requests.
-     * @param module The module from which the load and core count is being requested (as specified by the `Codes::Module` enum).
-     * @param callback Function to be called with the load value (in percentage) and core count (as integer).
-     *                 A negative value for load indicates an error (-1 for failure, -2 for timeout).
-     */
-    void getLoad(CanRequestManager& manager, Codes::Module module, std::function<void(float, int)> callback);
+    * @brief Sends a request to retrieve the CPU/MCU load from the specified CAN module.
+    *
+    * This method sends a request to the module specified by the `module` parameter to retrieve the CPU/MCU load.
+    * The function waits for a response and calls the provided callback with the load value or an error code.
+    *
+    * @param manager Reference to the CanRequestManager used to manage CAN requests.
+    * @param module The module from which the CPU/MCU load is being requested.
+    * @param callback Function to be called with the CPU/MCU load value (between 0 and 1).
+    */
+    void getCoreLoad(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
 
     /**
      * @brief Sends a request to retrieve the core temperature from the specified CAN module.

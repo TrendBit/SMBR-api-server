@@ -65,19 +65,20 @@ public:
     ENDPOINT("GET", "/{module}/ping", ping, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
 
     /**
-     * @brief Retrieves the CPU/MCU load and core count of the specified module.
-     */
-    ENDPOINT_INFO(getLoad) {
+    * @brief Retrieves the CPU/MCU load of the specified module.
+    */
+    ENDPOINT_INFO(getCoreLoad) {
         info->summary = "Get module CPU/MCU load";
         info->addTag("Common");
-        info->description = "Gets the current workload values of the computing unit, including the average utilization and number of cores.";
+        info->description = "Gets the current workload values of the computing unit. The average utilization of all available cores.";
         info->addResponse<Object<MyLoadResponseDto>>(Status::CODE_200, "application/json");
         info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
         info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve load");
         info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
-    }
-    ADD_CORS(getLoad)
-    ENDPOINT("GET", "/{module}/load", getLoad, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
+}
+ADD_CORS(getCoreLoad)
+ENDPOINT("GET", "/{module}/load", getCoreLoad, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
+
 
     /**
      * @brief Retrieves the CPU/MCU temperature of the specified module.

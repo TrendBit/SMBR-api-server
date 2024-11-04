@@ -35,34 +35,44 @@ void CommonModule::ping(CanRequestManager& manager, Codes::Module module, uint8_
 }
 
 
-void CommonModule::getLoad(CanRequestManager& manager, Codes::Module module, std::function<void(float, int)> callback) {
+void CommonModule::getCoreLoad(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+    /*App_messages::Core_load_request loadRequest;
+
+    uint32_t load_can_id = createCanId(loadRequest.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t load_response_id = createCanId(App_messages::Core_load_response().Type(), module, Codes::Instance::Exclusive, false);*/
+//----------------------------------------
     uint32_t load_can_id = createCanId(Codes::Message_type::Core_load_request, module, Codes::Instance::Exclusive, false);
     uint32_t load_response_id = createCanId(Codes::Message_type::Core_load_response, module, Codes::Instance::Exclusive, false);
     std::vector<uint8_t> load_data = {};  
-    int timeoutSeconds = 1.5;
+//----------------------------------------
+    int timeoutSeconds = 2;
 
-    manager.addRequest(load_can_id, load_data, load_response_id, [callback](CanRequestStatus status, const CanMessage& response) {
+    manager.addRequest(load_can_id, /*loadRequest.Export_data()*/load_data, load_response_id, [callback](CanRequestStatus status, const CanMessage& response) {
         if (status == CanRequestStatus::Success) {
-            if (response.getData().size() >= 8) {
-                float load = *reinterpret_cast<const float*>(response.getData().data());
-                int cores = *reinterpret_cast<const int*>(response.getData().data() + 4);
-                callback(load, cores);  
+            can_data_vector_t dataCopy = response.getData();
+
+            //App_messages::Core_load_response loadResponse;
+            App_messages::Core_temp_response loadResponse;
+            if (loadResponse.Interpret_data(dataCopy)) {
+                //callback(loadResponse.load);
+                callback(loadResponse.temperature);
             } else {
-                callback(-1, 0);  
+                callback(-1);
             }
         } else if (status == CanRequestStatus::Timeout) {
-            callback(-2, 0);  
+            callback(-2);
         } else {
-            callback(-1, 0); 
+            callback(-1);
         }
     }, timeoutSeconds);
 }
+
 
 void CommonModule::getCoreTemp(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
     App_messages::Core_temp_request set_coreTempReq;
 
     uint32_t temp_can_id = createCanId(set_coreTempReq.Type(), module, Codes::Instance::Exclusive, false);
-    uint32_t temp_response_id = createCanId(set_coreTempReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t temp_response_id = createCanId(App_messages::Core_temp_response().Type(), module, Codes::Instance::Exclusive, false);
 
     int timeoutSeconds = 2;
 
@@ -74,7 +84,7 @@ void CommonModule::getCoreTemp(CanRequestManager& manager, Codes::Module module,
             if (coreTempRes.Interpret_data(dataCopy)) {
                 callback(coreTempRes.temperature);
             } else {
-                callback(-1);
+                callback(-1);  
             }
         } else if (status == CanRequestStatus::Timeout) {
             callback(-2);  
@@ -83,6 +93,7 @@ void CommonModule::getCoreTemp(CanRequestManager& manager, Codes::Module module,
         }
     }, timeoutSeconds);
 }
+
 
 
 
