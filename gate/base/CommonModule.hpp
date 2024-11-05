@@ -12,6 +12,7 @@
 #include "codes/messages/core_temp_response.hpp"
 #include "codes/messages/device_reset.hpp"
 #include "codes/messages/device_usb_bootloader.hpp"
+#include "codes/messages/device_can_bootloader.hpp"
 
 
 /**
@@ -98,6 +99,18 @@ public:
     * @param callback Callback function that will be called upon completion.
     */
     void sendDeviceUsbBootloader(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+    * @brief Sends a request to reboot the specified CAN module into CAN bootloader mode.
+    *
+    * This method sends a request to the specified module to enter CAN bootloader mode.
+    *  
+    * @param manager Reference to the CanRequestManager used to manage CAN requests.
+    * @param module The module to be rebooted in CAN bootloader mode.
+    * @param callback Callback function that will be called upon completion.
+    */
+    void sendDeviceCanBootloader(CanRequestManager& manager, Codes::Module module, std::function<void(bool)> callback);
+
 
 
 

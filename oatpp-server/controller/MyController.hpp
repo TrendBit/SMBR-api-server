@@ -72,6 +72,7 @@ public:
     /**
     * @brief Retrieves the CPU/MCU load of the specified module.
     */
+   /*
     ENDPOINT_INFO(getCoreLoad) {
         info->summary = "Get module CPU/MCU load";
         info->addTag("Common");
@@ -83,7 +84,7 @@ public:
 }
 ADD_CORS(getCoreLoad)
 ENDPOINT("GET", "/{module}/load", getCoreLoad, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
-
+*/
 
     /**
      * @brief Retrieves the CPU/MCU temperature of the specified module.
@@ -114,6 +115,43 @@ ENDPOINT("GET", "/{module}/load", getCoreLoad, PATH(oatpp::Enum<dto::ModuleEnum>
     ADD_CORS(postRestart)
     ENDPOINT("POST", "/{module}/restart", postRestart, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module), BODY_DTO(Object<MyModuleActionRequestDto>, body));
 
+    /**
+    * @brief Reboots the specified module in USB bootloader mode.
+    */
+    ENDPOINT_INFO(postUsbBootloader) {
+        info->summary = "Reboot module in USB bootloader mode";
+        info->addTag("Common");
+        info->description = 
+            "This will reset the module and put it into USB bootloader mode so new firmware can be flashed via USB-C connector on board. "
+            "UID of the module is required in order to confirm that correct module is selected by request.";
+        info->addConsumes<Object<MyModuleActionRequestDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Successfully restarted module in usb bootloader mode");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
+    }
+    ADD_CORS(postUsbBootloader)
+    ENDPOINT("POST", "/{module}/usb_bootloader", postUsbBootloader, 
+         PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module), 
+         BODY_DTO(Object<MyModuleActionRequestDto>, body));  
+
+    /**
+    * @brief Reboots the specified module in CAN bootloader mode.
+    */
+    ENDPOINT_INFO(postCanBootloader) {
+        info->summary = "Reboot module in CAN bootloader mode";
+        info->addTag("Common");
+        info->description =
+            "This will reset the module and put it into CAN bootloader mode so new firmware can be flashed over CAN bus from RPi. "
+            "UID of the module is required in order to confirm that correct module is selected by request.";
+        info->addConsumes<Object<MyModuleActionRequestDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Successfully restarted module in CAN bootloader mode");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
+    }
+    ADD_CORS(postCanBootloader)
+    ENDPOINT("POST", "/{module}/can_bootloader", postCanBootloader,
+         PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
+         BODY_DTO(Object<MyModuleActionRequestDto>, body));
+
+
 
     /**
     * @brief Sets the intensity and the channel of the LED lighting.
@@ -132,29 +170,12 @@ ENDPOINT("GET", "/{module}/load", getCoreLoad, PATH(oatpp::Enum<dto::ModuleEnum>
         info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set intensity.");
     }
     ADD_CORS(setIntensity)
-    ENDPOINT("POST", "/control/set-led-intensity", setIntensity, BODY_DTO(Object<MyIntensityDto>, body));     
-
-    /**
-    * @brief Reboots the specified module in USB bootloader mode.
-    */
-    ENDPOINT_INFO(postUsbBootloader) {
-        info->summary = "Reboot module in USB bootloader mode";
-        info->addTag("Common");
-        info->description = 
-            "This will reset the module and put it into USB bootloader mode so new firmware can be flashed via USB-C connector on board. "
-            "UID of the module is required in order to confirm that correct module is selected by request.";
-        info->addConsumes<Object<MyModuleActionRequestDto>>("application/json");
-        info->addResponse<String>(Status::CODE_200, "application/json", "Successfully restarted module in usb bootloader mode");
-        info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
-    }
-    ADD_CORS(postUsbBootloader)
-    ENDPOINT("POST", "/{module}/usb_bootloader", postUsbBootloader, 
-         PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module), 
-         BODY_DTO(Object<MyModuleActionRequestDto>, body));    
+    ENDPOINT("POST", "/control/set-led-intensity", setIntensity, BODY_DTO(Object<MyIntensityDto>, body));      
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
     */
+   /*
     ENDPOINT_INFO(pingDirect) {
         info->summary = "Measure API response time. Used for testing.";
         info->addTag("Test");
@@ -163,7 +184,7 @@ ENDPOINT("GET", "/{module}/load", getCoreLoad, PATH(oatpp::Enum<dto::ModuleEnum>
     }   
     ADD_CORS(pingDirect)
     ENDPOINT("GET", "/ping-direct", pingDirect);
-
+    */
 
 private:
     /**
@@ -174,9 +195,6 @@ private:
         const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false>>& module,
         const std::string& uid);
     std::optional<Codes::Module> getTargetModule(const oatpp::Enum<dto::ModuleEnum>::AsString& module);
-
-
-
 
     boost::asio::io_context& m_ioContext;
     SystemModule& m_systemModule;
