@@ -120,6 +120,18 @@ void CommonModule::sendDeviceUsbBootloader(CanRequestManager& manager, Codes::Mo
     }, timeoutSeconds);
 }
 
+void CommonModule::sendDeviceCanBootloader(CanRequestManager& manager, Codes::Module module, std::function<void(bool)> callback) {
+    App_messages::Device_can_bootloader canBootloaderRequest;
+        
+    uint32_t canBootloader_can_id = createCanId(canBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t canBootloader_response_can_id = createCanId(canBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
+
+    int timeoutSeconds = 0;  
+
+    manager.addRequest(canBootloader_can_id, canBootloaderRequest.Export_data(), canBootloader_response_can_id, [callback](CanRequestStatus status, const CanMessage& response) {
+        callback(status == CanRequestStatus::Success);
+    }, timeoutSeconds);
+}
 
 
 

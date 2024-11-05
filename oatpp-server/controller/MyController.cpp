@@ -126,7 +126,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
     }
 }
 
-
+/*
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCoreLoad(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto loadResponseDto = MyLoadResponseDto::createShared();
     std::promise<float> promise;
@@ -156,7 +156,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         return createResponse(Status::CODE_500, "Failed to retrieve load");
     }
 }
-
+*/
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCoreTemp(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto tempResponseDto = MyTempDto::createShared();
@@ -347,6 +347,54 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::postCanBootloader(
+    const oatpp::Enum<dto::ModuleEnum>::AsString& module,
+    const oatpp::Object<MyModuleActionRequestDto>& body) {
+
+    if (!body || !body->uid) {
+        return createResponse(Status::CODE_400, "UID is required");
+    }
+
+    std::string inputUid = body->uid->c_str();
+
+    auto availabilityFuture = checkModuleAndUidAvailability(module, inputUid);
+    if (availabilityFuture.wait_for(std::chrono::seconds(2)) == std::future_status::timeout) {
+        return createResponse(Status::CODE_500, "Timeout while checking availability");
+    }
+
+    if (!availabilityFuture.get()) {
+        return createResponse(Status::CODE_404, "Module with this UID is not available");
+    }
+
+    auto targetModuleOpt = getTargetModule(module);
+    if (!targetModuleOpt.has_value()) {
+        return createResponse(Status::CODE_404, "Module not found");
+    }
+    Codes::Module targetModule = targetModuleOpt.value();
+
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handlepostCanBootloader = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_commonModule.sendDeviceCanBootloader(m_canRequestManager, targetModule, handlepostCanBootloader);
+
+    if (future.wait_for(std::chrono::seconds(2)) == std::future_status::timeout) {
+        return createResponse(Status::CODE_500, "Timeout while starting CAN bootloader");
+    }
+
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Successfully restarted module in CAN bootloader mode.");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to restart module.");
+    }
+}
+
+
 
 
 
@@ -387,9 +435,10 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 }
 
 
-
+/*
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pingDirect() {
     oatpp::String response = "{\"message\": \"Ping direct response successful\"}";
 
     return createResponse(Status::CODE_200, response);
 }
+*/
