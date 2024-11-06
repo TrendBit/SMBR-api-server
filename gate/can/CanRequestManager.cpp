@@ -50,6 +50,14 @@ void CanRequestManager::addRequest(uint32_t requestId, const std::vector<uint8_t
     });
 }
 
+void CanRequestManager::sendWithoutResponse(uint32_t requestId, const std::vector<uint8_t>& data, std::function<void(bool)> resultHandler) {
+    auto request = acquireRequest();
+    request->initializeForSendOnly(canBus_, io_context_, requestId, data);
+    request->sendOnly(resultHandler);  
+}
+
+
+
 void CanRequestManager::addRequestWithSeq(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, uint8_t seq_num, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, double timeoutSeconds) {
     auto request = acquireRequest();
     request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds, true); 

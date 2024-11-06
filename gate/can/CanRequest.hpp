@@ -48,11 +48,28 @@ public:
     void initialize(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId = true);
 
     /**
+     * @brief Initialize the CAN request for send-only mode.
+     * 
+     * @param canBus Reference to the CanBus object.
+     * @param io_context Reference to the Boost ASIO io_context.
+     * @param requestId CAN ID of the request.
+     * @param data Data to send in the request.
+     */
+    void initializeForSendOnly(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data);
+
+    /**
      * @brief Send the CAN request and wait for a single response.
      * 
      * @param responseHandler Function to handle the response.
      */
     void send(std::function<void(CanRequestStatus, const CanMessage&)> responseHandler);
+
+    /**
+     * @brief Send the CAN request without expecting a response.
+     * 
+     * @param resultHandler Callback function to indicate if the send operation was successful.
+     */
+    void sendOnly(std::function<void(bool)> resultHandler);
 
     /**
      * @brief Send the CAN request and wait for multiple responses.
