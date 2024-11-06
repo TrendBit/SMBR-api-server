@@ -14,6 +14,12 @@ void CanRequest::initialize(CanBus& canBus, boost::asio::io_context& io_context,
     timeoutTimer_ = boost::asio::steady_timer(io_context);
 }
 
+void CanRequest::initializeForSendOnly(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data) {
+    canBus_ = &canBus;  
+    requestMessage_ = CanMessage(requestId, data);
+}
+
+
 bool CanRequest::matchesResponse(uint32_t responseId) const {
     if (compareFullId_) {
         return responseId == expectedResponseId_;
@@ -44,6 +50,13 @@ void CanRequest::send(std::function<void(CanRequestStatus, const CanMessage&)> r
         }
     });
 }
+
+void CanRequest::sendOnly(std::function<void(bool)> resultHandler) {
+    canBus_->asyncSend(requestMessage_, [resultHandler](bool success) {
+        resultHandler(success);
+    });
+}
+
 
 void CanRequest::sendMultiResponse(std::function<void(CanRequestStatus, const std::vector<CanMessage>&)> multiResponseHandler) {
     multiResponseHandler_ = multiResponseHandler;
