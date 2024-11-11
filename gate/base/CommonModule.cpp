@@ -98,39 +98,33 @@ void CommonModule::sendDeviceReset(CanRequestManager& manager, Codes::Module mod
     App_messages::Device_reset resetRequest; 
         
     uint32_t reset_can_id = createCanId(resetRequest.Type(), module, Codes::Instance::Exclusive, false);
-    uint32_t reset_response_can_id = createCanId(resetRequest.Type(), module, Codes::Instance::Exclusive, false);
+    //uint32_t reset_response_can_id = createCanId(resetRequest.Type(), module, Codes::Instance::Exclusive, false);
 
-    double timeoutSeconds = 0;  
-
-    manager.addRequest(reset_can_id, resetRequest.Export_data(), reset_response_can_id, [callback](CanRequestStatus status, const CanMessage& response) {
-        callback(true);
-    }, timeoutSeconds);
+    manager.sendWithoutResponse(reset_can_id, resetRequest.Export_data(), [callback](bool success) {
+        callback(success);
+    });
 }
 
 void CommonModule::sendDeviceUsbBootloader(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
     App_messages::Device_usb_bootloader usbBootloaderRequest;
         
     uint32_t usbBootloader_can_id = createCanId(usbBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
-    uint32_t usbBootloader_response_can_id = createCanId(usbBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
+    //uint32_t usbBootloader_response_can_id = createCanId(usbBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
 
-    int timeoutSeconds = 0;  
-
-    manager.addRequest(usbBootloader_can_id, usbBootloaderRequest.Export_data(), usbBootloader_response_can_id, [callback](CanRequestStatus status, const CanMessage& response) {
-        callback(true);
-    }, timeoutSeconds);
+    manager.sendWithoutResponse(usbBootloader_can_id, usbBootloaderRequest.Export_data(), [callback](bool success) {
+        callback(success);
+    });
 }
 
 void CommonModule::sendDeviceCanBootloader(CanRequestManager& manager, Codes::Module module, std::function<void(bool)> callback) {
     App_messages::Device_can_bootloader canBootloaderRequest;
         
     uint32_t canBootloader_can_id = createCanId(canBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
-    uint32_t canBootloader_response_can_id = createCanId(canBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
+    //uint32_t canBootloader_response_can_id = createCanId(canBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
 
-    int timeoutSeconds = 0;  
-
-    manager.addRequest(canBootloader_can_id, canBootloaderRequest.Export_data(), canBootloader_response_can_id, [callback](CanRequestStatus status, const CanMessage& response) {
-        callback(status == CanRequestStatus::Success);
-    }, timeoutSeconds);
+    manager.sendWithoutResponse(canBootloader_can_id, canBootloaderRequest.Export_data(), [callback](bool success) {
+        callback(success);
+    });
 }
 
 
