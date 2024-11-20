@@ -81,10 +81,10 @@ public:
         info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
         info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve load");
         info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
-}
-ADD_CORS(getCoreLoad)
-ENDPOINT("GET", "/{module}/load", getCoreLoad, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
-*/
+    }
+    ADD_CORS(getCoreLoad)
+    ENDPOINT("GET", "/{module}/load", getCoreLoad, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
+    */
 
     /**
      * @brief Retrieves the CPU/MCU temperature of the specified module.

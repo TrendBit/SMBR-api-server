@@ -94,7 +94,7 @@ void CommonModule::getCoreTemp(CanRequestManager& manager, Codes::Module module,
     }, timeoutSeconds);
 }
 
-void CommonModule::sendDeviceReset(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+void CommonModule::sendDeviceReset(CanRequestManager& manager, Codes::Module module, std::function<void(bool)> callback) {
     App_messages::Device_reset resetRequest; 
         
     uint32_t reset_can_id = createCanId(resetRequest.Type(), module, Codes::Instance::Exclusive, false);
@@ -105,7 +105,7 @@ void CommonModule::sendDeviceReset(CanRequestManager& manager, Codes::Module mod
     });
 }
 
-void CommonModule::sendDeviceUsbBootloader(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+void CommonModule::sendDeviceUsbBootloader(CanRequestManager& manager, Codes::Module module, std::function<void(bool)> callback) {
     App_messages::Device_usb_bootloader usbBootloaderRequest;
         
     uint32_t usbBootloader_can_id = createCanId(usbBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);

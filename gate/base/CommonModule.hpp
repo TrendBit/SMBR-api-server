@@ -87,7 +87,7 @@ public:
     * @param module The module to be restarted.
     * @param callback Callback function that will be called upon completion.
     */
-    void sendDeviceReset(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+    void sendDeviceReset(CanRequestManager& manager, Codes::Module module, std::function<void(bool)> callback);
 
     /**
     * @brief Sends a request to reboot the specified CAN module into USB bootloader mode.
@@ -98,7 +98,7 @@ public:
     * @param module The module to be rebooted in USB bootloader mode.
     * @param callback Callback function that will be called upon completion.
     */
-    void sendDeviceUsbBootloader(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+    void sendDeviceUsbBootloader(CanRequestManager& manager, Codes::Module module, std::function<void(bool)> callback);
 
     /**
     * @brief Sends a request to reboot the specified CAN module into CAN bootloader mode.

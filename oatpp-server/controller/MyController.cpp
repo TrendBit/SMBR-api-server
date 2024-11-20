@@ -196,7 +196,13 @@ std::future<bool> MyController::checkModuleAndUidAvailability(
     auto promise = std::make_shared<std::promise<bool>>();
     auto future = promise->get_future();
 
-    m_systemModule.getAvailableModules([promise, module, uid](const std::vector<CanMessage>& responses) {
+
+    std::string normalizedUid = uid;
+    if (normalizedUid.size() < 2 || normalizedUid.substr(0, 2) != "0x") { 
+        normalizedUid = "0x" + normalizedUid;
+    }
+
+    m_systemModule.getAvailableModules([promise, module, normalizedUid](const std::vector<CanMessage>& responses) {
         std::unordered_set<std::string> availableModules;
 
         for (const auto& response : responses) {
@@ -246,12 +252,14 @@ std::future<bool> MyController::checkModuleAndUidAvailability(
             return;
         }
 
-        std::string combinedKey = inputModuleType + ":" + uid;
+        std::string combinedKey = inputModuleType + ":" + normalizedUid;
         promise->set_value(availableModules.find(combinedKey) != availableModules.end());
     });
 
     return future;
 }
+
+
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::postRestart(
     const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false>>& module,
