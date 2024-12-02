@@ -1,6 +1,11 @@
 # Changelog SMBR Api Server
 The version number consists of MAJOR.MINOR identifiers. The MINOR version changes correspond to the addition of new API endpoints.
 
+# 0.6 Restart
+- Added endpoint {module}/restart
+- Resets the module and starts main application firmware again
+- added new method for data filling - ping, module request, core temp
+
 # 0.5 LED
 - Added endpoint control/set-led-intensity
 - Sets the selected channel of LED panel to given intensity.
