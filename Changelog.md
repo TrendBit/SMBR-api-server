@@ -1,6 +1,10 @@
 # Changelog SMBR Api Server
 The version number consists of MAJOR.MINOR identifiers. The MINOR version changes correspond to the addition of new API endpoints.
 
+# 0.4 Core temp
+- Added endpoint {module}/core_temp
+- Returns the current temperature of CPU/MCU core values of the computing unit.
+
 # 0.3 Ping
 - Added endpoint {module}/ping
 - Sends ping request to target module and wait for response. 
