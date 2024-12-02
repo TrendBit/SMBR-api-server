@@ -30,7 +30,11 @@ void run(boost::asio::io_context& io_context) {
   SystemModule& systemModule = SystemModule::getInstance(io_context, canRequestManager);
   CommonModule commonModule(io_context, canRequestManager);
 
-  auto myController = std::make_shared<MyController>(contentMappers, io_context, systemModule, commonModule, canRequestManager);  
+  ControlModule controlModule(io_context, canRequestManager); 
+
+  auto myController = std::make_shared<MyController>(
+      contentMappers, io_context, systemModule, commonModule, controlModule, canRequestManager
+  );  
   router->addController(myController);
 
   auto docEndpoints = myController->getEndpoints();
@@ -46,6 +50,7 @@ void run(boost::asio::io_context& io_context) {
 
   server.run();
 }
+
 
 /**
  * @brief Main entry point of the application.

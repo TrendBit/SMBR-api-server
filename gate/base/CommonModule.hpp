@@ -6,6 +6,15 @@
 #include <functional>
 #include <boost/asio.hpp>
 
+#include "codes/messages/ping_request.hpp"
+#include "codes/messages/ping_response.hpp"
+#include "codes/messages/core_temp_request.hpp"
+#include "codes/messages/core_temp_response.hpp"
+#include "codes/messages/device_reset.hpp"
+#include "codes/messages/device_usb_bootloader.hpp"
+#include "codes/messages/device_can_bootloader.hpp"
+
+
 /**
  * @class CommonModule
  * @brief Represents a common module that can send ping requests and handle CAN communication.
@@ -28,17 +37,33 @@ public:
     CommonModule(boost::asio::io_context& io_context, CanRequestManager& canRequestManager);
 
     /**
-     * @brief Sends a ping request to the specified CAN module.
+     * @brief Sends a ping request to the specified CAN module with a sequence number.
      * 
-     * This method sends a ping request to the module specified by the `module` parameter, waits for a response,
-     * and calls the provided callback with the time taken for the ping or an error code.
+     * This method sends a ping request to the module specified by the `module` parameter with the provided 
+     * sequence number (`seq_num`), waits for a response, and calls the provided callback with the time 
+     * taken for the ping or an error code.
      * 
      * @param manager Reference to the CanRequestManager used to manage CAN requests.
      * @param module The module to which the ping request is being sent (as specified by the `Codes::Module` enum).
+     * @param seq_num Sequence number for the ping request.
      * @param callback Function to be called with the time (in milliseconds) for the ping response. 
      *                 A negative value indicates an error (-1 for failure, -2 for timeout).
      */
-    void ping(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+    void ping(CanRequestManager& manager, Codes::Module module, uint8_t seq_num, std::function<void(float)> callback);
+
+
+    /**
+    * @brief Sends a request to retrieve the CPU/MCU load from the specified CAN module.
+    *
+    * This method sends a request to the module specified by the `module` parameter to retrieve the CPU/MCU load.
+    * The function waits for a response and calls the provided callback with the load value or an error code.
+    *
+    * @param manager Reference to the CanRequestManager used to manage CAN requests.
+    * @param module The module from which the CPU/MCU load is being requested.
+    * @param callback Function to be called with the CPU/MCU load value (between 0 and 1).
+    */
+    void getCoreLoad(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
 
     /**
      * @brief Sends a request to retrieve the core temperature from the specified CAN module.
@@ -52,6 +77,43 @@ public:
      *                 A negative value indicates an error (-1 for failure, -2 for timeout).
      */
     void getCoreTemp(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+    * @brief Sends a request to restart the specified CAN module.
+    *
+    * This method sends a reset request to the module specified by the `module` parameter.
+    *  
+    * @param manager Reference to the CanRequestManager used to manage CAN requests.
+    * @param module The module to be restarted.
+    * @param callback Callback function that will be called upon completion.
+    */
+    void sendDeviceReset(CanRequestManager& manager, Codes::Module module, std::function<void(bool)> callback);
+
+    /**
+    * @brief Sends a request to reboot the specified CAN module into USB bootloader mode.
+    *
+    * This method sends a request to the specified module to enter USB bootloader mode.
+    *  
+    * @param manager Reference to the CanRequestManager used to manage CAN requests.
+    * @param module The module to be rebooted in USB bootloader mode.
+    * @param callback Callback function that will be called upon completion.
+    */
+    void sendDeviceUsbBootloader(CanRequestManager& manager, Codes::Module module, std::function<void(bool)> callback);
+
+    /**
+    * @brief Sends a request to reboot the specified CAN module into CAN bootloader mode.
+    *
+    * This method sends a request to the specified module to enter CAN bootloader mode.
+    *  
+    * @param manager Reference to the CanRequestManager used to manage CAN requests.
+    * @param module The module to be rebooted in CAN bootloader mode.
+    * @param callback Callback function that will be called upon completion.
+    */
+    void sendDeviceCanBootloader(CanRequestManager& manager, Codes::Module module, std::function<void(bool)> callback);
+
+
+
+
 
 
 protected:

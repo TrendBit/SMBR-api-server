@@ -15,7 +15,7 @@ class MyModuleActionRequestDto : public oatpp::DTO {
   /**
    * @brief Unique identifier for the action request.
    */
-  DTO_FIELD(Int64, uid); 
+  DTO_FIELD(String, uid); 
 };
 
 #include OATPP_CODEGEN_END(DTO)

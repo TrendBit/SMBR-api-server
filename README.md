@@ -1,13 +1,9 @@
 # SMBR-api-server
 Server providing an API for controlling SMBR and retrieving data.
 
-## Version
-1.0
 
 ## Project Status
-The project supports asynchronous communication over CAN. The `/system/modules`, `/{module}/ping`, and `/{module}/core_temp` endpoints are functional, allowing you to retrieve available modules, ping them for response times, and get core temperature readings.
-
-The active development for this project is currently taking place in the `dev` branch. 
+This project is actively developed in the `dev` branch. The `main` branch contains the stable release version. Changes from dev are periodically merged into `main`. You can see the version changes in `Changelog.md`.
 
 ## Requirements
 - CMake 3.20 or later
@@ -17,7 +13,11 @@ The active development for this project is currently taking place in the `dev` b
 - Boost Asio
 
 ## Installing Dependencies
-1. Install OATPP:
+1. Install CMake:
+    ```sh
+    sudo apt install cmake
+    ```
+2. Install OATPP:
     ```sh
     git clone https://github.com/oatpp/oatpp
     cd oatpp
@@ -25,7 +25,7 @@ The active development for this project is currently taking place in the `dev` b
     cmake ..
     make install
     ```
-2. Install OATPP-Swagger:
+3. Install OATPP-Swagger:
     ```sh
     git clone https://github.com/oatpp/oatpp-swagger
     cd oatpp-swagger
@@ -33,11 +33,11 @@ The active development for this project is currently taking place in the `dev` b
     cmake ..
     make install
     ```
-3. Install SocketCAN:
+4. Install SocketCAN:
     ```sh
     sudo apt install can-utils
     ```
-4. Install Boost Asio:
+5. Install Boost Asio:
     ```sh
     sudo apt-get install libboost-all-dev
     ```
@@ -80,7 +80,8 @@ SMBR-api.server
 │   │   ├── MyCoreTempResponseDto.hpp                  
 │   │   ├── MyModuleActionRequestDto.hpp       
 │   │   ├── MyModuleInfoDto.hpp               
-│   │   ├── MySupplyTypeResponseDto.hpp             
+│   │   ├── MySupplyTypeResponseDto.hpp   
+│   │   ├── MyIntensityDto.hpp   
 │   │   └── MyTempDto.hpp        
 │   ├── interceptors/
 │   │   └── MyResponseInterceptor.hpp
@@ -103,7 +104,7 @@ SMBR-api.server
 │   │   └── SensorModule.hpp
 │   ├── system/
 │   │   ├── SystemModule.cpp             
-│   │   └──SystemModule.hpp             
+│   │   └── SystemModule.hpp             
 │   ├── can/
 │   │   ├── CanIdGenerator.hpp               
 │   │   ├── CanIdGenerator.cpp   
