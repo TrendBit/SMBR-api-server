@@ -1,6 +1,10 @@
 # Changelog SMBR Api Server
 The version number consists of MAJOR.MINOR identifiers. The MINOR version changes correspond to the addition of new API endpoints.
 
+# 0.7 USB Bootloader
+- Added endpoint {module}/usb_bootloader
+- Resets the module and put it into USB bootloader mode so new firmware can be flashed via USB-C connector on board
+
 # 0.6 Restart
 - Added endpoint {module}/restart
 - Resets the module and starts main application firmware again
