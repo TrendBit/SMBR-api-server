@@ -1,8 +1,12 @@
 #include "CanRequestManager.hpp"
 
+#include <spdlog/spdlog.h>
+
 CanRequestManager::CanRequestManager(boost::asio::io_context& io_context, CanBus& canBus)
     : io_context_(io_context), canBus_(canBus) {
-    
+
+    spdlog::info("CanRequestManager created");
+
     canBus_.asyncReceive([this](bool success, const CanMessage& message) {
         if (success) {
             handleIncomingMessage(message);
@@ -16,23 +20,31 @@ CanRequestManager::CanRequestManager(boost::asio::io_context& io_context, CanBus
 }
 
 std::shared_ptr<CanRequest> CanRequestManager::acquireRequest() {
+    spdlog::info("Acquiring request");
+
     if (!recycledRequests_.empty()) {
         auto request = recycledRequests_.back();
         recycledRequests_.pop_back();
+        spdlog::info("Recycled request acquired");
         return request;
     } else {
+        spdlog::info("No recycled requests, creating new one");
         return std::make_shared<CanRequest>(canBus_, io_context_, 0, std::vector<uint8_t>(), 0, 0);
     }
 }
 
 void CanRequestManager::releaseRequest(std::shared_ptr<CanRequest> request) {
+    spdlog::info("Releasing request");
+
     request->reset();
     recycledRequests_.push_back(request);
 }
 
 void CanRequestManager::addRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, double timeoutSeconds) {
+    spdlog::info("Adding request with requestId: {}, responseId: {}", requestId, responseId);
+
     auto request = acquireRequest();
-    request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds, true); 
+    request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds, true);
 
     activeRequests_[responseId].push(request);
 
@@ -49,6 +61,7 @@ void CanRequestManager::addRequest(uint32_t requestId, const std::vector<uint8_t
         releaseRequest(request);
     });
 }
+
 
 void CanRequestManager::sendWithoutResponse(uint32_t requestId, const std::vector<uint8_t>& data, std::function<void(bool)> resultHandler) {
     auto request = acquireRequest();
