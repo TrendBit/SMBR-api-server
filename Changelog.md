@@ -1,6 +1,13 @@
 # Changelog SMBR Api Server
 The version number consists of MAJOR.MINOR identifiers. The MINOR version changes correspond to the addition of new API endpoints.
 
+# 0.5 LED
+- Added endpoint control/set-led-intensity
+- Sets the selected channel of LED panel to given intensity.
+- For ping added automatic incrementation by 1
+- Server changed to listen on all network interfaces (0.0.0.0)
+- Added script to test effective speed using ping
+
 # 0.4 Core temp
 - Added endpoint {module}/core_temp
 - Returns the current temperature of CPU/MCU core values of the computing unit.
