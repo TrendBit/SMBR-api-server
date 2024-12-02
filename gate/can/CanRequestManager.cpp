@@ -142,3 +142,4 @@ void CanRequestManager::handlePingMessage(const CanMessage& message) {
         request->handleResponse(message);
     }
 }
+

@@ -47,6 +47,7 @@ This project is actively developed in the `dev` branch. The `main` branch contai
     ```sh
     git clone git@github.com:TrendBit/SMBR-api-server.git
     cd SMBR-api-server
+    git checkout dev
     git submodule update --init --recursive
     ```
 2. Create a build directory and compile the project:

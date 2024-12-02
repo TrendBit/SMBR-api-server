@@ -31,3 +31,4 @@ protected:
     boost::asio::io_context& m_ioContext; 
     CanRequestManager& m_canRequestManager; 
 };
+

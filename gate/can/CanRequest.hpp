@@ -126,3 +126,4 @@ private:
     std::function<void(CanRequestStatus, const CanMessage&)> responseHandler_;
     std::function<void(CanRequestStatus, const std::vector<CanMessage>&)> multiResponseHandler_;
 };
+

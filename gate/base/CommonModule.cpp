@@ -126,3 +126,4 @@ void CommonModule::sendDeviceCanBootloader(CanRequestManager& manager, Codes::Mo
         callback(success);
     });
 }
+

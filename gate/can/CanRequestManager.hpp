@@ -107,3 +107,4 @@ private:
     std::unordered_map<uint32_t, std::queue<std::shared_ptr<CanRequest>>> activeRequests_; 
     std::vector<std::shared_ptr<CanRequest>> recycledRequests_; 
 };
+
