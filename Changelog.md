@@ -1,6 +1,13 @@
 # Changelog SMBR Api Server
 The version number consists of MAJOR.MINOR identifiers. The MINOR version changes correspond to the addition of new API endpoints.
 
+# 0.8 CAN Bootloader
+- Added endpoint {module}/can_bootloader
+- Resets the module and put it into CAN bus bootloader mode so new firmware can be flashed over CAN bus from RPi
+- Added and integrated new method for sending CAN messages via the can bus without expecting a response
+- Added support for using uid with and without 0x prefix for restart, usb_bootloader and can_bootloader endpoints
+- Added script to test effective speed using ping in C++
+
 # 0.7 USB Bootloader
 - Added endpoint {module}/usb_bootloader
 - Resets the module and put it into USB bootloader mode so new firmware can be flashed via USB-C connector on board
@@ -12,23 +19,23 @@ The version number consists of MAJOR.MINOR identifiers. The MINOR version change
 
 # 0.5 LED
 - Added endpoint control/set-led-intensity
-- Sets the selected channel of LED panel to given intensity.
+- Sets the selected channel of LED panel to given intensity
 - For ping added automatic incrementation by 1
 - Server changed to listen on all network interfaces (0.0.0.0)
-- Added script to test effective speed using ping
+- Added script to test effective speed using ping in python
 
 # 0.4 Core temp
 - Added endpoint {module}/core_temp
-- Returns the current temperature of CPU/MCU core values of the computing unit.
+- Returns the current temperature of CPU/MCU core values of the computing unit
 
 # 0.3 Ping
 - Added endpoint {module}/ping
-- Sends ping request to target module and wait for response. 
+- Sends ping request to target module and wait for response
 - Prints the time it takes for the module to respond to a ping.
 
 # 0.2 Modules request
 - Added endpoint system/modules 
-- Returns a list of all modules that have responded to the identification message and can therefore be considered available on the device.
+- Returns a list of all modules that have responded to the identification message and can therefore be considered available on the device
 
 # 0.1 Initial concept
 - Provides the foundational architecture for asynchronous communication over CAN
