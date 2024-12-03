@@ -1,77 +1,49 @@
 #include "CanRequestManager.hpp"
-
-#include <spdlog/spdlog.h>
+#include <iostream>
 
 CanRequestManager::CanRequestManager(boost::asio::io_context& io_context, CanBus& canBus)
     : io_context_(io_context), canBus_(canBus) {
+    
+    canBus_.asyncReceive([this](bool success, const CanMessage& message) {
+        if (success) {
+            handleIncomingMessage(message);
+        }
 
-    spdlog::info("CanRequestManager created");
+        this->startReceiving();
+    });
+}
+
+void CanRequestManager::startReceiving() {
 
     canBus_.asyncReceive([this](bool success, const CanMessage& message) {
         if (success) {
             handleIncomingMessage(message);
         }
-        canBus_.asyncReceive([this](bool success, const CanMessage& message) {
-            if (success) {
-                handleIncomingMessage(message);
-            }
-        });
+        this->startReceiving();
     });
 }
 
 std::shared_ptr<CanRequest> CanRequestManager::acquireRequest() {
-    spdlog::info("Acquiring request");
-
+    
     if (!recycledRequests_.empty()) {
         auto request = recycledRequests_.back();
         recycledRequests_.pop_back();
-        spdlog::info("Recycled request acquired");
         return request;
     } else {
-        spdlog::info("No recycled requests, creating new one");
         return std::make_shared<CanRequest>(canBus_, io_context_, 0, std::vector<uint8_t>(), 0, 0);
     }
 }
 
-void CanRequestManager::releaseRequest(std::shared_ptr<CanRequest> request) {
-    spdlog::info("Releasing request");
-
+void CanRequestManager::releaseRequest(std::shared_ptr<CanRequest> request) { 
     request->reset();
     recycledRequests_.push_back(request);
 }
 
-void CanRequestManager::addRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, double timeoutSeconds) {
-    spdlog::info("Adding request with requestId: {}, responseId: {}", requestId, responseId);
-
-    auto request = acquireRequest();
-    request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds, true);
-
-    activeRequests_[responseId].push(request);
-
-    request->send([this, responseId, responseHandler, request](CanRequestStatus status, const CanMessage& response) {
-        responseHandler(status, response);
-
-        auto& queue = activeRequests_[responseId];
-        if (!queue.empty() && queue.front() == request) {
-            queue.pop();
-            if (queue.empty()) {
-                activeRequests_.erase(responseId);
-            }
-        }
-        releaseRequest(request);
-    });
-}
-
-
-void CanRequestManager::sendWithoutResponse(uint32_t requestId, const std::vector<uint8_t>& data, std::function<void(bool)> resultHandler) {
-    auto request = acquireRequest();
-    request->initializeForSendOnly(canBus_, io_context_, requestId, data);
-    request->sendOnly(resultHandler);  
-}
 
 
 
 void CanRequestManager::addRequestWithSeq(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, uint8_t seq_num, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, double timeoutSeconds) {
+    
     auto request = acquireRequest();
     request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds, true); 
 
@@ -79,6 +51,7 @@ void CanRequestManager::addRequestWithSeq(uint32_t requestId, const std::vector<
     activeRequests_[requestKey].push(request);
 
     request->send([this, requestKey, responseHandler, request](CanRequestStatus status, const CanMessage& response) {
+
         responseHandler(status, response);
 
         auto& queue = activeRequests_[requestKey];
@@ -92,28 +65,9 @@ void CanRequestManager::addRequestWithSeq(uint32_t requestId, const std::vector<
     });
 }
 
-void CanRequestManager::addMultiResponseRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const std::vector<CanMessage>&)> multiResponseHandler, double timeoutSeconds) {
-    auto request = acquireRequest();
-    request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds, false); 
 
-    activeRequests_[responseId].push(request);
 
-    request->sendMultiResponse([this, responseId, multiResponseHandler, request](CanRequestStatus status, const std::vector<CanMessage>& responses) mutable {
-        if (multiResponseHandler) {
-            multiResponseHandler(status, responses);
-        }
 
-        auto& queue = activeRequests_[responseId];
-        if (!queue.empty() && queue.front() == request) {
-            queue.pop();
-            if (queue.empty()) {
-                activeRequests_.erase(responseId);
-            }
-        }
-
-        releaseRequest(request);
-    });
-}
 
 void CanRequestManager::handleIncomingMessage(const CanMessage& message) {
     uint32_t receivedId = message.getId();
@@ -141,9 +95,6 @@ void CanRequestManager::handleIncomingMessage(const CanMessage& message) {
     }
 }
 
-
-
-
 void CanRequestManager::handlePingMessage(const CanMessage& message) {
     uint32_t receivedId = message.getId();
     uint8_t receivedSeqNum = message.getData()[0]; 
@@ -155,8 +106,3 @@ void CanRequestManager::handlePingMessage(const CanMessage& message) {
         request->handleResponse(message);
     }
 }
-
-
-
-
-

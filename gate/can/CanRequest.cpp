@@ -1,15 +1,11 @@
 #include "CanRequest.hpp"
 
-#include <spdlog/spdlog.h>
 
 CanRequest::CanRequest(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId)
     : canBus_(&canBus), requestMessage_(requestId, data), expectedResponseId_(responseId), timeoutTimer_(io_context), timeoutSeconds_(timeoutSeconds), compareFullId_(compareFullId), responses_(std::make_shared<std::vector<CanMessage>>()) {
-    spdlog::info("CanRequest created: requestId = {}, responseId = {}", requestId, responseId);
 }
 
 void CanRequest::initialize(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId) {
-    spdlog::info("Initializing CanRequest: requestId = {}, responseId = {}", requestId, responseId);
-
     canBus_ = &canBus;  
     requestMessage_ = CanMessage(requestId, data);
     expectedResponseId_ = responseId;
@@ -104,7 +100,6 @@ void CanRequest::onTimeout() {
 }
 
 void CanRequest::reset() {
-    spdlog::info("Resetting CanRequest");
     responseHandler_ = nullptr;
     multiResponseHandler_ = nullptr;
     responses_->clear();

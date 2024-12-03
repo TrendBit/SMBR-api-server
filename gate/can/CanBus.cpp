@@ -16,13 +16,22 @@ CanBus::CanBus(boost::asio::io_context& io_context)
         throw std::runtime_error("Failed to create CAN socket");
     }
 
+    std::memset(&ifr, 0, sizeof(ifr));
     std::strncpy(ifr.ifr_name, "can0", IFNAMSIZ);
+
     if (ioctl(socketFd, SIOCGIFINDEX, &ifr) < 0) {
         perror("ioctl");
         close(socketFd);
         throw std::runtime_error("Failed to retrieve CAN interface index");
     }
 
+    if (ifr.ifr_ifindex == 0) {
+        std::cerr << "Invalid interface index" << std::endl;
+        close(socketFd);
+        throw std::runtime_error("Invalid interface index");
+    }
+
+    std::memset(&addr, 0, sizeof(addr));
     addr.can_family = AF_CAN;
     addr.can_ifindex = ifr.ifr_ifindex;
 

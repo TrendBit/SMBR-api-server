@@ -26,25 +26,6 @@ public:
      */
     CanRequestManager(boost::asio::io_context& io_context, CanBus& canBus);
 
-    /**
-     * @brief Add a request to the CAN bus.
-     * 
-     * @param requestId CAN ID of the request.
-     * @param data Data to send in the request.
-     * @param responseId Expected CAN ID of the response.
-     * @param responseHandler Function to handle the response.
-     * @param timeoutSeconds Timeout in seconds for the request.
-     */
-    void addRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, double timeoutSeconds);
-
-    /**
-     * @brief Send a CAN request without expecting a response.
-     * 
-     * @param requestId CAN ID of the request.
-     * @param data Data to send in the request.
-     * @param resultHandler Callback function to indicate if the send operation was successful.
-     */
-    void sendWithoutResponse(uint32_t requestId, const std::vector<uint8_t>& data, std::function<void(bool)> resultHandler);
 
 
 /**
@@ -61,18 +42,10 @@ public:
     void addRequestWithSeq(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, uint8_t seq_num, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, double timeoutSeconds);
     
 
-    /**
-     * @brief Add a request to the CAN bus expecting multiple responses.
-     * 
-     * @param requestId CAN ID of the request.
-     * @param data Data to send in the request.
-     * @param responseId Expected CAN ID of the responses.
-     * @param multiResponseHandler Function to handle multiple responses.
-     * @param timeoutSeconds Timeout in seconds for the request.
-     */
-    void addMultiResponseRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const std::vector<CanMessage>&)> multiResponseHandler, double timeoutSeconds);
+    
 
 private:
+    void startReceiving(); 
     /**
      * @brief Handle incoming CAN messages and match them to active requests.
      * 
@@ -107,4 +80,3 @@ private:
     std::unordered_map<uint32_t, std::queue<std::shared_ptr<CanRequest>>> activeRequests_; 
     std::vector<std::shared_ptr<CanRequest>> recycledRequests_; 
 };
-
