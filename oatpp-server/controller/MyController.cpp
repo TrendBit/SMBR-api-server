@@ -453,18 +453,21 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
-std::optional<int> MyController::getTargetChannel(const oatpp::Enum<dto::ChannelEnum>::AsString& channel) {
-    if (channel == dto::ChannelEnum::channel0) {
-        return 0;
-    } else if (channel == dto::ChannelEnum::channel1) {
-        return 1;
-    } else if (channel == dto::ChannelEnum::channel2) {
-        return 2;
-    } else if (channel == dto::ChannelEnum::channel3) {
-        return 3;
+std::optional<int> MyController::getTargetChannel(const dto::ChannelEnum& channel) {
+    switch (channel) {
+        case dto::ChannelEnum::channel0:
+            return 0;
+        case dto::ChannelEnum::channel1:
+            return 1;
+        case dto::ChannelEnum::channel2:
+            return 2;
+        case dto::ChannelEnum::channel3:
+            return 3;
+        default:
+            return std::nullopt;  
     }
-    return std::nullopt;
 }
+
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setIntensity(
     const oatpp::Enum<dto::ChannelEnum>::AsString& channel, 
@@ -488,12 +491,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
         promise.set_value(success);
     };
 
-    m_controlModule.setIntensity(
-        Codes::Module::Control_module, 
-        body->intensity, 
-        targetChannel, 
-        handleSetIntensityResult
-    );
+    m_controlModule.setIntensity(Codes::Module::Control_module, body->intensity, targetChannel, handleSetIntensityResult);
 
     future.wait();
     bool success = future.get();
@@ -505,7 +503,37 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getIntensity(const oatpp::Enum<dto::ChannelEnum>::AsString& channel) {
+    auto intensityResponseDto = MyIntensityDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
 
+    auto handleIntensityResult = [&promise](float intensity) {
+        promise.set_value(intensity);
+    };
+
+    auto targetChannelOpt = getTargetChannel(channel);  
+    if (!targetChannelOpt.has_value()) {
+        return createResponse(Status::CODE_404, "Channel not found");
+    }
+    int targetChannel = targetChannelOpt.value();
+
+   
+    m_controlModule.getIntensity(m_canRequestManager, Codes::Module::Control_module, targetChannel, handleIntensityResult);
+    
+
+    future.wait();
+    float intensity = future.get();
+
+    if (intensity != -2 && intensity != -1) {
+        intensityResponseDto->intensity = intensity;
+        return createDtoResponse(Status::CODE_200, intensityResponseDto); 
+    } else if (intensity == -2) {
+        return createResponse(Status::CODE_504, "Request timed out"); 
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve intensity");  
+    }
+}
 
 
 

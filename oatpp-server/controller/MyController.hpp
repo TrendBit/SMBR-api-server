@@ -192,6 +192,22 @@ public:
     ADD_CORS(setIntensity)
     ENDPOINT("POST", "/control/led_intensity/{channel}", setIntensity, PATH(oatpp::Enum<dto::ChannelEnum>::AsString, channel), BODY_DTO(Object<MyIntensityDto>, body));
 
+    /**
+    * @brief Retrieves the current intensity of the selected LED channel.
+    */
+    ENDPOINT_INFO(getIntensity) {
+        info->summary = "Retrieves current intensity of selected channel of LED panel";
+        info->description = "Retrieves current intensity of selected channel of LED panel.";
+        info->addTag("Control module");
+        info->addResponse<Object<MyIntensityDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Channel not found");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve intensity");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getIntensity)
+    ENDPOINT("GET", "/control/led_intensity/{channel}", getIntensity, PATH(oatpp::Enum<dto::ChannelEnum>, channel));
+
+
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
@@ -216,7 +232,8 @@ private:
         const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false>>& module,
         const std::string& uid);
     std::optional<Codes::Module> getTargetModule(const oatpp::Enum<dto::ModuleEnum>::AsString& module);
-    std::optional<int> getTargetChannel(const oatpp::Enum<dto::ChannelEnum>::AsString& channel);
+    //std::optional<int> getTargetChannel(const oatpp::Enum<dto::ChannelEnum>::AsString& channel);
+    std::optional<int> getTargetChannel(const dto::ChannelEnum& channel);
 
     boost::asio::io_context& m_ioContext;
     SystemModule& m_systemModule;
