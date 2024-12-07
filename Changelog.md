@@ -17,6 +17,12 @@ The version number consists of MAJOR.MINOR identifiers. The MINOR version change
 - Resets the module and starts main application firmware again
 - added new method for data filling - ping, module request, core temp
 
+# 0.5.1 LED
+- Endpoint control/set-led-intensity rename to /control/led_intensity/{channel}
+- Added endpoint POST /control/led_intensity - sets all channels of LED panel to given intensity
+- Added endpoint GET /control/led_intensity/{channel} - retrieves current intensity of selected channel of LED panel
+- Added endpoint /control/led_temperature - retrieves temperature of LED panel
+
 # 0.5 LED
 - Added endpoint control/set-led-intensity
 - Sets the selected channel of LED panel to given intensity
