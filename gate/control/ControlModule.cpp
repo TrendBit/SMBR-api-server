@@ -21,7 +21,7 @@ void ControlModule::getIntensity(CanRequestManager& manager, Codes::Module modul
     App_messages::LED_panel::Get_intensity_request getIntensityReq ((uint8_t)channel);
 
     uint32_t requestCanId = createCanId(getIntensityReq.Type(), module, Codes::Instance::Exclusive, false);
-    uint32_t responseCanId = createCanId(App_messages::LED_panel::Get_intensity_request().Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t responseCanId = createCanId(App_messages::LED_panel::Get_intensity_response().Type(), module, Codes::Instance::Exclusive, false);
 
     double timeoutSeconds = 2;
 
@@ -42,6 +42,33 @@ void ControlModule::getIntensity(CanRequestManager& manager, Codes::Module modul
         }
     }, timeoutSeconds);
 }
+
+void ControlModule::getLedTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+    App_messages::LED_panel::Temperature_request getTemperatureReq;
+
+    uint32_t requestCanId = createCanId(getTemperatureReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t responseCanId = createCanId(App_messages::LED_panel::Temperature_response(0.0f).Type(), module, Codes::Instance::Exclusive, false);
+
+    double timeoutSeconds = 2;
+
+    manager.addRequest(requestCanId, getTemperatureReq.Export_data(), responseCanId, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::LED_panel::Temperature_response temperatureResponse(0.0f);
+            if (temperatureResponse.Interpret_data(dataCopy)) {
+                callback(temperatureResponse.temperature);  
+            } else {
+                callback(-1); 
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2);
+        } else {
+            callback(-1); 
+        }
+    }, timeoutSeconds);
+}
+
 
 
 

@@ -207,6 +207,22 @@ public:
     ADD_CORS(getIntensity)
     ENDPOINT("GET", "/control/led_intensity/{channel}", getIntensity, PATH(oatpp::Enum<dto::ChannelEnum>, channel));
 
+    /**
+    * @brief Retrieves the temperature of the LED panel.
+    */
+    ENDPOINT_INFO(getLedTemperature) {
+        info->summary = "Get LED panel temperature";
+        info->addTag("Control module");
+        info->description = "Retrieves the current temperature of the LED panel in °C.";
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "LED panel not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve LED temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getLedTemperature)
+    ENDPOINT("GET", "/control/led_temperature", getLedTemperature);
+
+
 
 
     /**
@@ -232,7 +248,6 @@ private:
         const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false>>& module,
         const std::string& uid);
     std::optional<Codes::Module> getTargetModule(const oatpp::Enum<dto::ModuleEnum>::AsString& module);
-    //std::optional<int> getTargetChannel(const oatpp::Enum<dto::ChannelEnum>::AsString& channel);
     std::optional<int> getTargetChannel(const dto::ChannelEnum& channel);
 
     boost::asio::io_context& m_ioContext;

@@ -535,6 +535,29 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getLedTemperature() {
+    auto tempResponseDto = MyTempDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleTempResult = [&promise](float temperature) {
+        promise.set_value(temperature);
+    };
+
+    m_controlModule.getLedTemperature(m_canRequestManager, Codes::Module::Control_module, handleTempResult);
+
+    future.wait();
+    float temperature = future.get();
+
+    if (temperature >= 0) {
+        tempResponseDto->temperature = temperature;
+        return createDtoResponse(Status::CODE_200, tempResponseDto);  
+    } else if (temperature == -2) {
+        return createResponse(Status::CODE_504, "Request timed out"); 
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve LED temperature");  
+    }
+}
 
 
 
