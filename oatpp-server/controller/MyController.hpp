@@ -3,6 +3,7 @@
 #include "oatpp/macro/component.hpp"
 #include "oatpp/web/server/api/ApiController.hpp"
 #include "dto/ModuleEnum.hpp"
+#include "dto/ChannelEnum.hpp"
 #include "dto/MyPingResponseDto.hpp"
 #include "dto/MyTempDto.hpp"
 #include "dto/MyModuleInfoDto.hpp"
@@ -180,16 +181,17 @@ public:
         info->description = "This endpoint allows the user to set the intensity of the LED lighting and the channel. "
                             "The intensity value should be a float between 0 and 1, "
                             "where 0 represents off and 1 represents maximum brightness. "
-                            "The channel value must be an integer that can be 0, 1, 2, or 3, "
+                            "The channel value must be one of the following: 'channel0', 'channel1', 'channel2', or 'channel3', "
                             "representing the specific LED channel to control.";
         info->addTag("Control module");
         info->addConsumes<Object<MyIntensityDto>>("application/json");
         info->addResponse<String>(Status::CODE_200, "application/json", "Intensity set successfully.");
-        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid intensity value.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid intensity or channel value.");
         info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set intensity.");
     }
     ADD_CORS(setIntensity)
-    ENDPOINT("POST", "/control/led_intensity/{channel}", setIntensity, BODY_DTO(Object<MyIntensityDto>, body));  
+    ENDPOINT("POST", "/control/led_intensity/{channel}", setIntensity, PATH(oatpp::Enum<dto::ChannelEnum>::AsString, channel), BODY_DTO(Object<MyIntensityDto>, body));
+
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
@@ -214,6 +216,7 @@ private:
         const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false>>& module,
         const std::string& uid);
     std::optional<Codes::Module> getTargetModule(const oatpp::Enum<dto::ModuleEnum>::AsString& module);
+    std::optional<int> getTargetChannel(const oatpp::Enum<dto::ChannelEnum>::AsString& channel);
 
     boost::asio::io_context& m_ioContext;
     SystemModule& m_systemModule;

@@ -453,17 +453,33 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setIntensity(const oatpp::Object<MyIntensityDto>& body) {
+std::optional<int> MyController::getTargetChannel(const oatpp::Enum<dto::ChannelEnum>::AsString& channel) {
+    if (channel == dto::ChannelEnum::channel0) {
+        return 0;
+    } else if (channel == dto::ChannelEnum::channel1) {
+        return 1;
+    } else if (channel == dto::ChannelEnum::channel2) {
+        return 2;
+    } else if (channel == dto::ChannelEnum::channel3) {
+        return 3;
+    }
+    return std::nullopt;
+}
 
-   
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setIntensity(
+    const oatpp::Enum<dto::ChannelEnum>::AsString& channel, 
+    const oatpp::Object<MyIntensityDto>& body
+) {
     if (body->intensity < 0 || body->intensity > 1) {
         return createResponse(Status::CODE_400, "Invalid intensity. Must be between 0 and 1.");
     }
 
-    
-    if (body->channel < 0 || body->channel > 3) { 
-        return createResponse(Status::CODE_400, "Invalid channel. Must be 0, 1, 2, or 3.");
+    auto targetChannelOpt = getTargetChannel(channel);
+    if (!targetChannelOpt.has_value()) { 
+        return createResponse(Status::CODE_400, "Invalid channel. Must be channel0, channel1, channel2, or channel3.");
     }
+
+    int targetChannel = targetChannelOpt.value();
 
     std::promise<bool> promise;
     auto future = promise.get_future();
@@ -472,8 +488,12 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
         promise.set_value(success);
     };
 
-    
-    m_controlModule.setIntensity(Codes::Module::Control_module, body->intensity, body->channel, handleSetIntensityResult);
+    m_controlModule.setIntensity(
+        Codes::Module::Control_module, 
+        body->intensity, 
+        targetChannel, 
+        handleSetIntensityResult
+    );
 
     future.wait();
     bool success = future.get();
@@ -484,6 +504,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
         return createResponse(Status::CODE_500, "Failed to set intensity.");
     }
 }
+
+
 
 
 
