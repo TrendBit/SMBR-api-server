@@ -10,8 +10,8 @@ SystemModule::SystemModule(boost::asio::io_context& io_context, CanRequestManage
 
 void SystemModule::getAvailableModules(std::function<void(const std::vector<CanMessage>&)> callback) {
 
-    App_messages::Probe_modules_request set_moduleReq;
-    App_messages::Probe_modules_response set_moduleRes;
+    App_messages::Common::Probe_modules_request set_moduleReq;
+    App_messages::Common::Probe_modules_response set_moduleRes;
 
     uint32_t probe_can_id = createCanId(set_moduleReq.Type(), 
                                         Codes::Module::All, 

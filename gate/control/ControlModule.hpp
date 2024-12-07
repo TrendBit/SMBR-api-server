@@ -8,7 +8,7 @@
 #include <iomanip>
 #include <sstream>
 
-#include "codes/messages/led_set_intensity.hpp"
+#include "codes/messages/led_panel/set_intensity.hpp"
 
 /**
  * @class ControlModule

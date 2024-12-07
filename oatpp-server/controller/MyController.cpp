@@ -24,7 +24,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_systemModule.getAvailableModules([&promise, dtoList](const std::vector<CanMessage>& responses) {
     for (const auto& response : responses) {
-        App_messages::Probe_modules_response moduleResponse;
+        App_messages::Common::Probe_modules_response moduleResponse;
 
         auto dataCopy = response.getData();
         if (moduleResponse.Interpret_data(dataCopy)) {
@@ -39,13 +39,13 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
             uint32_t modulePart = (response.getId() >> 4) & 0xFF;
             switch (static_cast<Codes::Module>(modulePart)) {
-                case Codes::Module::Core_device:
+                case Codes::Module::Core_module:
                     moduleInfoDto->module_type = "core";
                     break;
-                case Codes::Module::Control_board:
+                case Codes::Module::Control_module:
                     moduleInfoDto->module_type = "control";
                     break;
-                case Codes::Module::Sensor_board:
+                case Codes::Module::Sensor_module:
                     moduleInfoDto->module_type = "sensor";
                     break;
                 default:
@@ -85,11 +85,11 @@ uint8_t MyController::getNextSeqNumber() {
 
 std::optional<Codes::Module> MyController::getTargetModule(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     if (module == dto::ModuleEnum::control) {
-        return Codes::Module::Control_board;
+        return Codes::Module::Control_module;
     } else if (module == dto::ModuleEnum::sensor) {
-        return Codes::Module::Sensor_board;
+        return Codes::Module::Sensor_module;
     } else if (module == dto::ModuleEnum::core) {
-        return Codes::Module::Core_device;
+        return Codes::Module::Core_module;
     }
     return std::nullopt;
 }
@@ -206,7 +206,7 @@ std::future<bool> MyController::checkModuleAndUidAvailability(
         std::unordered_set<std::string> availableModules;
 
         for (const auto& response : responses) {
-            App_messages::Probe_modules_response moduleResponse;
+            App_messages::Common::Probe_modules_response moduleResponse;
             auto dataCopy = response.getData();
 
             if (moduleResponse.Interpret_data(dataCopy)) {
@@ -221,13 +221,13 @@ std::future<bool> MyController::checkModuleAndUidAvailability(
                 std::string moduleType;
 
                 switch (static_cast<Codes::Module>(modulePart)) {
-                    case Codes::Module::Core_device:
+                    case Codes::Module::Core_module:
                         moduleType = "core";
                         break;
-                    case Codes::Module::Control_board:
+                    case Codes::Module::Control_module:
                         moduleType = "control";
                         break;
-                    case Codes::Module::Sensor_board:
+                    case Codes::Module::Sensor_module:
                         moduleType = "sensor";
                         break;
                     default:
@@ -410,37 +410,50 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
 // ==========================================
 // Control module
 // ==========================================
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setIntensity(const oatpp::Object<MyIntensityDto>& body) {
-
-   
-    if (body->intensity < 0 || body->intensity > 1) {
-        return createResponse(Status::CODE_400, "Invalid intensity. Must be between 0 and 1.");
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setIntensities(const oatpp::Object<MyIntensitiesDto>& body) {
+    if (!body || !body->intensity || body->intensity->size() != 4) {
+        return createResponse(Status::CODE_400, "Invalid intensity array. Must contain exactly 4 values.");
     }
 
-    
-    if (body->channel < 0 || body->channel > 3) { 
-        return createResponse(Status::CODE_400, "Invalid channel. Must be 0, 1, 2, or 3.");
+    for (size_t i = 0; i < body->intensity->size(); i++) {
+        auto intensity = body->intensity->at(i); 
+        if (!intensity || *intensity < 0.0f || *intensity > 1.0f) {
+            return createResponse(Status::CODE_400, "Invalid intensity value. Must be between 0.0 and 1.0.");
+        }
     }
 
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    bool success = true;
+    for (size_t channel = 0; channel < body->intensity->size(); ++channel) {
+        std::promise<bool> promise;
+        auto future = promise.get_future();
 
-    auto handleSetIntensityResult = [&promise](bool success) {
-        promise.set_value(success);
-    };
+        auto handleSetIntensityResult = [&promise](bool result) {
+            promise.set_value(result);
+        };
 
-    
-    m_controlModule.setIntensity(Codes::Module::Control_board, body->intensity, body->channel, handleSetIntensityResult);
+        m_controlModule.setIntensity(
+            Codes::Module::Control_module,
+            *body->intensity->at(channel), 
+            channel,
+            handleSetIntensityResult
+        );
 
-    future.wait();
-    bool success = future.get();
+        future.wait();
+        if (!future.get()) {
+            success = false;
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(3));
+    }
 
     if (success) {
-        return createResponse(Status::CODE_200, "Intensity set successfully.");
+        return createResponse(Status::CODE_200, "Intensities set successfully.");
     } else {
-        return createResponse(Status::CODE_500, "Failed to set intensity.");
+        return createResponse(Status::CODE_500, "Failed to set intensities.");
     }
 }
+
+
 
 
 /*
