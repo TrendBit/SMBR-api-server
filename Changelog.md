@@ -1,6 +1,11 @@
 # Changelog SMBR Api Server
 The version number consists of MAJOR.MINOR identifiers. The MINOR version changes correspond to the addition of new API endpoints.
 
+# 0.9 Load
+- Added endpoint /{module}/load 
+- Gets module CPU/MCU load
+- Updating CMakeLists for new version of Codes
+
 # 0.8 CAN Bootloader
 - Added endpoint {module}/can_bootloader
 - Resets the module and put it into CAN bus bootloader mode so new firmware can be flashed over CAN bus from RPi
