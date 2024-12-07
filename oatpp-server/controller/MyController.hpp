@@ -3,11 +3,13 @@
 #include "oatpp/macro/component.hpp"
 #include "oatpp/web/server/api/ApiController.hpp"
 #include "dto/ModuleEnum.hpp"
+#include "dto/ChannelEnum.hpp"
 #include "dto/MyPingResponseDto.hpp"
 #include "dto/MyTempDto.hpp"
 #include "dto/MyModuleInfoDto.hpp"
 #include "dto/MyLoadResponseDto.hpp"
 #include "dto/MyModuleActionRequestDto.hpp"
+#include "dto/MyIntensitiesDto.hpp"
 #include "dto/MyIntensityDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
@@ -22,6 +24,9 @@
 #include <utility>
 #include <unordered_set>
 #include <optional>
+
+#include <thread> 
+#include <chrono> 
 
 #include <iostream>
 
@@ -72,7 +77,6 @@ public:
     /**
     * @brief Retrieves the CPU/MCU load of the specified module.
     */
-   /*
     ENDPOINT_INFO(getCoreLoad) {
         info->summary = "Get module CPU/MCU load";
         info->addTag("Common");
@@ -84,7 +88,7 @@ public:
     }
     ADD_CORS(getCoreLoad)
     ENDPOINT("GET", "/{module}/load", getCoreLoad, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
-    */
+    
 
     /**
      * @brief Retrieves the CPU/MCU temperature of the specified module.
@@ -154,6 +158,21 @@ public:
 
 
     /**
+    * @brief Sets all channels of LED panel to given intensity.
+    */
+    ENDPOINT_INFO(setIntensities) {
+        info->summary = "Sets all channels of LED panel to given intensity";
+        info->description = "In format: {\"intensity\": [0.5,1,0,0.2] }";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyIntensitiesDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Intensity set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid intensity value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set intensity.");
+    }
+    ADD_CORS(setIntensities)
+    ENDPOINT("POST", "/control/led_intensity", setIntensities, BODY_DTO(Object<MyIntensitiesDto>, body));      
+
+    /**
     * @brief Sets the intensity and the channel of the LED lighting.
     */
     ENDPOINT_INFO(setIntensity) {
@@ -161,16 +180,49 @@ public:
         info->description = "This endpoint allows the user to set the intensity of the LED lighting and the channel. "
                             "The intensity value should be a float between 0 and 1, "
                             "where 0 represents off and 1 represents maximum brightness. "
-                            "The channel value must be an integer that can be 0, 1, 2, or 3, "
+                            "The channel value must be one of the following: 'channel0', 'channel1', 'channel2', or 'channel3', "
                             "representing the specific LED channel to control.";
         info->addTag("Control module");
         info->addConsumes<Object<MyIntensityDto>>("application/json");
         info->addResponse<String>(Status::CODE_200, "application/json", "Intensity set successfully.");
-        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid intensity value.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid intensity or channel value.");
         info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set intensity.");
     }
     ADD_CORS(setIntensity)
-    ENDPOINT("POST", "/control/set-led-intensity", setIntensity, BODY_DTO(Object<MyIntensityDto>, body));      
+    ENDPOINT("POST", "/control/led_intensity/{channel}", setIntensity, PATH(oatpp::Enum<dto::ChannelEnum>::AsString, channel), BODY_DTO(Object<MyIntensityDto>, body));
+
+    /**
+    * @brief Retrieves the current intensity of the selected LED channel.
+    */
+    ENDPOINT_INFO(getIntensity) {
+        info->summary = "Retrieves current intensity of selected channel of LED panel";
+        info->description = "Retrieves current intensity of selected channel of LED panel.";
+        info->addTag("Control module");
+        info->addResponse<Object<MyIntensityDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Channel not found");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve intensity");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getIntensity)
+    ENDPOINT("GET", "/control/led_intensity/{channel}", getIntensity, PATH(oatpp::Enum<dto::ChannelEnum>, channel));
+
+    /**
+    * @brief Retrieves the temperature of the LED panel.
+    */
+    ENDPOINT_INFO(getLedTemperature) {
+        info->summary = "Get LED panel temperature";
+        info->addTag("Control module");
+        info->description = "Retrieves the current temperature of the LED panel in °C.";
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "LED panel not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve LED temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getLedTemperature)
+    ENDPOINT("GET", "/control/led_temperature", getLedTemperature);
+
+
+
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
@@ -195,6 +247,7 @@ private:
         const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false>>& module,
         const std::string& uid);
     std::optional<Codes::Module> getTargetModule(const oatpp::Enum<dto::ModuleEnum>::AsString& module);
+    std::optional<int> getTargetChannel(const dto::ChannelEnum& channel);
 
     boost::asio::io_context& m_ioContext;
     SystemModule& m_systemModule;

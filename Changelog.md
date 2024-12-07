@@ -1,6 +1,11 @@
 # Changelog SMBR Api Server
 The version number consists of MAJOR.MINOR identifiers. The MINOR version changes correspond to the addition of new API endpoints.
 
+# 0.9 Load
+- Added endpoint /{module}/load 
+- Gets module CPU/MCU load
+- Updating CMakeLists for new version of Codes
+
 # 0.8 CAN Bootloader
 - Added endpoint {module}/can_bootloader
 - Resets the module and put it into CAN bus bootloader mode so new firmware can be flashed over CAN bus from RPi
@@ -16,6 +21,12 @@ The version number consists of MAJOR.MINOR identifiers. The MINOR version change
 - Added endpoint {module}/restart
 - Resets the module and starts main application firmware again
 - added new method for data filling - ping, module request, core temp
+
+# 0.5.1 LED
+- Endpoint control/set-led-intensity rename to /control/led_intensity/{channel}
+- Added endpoint POST /control/led_intensity - sets all channels of LED panel to given intensity
+- Added endpoint GET /control/led_intensity/{channel} - retrieves current intensity of selected channel of LED panel
+- Added endpoint /control/led_temperature - retrieves temperature of LED panel
 
 # 0.5 LED
 - Added endpoint control/set-led-intensity

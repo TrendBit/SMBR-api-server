@@ -6,13 +6,15 @@
 #include <functional>
 #include <boost/asio.hpp>
 
-#include "codes/messages/ping_request.hpp"
-#include "codes/messages/ping_response.hpp"
-#include "codes/messages/core_temp_request.hpp"
-#include "codes/messages/core_temp_response.hpp"
-#include "codes/messages/device_reset.hpp"
-#include "codes/messages/device_usb_bootloader.hpp"
-#include "codes/messages/device_can_bootloader.hpp"
+#include "codes/messages/common/ping_request.hpp"
+#include "codes/messages/common/ping_response.hpp"
+#include "codes/messages/common/core_temp_request.hpp"
+#include "codes/messages/common/core_temp_response.hpp"
+#include "codes/messages/common/device_reset.hpp"
+#include "codes/messages/common/device_usb_bootloader.hpp"
+#include "codes/messages/common/device_can_bootloader.hpp"
+#include "codes/messages/common/core_load_request.hpp"
+#include "codes/messages/common/core_load_response.hpp"
 
 
 /**
