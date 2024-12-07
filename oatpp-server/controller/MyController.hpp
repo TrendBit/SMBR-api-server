@@ -9,6 +9,7 @@
 #include "dto/MyLoadResponseDto.hpp"
 #include "dto/MyModuleActionRequestDto.hpp"
 #include "dto/MyIntensitiesDto.hpp"
+#include "dto/MyIntensityDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -157,7 +158,7 @@ public:
 
 
     /**
-    * @brief Sets the intensity and the channel of the LED lighting.
+    * @brief Sets all channels of LED panel to given intensity.
     */
     ENDPOINT_INFO(setIntensities) {
         info->summary = "Sets all channels of LED panel to given intensity";
@@ -170,6 +171,25 @@ public:
     }
     ADD_CORS(setIntensities)
     ENDPOINT("POST", "/control/led_intensity", setIntensities, BODY_DTO(Object<MyIntensitiesDto>, body));      
+
+    /**
+    * @brief Sets the intensity and the channel of the LED lighting.
+    */
+    ENDPOINT_INFO(setIntensity) {
+        info->summary = "Set the intensity and the channel of LED lighting.";
+        info->description = "This endpoint allows the user to set the intensity of the LED lighting and the channel. "
+                            "The intensity value should be a float between 0 and 1, "
+                            "where 0 represents off and 1 represents maximum brightness. "
+                            "The channel value must be an integer that can be 0, 1, 2, or 3, "
+                            "representing the specific LED channel to control.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyIntensityDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Intensity set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid intensity value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set intensity.");
+    }
+    ADD_CORS(setIntensity)
+    ENDPOINT("POST", "/control/led_intensity/{channel}", setIntensity, BODY_DTO(Object<MyIntensityDto>, body));  
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
