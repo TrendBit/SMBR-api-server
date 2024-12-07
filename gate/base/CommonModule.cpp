@@ -36,26 +36,20 @@ void CommonModule::ping(CanRequestManager& manager, Codes::Module module, uint8_
 
 
 void CommonModule::getCoreLoad(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
-    /*App_messages::Core_load_request loadRequest;
+    App_messages::Common::Core_load_request loadRequest;
 
     uint32_t load_can_id = createCanId(loadRequest.Type(), module, Codes::Instance::Exclusive, false);
-    uint32_t load_response_id = createCanId(App_messages::Core_load_response().Type(), module, Codes::Instance::Exclusive, false);*/
-//----------------------------------------
-    uint32_t load_can_id = createCanId(Codes::Message_type::Core_load_request, module, Codes::Instance::Exclusive, false);
-    uint32_t load_response_id = createCanId(Codes::Message_type::Core_load_response, module, Codes::Instance::Exclusive, false);
-    std::vector<uint8_t> load_data = {};  
-//----------------------------------------
+    uint32_t load_response_id = createCanId(App_messages::Common::Core_load_response().Type(), module, Codes::Instance::Exclusive, false);
+
     double timeoutSeconds = 2;
 
-    manager.addRequest(load_can_id, /*loadRequest.Export_data()*/load_data, load_response_id, [callback](CanRequestStatus status, const CanMessage& response) {
+    manager.addRequest(load_can_id, loadRequest.Export_data(), load_response_id, [callback](CanRequestStatus status, const CanMessage& response) {
         if (status == CanRequestStatus::Success) {
             can_data_vector_t dataCopy = response.getData();
 
-            //App_messages::Core_load_response loadResponse;
-            App_messages::Common::Core_temp_response loadResponse;
+            App_messages::Common::Core_load_response loadResponse;
             if (loadResponse.Interpret_data(dataCopy)) {
-                //callback(loadResponse.load);
-                callback(loadResponse.temperature);
+                callback(loadResponse.load);
             } else {
                 callback(-1);
             }

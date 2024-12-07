@@ -77,7 +77,6 @@ public:
     /**
     * @brief Retrieves the CPU/MCU load of the specified module.
     */
-   /*
     ENDPOINT_INFO(getCoreLoad) {
         info->summary = "Get module CPU/MCU load";
         info->addTag("Common");
@@ -89,7 +88,7 @@ public:
     }
     ADD_CORS(getCoreLoad)
     ENDPOINT("GET", "/{module}/load", getCoreLoad, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
-    */
+    
 
     /**
      * @brief Retrieves the CPU/MCU temperature of the specified module.

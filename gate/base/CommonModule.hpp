@@ -13,6 +13,8 @@
 #include "codes/messages/common/device_reset.hpp"
 #include "codes/messages/common/device_usb_bootloader.hpp"
 #include "codes/messages/common/device_can_bootloader.hpp"
+#include "codes/messages/common/core_load_request.hpp"
+#include "codes/messages/common/core_load_response.hpp"
 
 
 /**

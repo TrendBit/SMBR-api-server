@@ -126,7 +126,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
     }
 }
 
-/*
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCoreLoad(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto loadResponseDto = MyLoadResponseDto::createShared();
     std::promise<float> promise;
@@ -156,7 +155,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         return createResponse(Status::CODE_500, "Failed to retrieve load");
     }
 }
-*/
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCoreTemp(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto tempResponseDto = MyTempDto::createShared();
