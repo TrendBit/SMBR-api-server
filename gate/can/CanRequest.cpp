@@ -6,6 +6,7 @@ CanRequest::CanRequest(CanBus& canBus, boost::asio::io_context& io_context, uint
 }
 
 void CanRequest::initialize(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId) {
+
     canBus_ = &canBus;  
     requestMessage_ = CanMessage(requestId, data);
     expectedResponseId_ = responseId;

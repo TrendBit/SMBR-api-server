@@ -52,14 +52,14 @@ CanBus::~CanBus() {
 }
 
 void CanBus::asyncSend(const CanMessage& message, std::function<void(bool)> handler) {
-    auto frame = std::make_shared<struct can_frame>();
+    auto frame = std::make_unique<struct can_frame>();
     frame->can_id = message.getId() | CAN_EFF_FLAG;
     frame->can_dlc = message.getData().size();
     std::memcpy(frame->data, message.getData().data(), frame->can_dlc);
 
     boost::asio::async_write(socket,
         boost::asio::buffer(frame.get(), sizeof(*frame)),
-        [this, frame, handler](const boost::system::error_code& ec, std::size_t ) {
+        [this, frame = std::move(frame), handler](const boost::system::error_code& ec, std::size_t) {
             if (ec) {
                 std::cerr << "Failed to send CAN message with ID: 0x" << std::hex << (frame->can_id & CAN_EFF_MASK) << " and data: ";
                 for (size_t i = 0; i < frame->can_dlc; ++i) {
@@ -73,10 +73,10 @@ void CanBus::asyncSend(const CanMessage& message, std::function<void(bool)> hand
 }
 
 void CanBus::asyncReceive(std::function<void(bool, const CanMessage&)> handler) {
-    auto frame = std::make_shared<struct can_frame>();
+    auto frame = std::make_unique<struct can_frame>();
 
     socket.async_read_some(boost::asio::buffer(frame.get(), sizeof(*frame)),
-        [this, frame, handler](const boost::system::error_code& ec, std::size_t bytes_transferred) {
+        [this, frame = std::move(frame), handler](const boost::system::error_code& ec, std::size_t bytes_transferred) {
             if (!ec) {
                 std::vector<uint8_t> data(frame->data, frame->data + frame->can_dlc);
                 CanMessage message(frame->can_id & CAN_EFF_MASK, data);
