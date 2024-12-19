@@ -149,7 +149,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     future.wait();
     float load = future.get();
 
-    if (load >= 0 && load <= 1.0) {
+    if (load >= 0 && load <= 100) {
         loadResponseDto->load = load;
         return createDtoResponse(Status::CODE_200, loadResponseDto);
     } else if (load == -2) {
