@@ -21,17 +21,17 @@ void CommonModule::ping(CanRequestManager& manager, Codes::Module module, uint8_
 
     auto start_time = std::chrono::steady_clock::now();
 
-    manager.addRequestWithSeq(ping_can_id, set_pingReq.Export_data(), ping_response_id, seq_num, [callback, start_time](CanRequestStatus status, const CanMessage& response) {
+    manager.addRequestWithSeq(ping_can_id, set_pingReq.Export_data(), ping_response_id, seq_num, 
+    [callback, start_time](CanRequestStatus status, const CanMessage& response) {
         if (status == CanRequestStatus::Success) {
             auto end_time = std::chrono::steady_clock::now();
             float response_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
             callback(response_time_ms); 
-        } else if (status == CanRequestStatus::Timeout) {
-            callback(-2); 
         } else {
-            callback(-1); 
+            callback((status == CanRequestStatus::Timeout) ? -2 : -1); 
         }
     }, timeoutSeconds);
+
 }
 
 

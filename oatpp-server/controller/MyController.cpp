@@ -1,4 +1,5 @@
 #include "MyController.hpp"
+#include <spdlog/spdlog.h>
 
 MyController::MyController(const std::shared_ptr<oatpp::web::mime::ContentMappers>& apiContentMappers,
                            boost::asio::io_context& ioContext,
@@ -44,8 +45,13 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
     std::promise<float> promise;
     auto future = promise.get_future();
 
-    auto handlePingResult = [&promise](float responseTime) {
-        promise.set_value(responseTime);
+    std::atomic<bool> promiseSet = false;
+    auto handlePingResult = [&promise, &promiseSet](float responseTime) {
+        if (!promiseSet.exchange(true)) {
+            promise.set_value(responseTime);
+        } else {
+            spdlog::warn("Promise already satisfied, ignoring result");
+        }
     };
 
     auto targetModuleOpt = getTargetModule(module);  
@@ -70,4 +76,5 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
         return createResponse(Status::CODE_500, "Ping failed"); 
     }
 }
+
 

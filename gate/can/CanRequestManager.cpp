@@ -91,6 +91,8 @@ void CanRequestManager::addRequestWithSeq(uint32_t requestId, const std::vector<
 
 
 
+
+
 void CanRequestManager::handleIncomingMessage(const CanMessage& message) {
     uint32_t receivedId = message.getId();
 
@@ -110,7 +112,6 @@ void CanRequestManager::handleIncomingMessage(const CanMessage& message) {
 
     std::unique_ptr<CanRequest> requestToHandle;
     {
-        // Zamykáme pouze přístup k activeRequests_
         std::lock_guard<std::mutex> lock(activeRequestsMutex_);
         for (auto& [key, queue] : activeRequests_) {
             if (!queue.empty() && queue.front() && queue.front()->matchesResponseByMessageType(receivedId)) {
@@ -125,7 +126,6 @@ void CanRequestManager::handleIncomingMessage(const CanMessage& message) {
     }
 
     if (requestToHandle) {
-        // Zpracování požadavku mimo zamknutou sekci
         requestToHandle->handleResponse(message);
     } else {
         spdlog::warn("No matching request found for message ID={}", receivedId);
