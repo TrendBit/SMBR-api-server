@@ -5,6 +5,7 @@
 ControlModule::ControlModule(boost::asio::io_context& io_context, CanRequestManager& canRequestManager)
     : m_ioContext(io_context), m_canRequestManager(canRequestManager) {}
 
+
 void ControlModule::setIntensity(Codes::Module module, float intensity, int channel, std::function<void(bool)> callback) {
 
     App_messages::LED_panel::Set_intensity Set_intensity((uint8_t)channel, (float)intensity);
@@ -67,4 +68,3 @@ void ControlModule::getLedTemperature(CanRequestManager& manager, Codes::Module 
         }
     }, timeoutSeconds);
 }
-

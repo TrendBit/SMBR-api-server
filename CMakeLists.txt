@@ -3,6 +3,7 @@ project(client_server_project)
 
 set(CMAKE_CXX_STANDARD 17)
 
+
 # --- GateLibrary (gate) ---
 
 add_library(GateLibrary
@@ -29,7 +30,9 @@ target_include_directories(GateLibrary
 )
 
 target_link_libraries(GateLibrary
-  PUBLIC oatpp::oatpp
+  PUBLIC 
+      oatpp::oatpp
+
 )
 
 install(
@@ -97,3 +100,4 @@ set_target_properties(ServerLibrary Server PROPERTIES
 add_definitions(
   -DOATPP_SWAGGER_RES_PATH="/usr/local/include/oatpp-1.4.0/bin/oatpp-swagger/res"
 )
+

@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 #include "codes/codes.hpp"
+#include <mutex>
 
 /**
  * @class CanRequestManager
@@ -93,18 +94,21 @@ private:
      * 
      * @return std::shared_ptr<CanRequest> Pointer to a CanRequest object.
      */
-    std::shared_ptr<CanRequest> acquireRequest();
+    std::unique_ptr<CanRequest> acquireRequest();
 
     /**
      * @brief Release a CanRequest object back to the recycled pool.
      * 
      * @param request Pointer to the CanRequest object to release.
      */
-    void releaseRequest(std::shared_ptr<CanRequest> request);
+    void releaseRequest(std::unique_ptr<CanRequest> request);
 
-    boost::asio::io_context& io_context_; 
-    CanBus& canBus_; 
-    std::unordered_map<uint32_t, std::queue<std::shared_ptr<CanRequest>>> activeRequests_; 
-    std::vector<std::shared_ptr<CanRequest>> recycledRequests_; 
+    void startReceiving();
+    std::mutex activeRequestsMutex_;
+    std::mutex recycledRequestsMutex_;
+
+    boost::asio::io_context& io_context_;
+    CanBus& canBus_;
+    std::unordered_map<uint32_t, std::queue<std::unique_ptr<CanRequest>>> activeRequests_;
+    std::vector<std::unique_ptr<CanRequest>> recycledRequests_;
 };
-

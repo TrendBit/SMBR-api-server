@@ -99,8 +99,11 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
     std::promise<float> promise;
     auto future = promise.get_future();
 
-    auto handlePingResult = [&promise](float responseTime) {
-        promise.set_value(responseTime);
+    std::atomic<bool> promiseSet = false;
+    auto handlePingResult = [&promise, &promiseSet](float responseTime) {
+        if (!promiseSet.exchange(true)) {
+            promise.set_value(responseTime);
+        } 
     };
 
     auto targetModuleOpt = getTargetModule(module);  
@@ -146,7 +149,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     future.wait();
     float load = future.get();
 
-    if (load >= 0 && load <= 1.0) {
+    if (load >= 0 && load <= 100) {
         loadResponseDto->load = load;
         return createDtoResponse(Status::CODE_200, loadResponseDto);
     } else if (load == -2) {
