@@ -1,25 +1,12 @@
 #include "CanRequestManager.hpp"
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/basic_file_sink.h>
-#include <iostream>
 
 CanRequestManager::CanRequestManager(boost::asio::io_context& io_context, CanBus& canBus)
     : io_context_(io_context), canBus_(canBus) {
 
-    try {
-        auto file_logger = spdlog::basic_logger_mt("file_logger", "logs/can_request_manager.log");
-        spdlog::set_default_logger(file_logger);
-        spdlog::flush_on(spdlog::level::warn); 
-    } catch (const spdlog::spdlog_ex& ex) {
-        std::cerr << "Failed to initialize spdlog file logger: " << ex.what() << std::endl;
-    }
-
     canBus_.asyncReceive([this](bool success, const CanMessage& message) {
         if (success) {
             handleIncomingMessage(message);
-        } else {
-            spdlog::warn("Message reception failed in constructor");
-        }
+        } 
         this->startReceiving();
     });
 }
@@ -29,9 +16,7 @@ void CanRequestManager::startReceiving() {
 
         if (success) {
             handleIncomingMessage(message);
-        } else {
-            spdlog::warn("Message reception failed in startReceiving");
-        }
+        } 
         this->startReceiving();
     });
 }
@@ -53,7 +38,6 @@ void CanRequestManager::releaseRequest(std::unique_ptr<CanRequest> request) {
         std::lock_guard<std::mutex> activeLock(activeRequestsMutex_);
         for (const auto& [key, queue] : activeRequests_) {
             if (!queue.empty() && queue.front().get() == request.get()) {
-                spdlog::warn("Attempted to recycle an active request");
                 return;
             }
         }
@@ -180,8 +164,6 @@ void CanRequestManager::handleIncomingMessage(const CanMessage& message) {
             return;
         }
     }
-
-    spdlog::warn("No matching request found for message ID=", receivedId);
 }
 
 void CanRequestManager::handlePingMessage(const CanMessage& message) {
@@ -195,7 +177,5 @@ void CanRequestManager::handlePingMessage(const CanMessage& message) {
         if (request) {
             request->handleResponse(message);
         }
-    } else {
-        spdlog::warn("No matching ping request found for key=", requestKey);
-    }
+    } 
 }

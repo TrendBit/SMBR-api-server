@@ -3,7 +3,6 @@ project(client_server_project)
 
 set(CMAKE_CXX_STANDARD 17)
 
-find_package(spdlog REQUIRED)
 
 # --- GateLibrary (gate) ---
 
@@ -33,7 +32,6 @@ target_include_directories(GateLibrary
 target_link_libraries(GateLibrary
   PUBLIC 
         oatpp::oatpp
-        spdlog::spdlog
 )
 
 install(
