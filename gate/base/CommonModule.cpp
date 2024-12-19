@@ -11,8 +11,8 @@ CommonModule::CommonModule(boost::asio::io_context& io_context, CanRequestManage
 
 void CommonModule::ping(CanRequestManager& manager, Codes::Module module, uint8_t seq_num, std::function<void(float)> callback) {
     
-    App_messages::Ping_request set_pingReq((uint8_t)seq_num);
-    App_messages::Ping_response set_pingRes;
+    App_messages::Common::Ping_request set_pingReq((uint8_t)seq_num);
+    App_messages::Common::Ping_response set_pingRes;
     
     uint32_t ping_can_id = createCanId(set_pingReq.Type(), module, Codes::Instance::Exclusive, false);
     uint32_t ping_response_id = createCanId(set_pingRes.Type(), module, Codes::Instance::Exclusive, false);
@@ -33,5 +33,96 @@ void CommonModule::ping(CanRequestManager& manager, Codes::Module module, uint8_
     }, timeoutSeconds);
 
 }
+
+
+void CommonModule::getCoreLoad(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+    App_messages::Common::Core_load_request loadRequest;
+
+    uint32_t load_can_id = createCanId(loadRequest.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t load_response_id = createCanId(App_messages::Common::Core_load_response().Type(), module, Codes::Instance::Exclusive, false);
+
+    double timeoutSeconds = 2;
+
+    manager.addRequest(load_can_id, loadRequest.Export_data(), load_response_id, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::Common::Core_load_response loadResponse;
+            if (loadResponse.Interpret_data(dataCopy)) {
+                callback(loadResponse.load);
+            } else {
+                callback(-1);
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2);
+        } else {
+            callback(-1);
+        }
+    }, timeoutSeconds);
+}
+
+
+void CommonModule::getCoreTemp(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+    App_messages::Common::Core_temp_request set_coreTempReq;
+
+    uint32_t temp_can_id = createCanId(set_coreTempReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t temp_response_id = createCanId(App_messages::Common::Core_temp_response().Type(), module, Codes::Instance::Exclusive, false);
+
+    double timeoutSeconds = 2;
+
+    manager.addRequest(temp_can_id, set_coreTempReq.Export_data(), temp_response_id, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::Common::Core_temp_response coreTempRes;
+            if (coreTempRes.Interpret_data(dataCopy)) {
+                callback(coreTempRes.temperature);
+            } else {
+                callback(-1);  
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2);  
+        } else {
+            callback(-1);  
+        }
+    }, timeoutSeconds);
+}
+
+void CommonModule::sendDeviceReset(CanRequestManager& manager, Codes::Module module, std::function<void(bool)> callback) {
+    App_messages::Common::Device_reset resetRequest; 
+        
+    uint32_t reset_can_id = createCanId(resetRequest.Type(), module, Codes::Instance::Exclusive, false);
+    //uint32_t reset_response_can_id = createCanId(resetRequest.Type(), module, Codes::Instance::Exclusive, false);
+
+    manager.sendWithoutResponse(reset_can_id, resetRequest.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}
+
+void CommonModule::sendDeviceUsbBootloader(CanRequestManager& manager, Codes::Module module, std::function<void(bool)> callback) {
+    App_messages::Common::Device_usb_bootloader usbBootloaderRequest;
+        
+    uint32_t usbBootloader_can_id = createCanId(usbBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
+    //uint32_t usbBootloader_response_can_id = createCanId(usbBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
+
+    manager.sendWithoutResponse(usbBootloader_can_id, usbBootloaderRequest.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}
+
+void CommonModule::sendDeviceCanBootloader(CanRequestManager& manager, Codes::Module module, std::function<void(bool)> callback) {
+    App_messages::Common::Device_can_bootloader canBootloaderRequest;
+        
+    uint32_t canBootloader_can_id = createCanId(canBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
+    //uint32_t canBootloader_response_can_id = createCanId(canBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
+
+    manager.sendWithoutResponse(canBootloader_can_id, canBootloaderRequest.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}
+
+
+
+
 
 

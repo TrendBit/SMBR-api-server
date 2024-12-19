@@ -1,8 +1,18 @@
 #include "CanRequestManager.hpp"
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <iostream>
 
 CanRequestManager::CanRequestManager(boost::asio::io_context& io_context, CanBus& canBus)
     : io_context_(io_context), canBus_(canBus) {
+
+    try {
+        auto file_logger = spdlog::basic_logger_mt("file_logger", "logs/can_request_manager.log");
+        spdlog::set_default_logger(file_logger);
+        spdlog::flush_on(spdlog::level::warn); 
+    } catch (const spdlog::spdlog_ex& ex) {
+        std::cerr << "Failed to initialize spdlog file logger: " << ex.what() << std::endl;
+    }
 
     canBus_.asyncReceive([this](bool success, const CanMessage& message) {
         if (success) {
@@ -16,6 +26,7 @@ CanRequestManager::CanRequestManager(boost::asio::io_context& io_context, CanBus
 
 void CanRequestManager::startReceiving() {
     canBus_.asyncReceive([this](bool success, const CanMessage& message) {
+
         if (success) {
             handleIncomingMessage(message);
         } else {
@@ -53,7 +64,43 @@ void CanRequestManager::releaseRequest(std::unique_ptr<CanRequest> request) {
     recycledRequests_.push_back(std::move(request));
 }
 
+void CanRequestManager::addRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, double timeoutSeconds) {
+    auto request = acquireRequest();
+    request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds, true);
 
+    {
+        std::lock_guard<std::mutex> lock(activeRequestsMutex_);
+        activeRequests_[responseId].push(std::move(request));
+    }
+
+    auto& queue = activeRequests_[responseId];
+    queue.front()->send([this, responseId, responseHandler](CanRequestStatus status, const CanMessage& response) mutable {
+        responseHandler(status, response);
+
+        std::unique_ptr<CanRequest> completedRequest;
+        {
+            std::lock_guard<std::mutex> lock(activeRequestsMutex_);
+            auto it = activeRequests_.find(responseId);
+            if (it != activeRequests_.end() && !it->second.empty()) {
+                completedRequest = std::move(it->second.front());
+                it->second.pop();
+                if (it->second.empty()) {
+                    activeRequests_.erase(it);
+                }
+            }
+        }
+
+        if (completedRequest) {
+            releaseRequest(std::move(completedRequest));
+        }
+    });
+}
+
+void CanRequestManager::sendWithoutResponse(uint32_t requestId, const std::vector<uint8_t>& data, std::function<void(bool)> resultHandler) {
+    auto request = acquireRequest();
+    request->initializeForSendOnly(canBus_, io_context_, requestId, data);
+    request->sendOnly(resultHandler);  
+}
 
 void CanRequestManager::addRequestWithSeq(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, uint8_t seq_num, std::function<void(CanRequestStatus, const CanMessage&)> responseHandler, double timeoutSeconds) {
     auto request = acquireRequest();
@@ -89,9 +136,40 @@ void CanRequestManager::addRequestWithSeq(uint32_t requestId, const std::vector<
     });
 }
 
+void CanRequestManager::addMultiResponseRequest(uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, std::function<void(CanRequestStatus, const std::vector<CanMessage>&)> multiResponseHandler, double timeoutSeconds) {
+    auto request = acquireRequest();
+    request->initialize(canBus_, io_context_, requestId, data, responseId, timeoutSeconds, false);
 
+    {
+        std::lock_guard<std::mutex> lock(activeRequestsMutex_);
+        activeRequests_[responseId].push(std::move(request));
+    }
 
+    auto& queue = activeRequests_[responseId];
+    auto frontRequest = queue.front().get(); 
+    frontRequest->sendMultiResponse([this, responseId, multiResponseHandler, frontRequest](CanRequestStatus status, const std::vector<CanMessage>& responses) mutable {
+        if (multiResponseHandler) {
+            multiResponseHandler(status, responses);
+        }
 
+        std::unique_ptr<CanRequest> completedRequest;
+        {
+            std::lock_guard<std::mutex> lock(activeRequestsMutex_);
+            auto it = activeRequests_.find(responseId);
+            if (it != activeRequests_.end() && !it->second.empty()) {
+                completedRequest = std::move(it->second.front());
+                it->second.pop();
+                if (it->second.empty()) {
+                    activeRequests_.erase(it);
+                }
+            }
+        }
+
+        if (completedRequest) {
+            releaseRequest(std::move(completedRequest));
+        }
+    });
+}
 
 void CanRequestManager::handleIncomingMessage(const CanMessage& message) {
     uint32_t receivedId = message.getId();
@@ -103,35 +181,8 @@ void CanRequestManager::handleIncomingMessage(const CanMessage& message) {
         }
     }
 
-    spdlog::warn("No matching request found for message ID={}", receivedId);
+    spdlog::warn("No matching request found for message ID=", receivedId);
 }
-
-/*
-void CanRequestManager::handleIncomingMessage(const CanMessage& message) {
-    uint32_t receivedId = message.getId();
-
-    std::unique_ptr<CanRequest> requestToHandle;
-    {
-        std::lock_guard<std::mutex> lock(activeRequestsMutex_);
-        for (auto& [key, queue] : activeRequests_) {
-            if (!queue.empty() && queue.front() && queue.front()->matchesResponseByMessageType(receivedId)) {
-                requestToHandle = std::move(queue.front());
-                queue.pop();
-                if (queue.empty()) {
-                    activeRequests_.erase(key);
-                }
-                break;
-            }
-        }
-    }
-
-    if (requestToHandle) {
-        requestToHandle->handleResponse(message);
-    } else {
-        spdlog::warn("No matching request found for message ID={}", receivedId);
-    }
-}*/
-
 
 void CanRequestManager::handlePingMessage(const CanMessage& message) {
     uint32_t receivedId = message.getId();
@@ -145,6 +196,6 @@ void CanRequestManager::handlePingMessage(const CanMessage& message) {
             request->handleResponse(message);
         }
     } else {
-        spdlog::warn("No matching ping request found for key={}", requestKey);
+        spdlog::warn("No matching ping request found for key=", requestKey);
     }
 }
