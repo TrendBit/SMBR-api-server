@@ -560,27 +560,27 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHeaterTargetTemperature() {
-    auto tempResponseDto = MyTempDto::createShared();
-    std::promise<float> promise;
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setHeaterIntensity(const oatpp::Object<MyIntensityDto>& body) {
+    if (!body || body->intensity < -1.0f || body->intensity > 1.0f) {
+        return createResponse(Status::CODE_400, "Invalid intensity value. Must be between -1.0 and 1.0.");
+    }
+
+    std::promise<bool> promise;
     auto future = promise.get_future();
 
-    auto handleTempResult = [&promise](float temperature) {
-        promise.set_value(temperature);
+    auto handleSetIntensityResult = [&promise](bool success) {
+        promise.set_value(success);
     };
 
-    m_controlModule.getHeaterTargetTemperature(m_canRequestManager, Codes::Module::Control_module, handleTempResult);
+    m_controlModule.setHeaterIntensity(Codes::Module::Control_module, body->intensity, handleSetIntensityResult);
 
     future.wait();
-    float temperature = future.get();
+    bool success = future.get();
 
-    if (temperature >= 0) {
-        tempResponseDto->temperature = temperature;
-        return createDtoResponse(Status::CODE_200, tempResponseDto);  
-    } else if (temperature == -2) {
-        return createResponse(Status::CODE_504, "Request timed out"); 
+    if (success) {
+        return createResponse(Status::CODE_200, "Intensity set successfully.");
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve heater target temperature");  
+        return createResponse(Status::CODE_500, "Failed to set heater intensity.");
     }
 }
 
@@ -608,6 +608,54 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setHeaterTargetTemperature(const oatpp::Object<MyTempDto>& body) {
+    if (!body || body->temperature < 0.0f) {
+        return createResponse(Status::CODE_400, "Invalid target temperature. Must be a positive value.");
+    }
+
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handleSetTargetTempResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_controlModule.setHeaterTargetTemperature(Codes::Module::Control_module, body->temperature, handleSetTargetTempResult);
+
+    future.wait();
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Target temperature set successfully.");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to set target temperature.");
+    }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHeaterTargetTemperature() {
+    auto tempResponseDto = MyTempDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleTempResult = [&promise](float temperature) {
+        promise.set_value(temperature);
+    };
+
+    m_controlModule.getHeaterTargetTemperature(m_canRequestManager, Codes::Module::Control_module, handleTempResult);
+
+    future.wait();
+    float temperature = future.get();
+
+    if (temperature >= 0) {
+        tempResponseDto->temperature = temperature;
+        return createDtoResponse(Status::CODE_200, tempResponseDto);  
+    } else if (temperature == -2) {
+        return createResponse(Status::CODE_504, "Request timed out"); 
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve heater target temperature");  
+    }
+}
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHeaterPlateTemperature() {
     auto plateTempResponseDto = MyTempDto::createShared();
     std::promise<float> promise;
@@ -632,51 +680,23 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setHeaterIntensity(const oatpp::Object<MyIntensityDto>& body) {
-    if (!body || body->intensity < -1.0f || body->intensity > 1.0f) {
-        return createResponse(Status::CODE_400, "Invalid intensity value. Must be between -1.0 and 1.0.");
-    }
-
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::turnOffHeater() {
     std::promise<bool> promise;
     auto future = promise.get_future();
 
-    auto handleSetIntensityResult = [&promise](bool success) {
+    auto handleTurnOffResult = [&promise](bool success) {
         promise.set_value(success);
     };
 
-    m_controlModule.setHeaterIntensity(Codes::Module::Control_module, body->intensity, handleSetIntensityResult);
+    m_controlModule.turnOffHeater(Codes::Module::Control_module, handleTurnOffResult);
 
     future.wait();
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Intensity set successfully.");
+        return createResponse(Status::CODE_200, "Heater was turned off.");
     } else {
-        return createResponse(Status::CODE_500, "Failed to set heater intensity.");
-    }
-}
-
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setHeaterTargetTemperature(const oatpp::Object<MyTempDto>& body) {
-    if (!body || body->temperature < 0.0f) {
-        return createResponse(Status::CODE_400, "Invalid target temperature. Must be a positive value.");
-    }
-
-    std::promise<bool> promise;
-    auto future = promise.get_future();
-
-    auto handleSetTargetTempResult = [&promise](bool success) {
-        promise.set_value(success);
-    };
-
-    m_controlModule.setHeaterTargetTemperature(Codes::Module::Control_module, body->temperature, handleSetTargetTempResult);
-
-    future.wait();
-    bool success = future.get();
-
-    if (success) {
-        return createResponse(Status::CODE_200, "Target temperature set successfully.");
-    } else {
-        return createResponse(Status::CODE_500, "Failed to set target temperature.");
+        return createResponse(Status::CODE_500, "Failed to turn off heater.");
     }
 }
 

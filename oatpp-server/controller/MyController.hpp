@@ -222,49 +222,6 @@ public:
     ENDPOINT("GET", "/control/led_temperature", getLedTemperature);
 
     /**
-     * @brief Retrieves the currently set target temperature for the heater.
-     */
-    ENDPOINT_INFO(getHeaterTargetTemperature) {
-        info->summary = "Get heater target temperature";
-        info->addTag("Control module");
-        info->description = "Retrieves the currently set target temperature for the heater (temperature of bottle) in °C.";
-        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve heater target temperature");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
-    }
-    ADD_CORS(getHeaterTargetTemperature)
-    ENDPOINT("GET", "/control/heater/target_temperature", getHeaterTargetTemperature);
-
-    /**
-     * @brief Retrieves the current intensity of heating or cooling.
-     */
-    ENDPOINT_INFO(getHeaterIntensity) {
-        info->summary = "Get heater intensity";
-        info->addTag("Control module");
-        info->description = "Retrieves current intensity of heating or cooling. Range is -1.0 (cooling) to 1.0 (heating). Intensity can be modified by regulation algorithm if temperature regulation (target temperature) is set.";
-        info->addResponse<Object<MyIntensityDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve heater intensity");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
-    }
-    ADD_CORS(getHeaterIntensity)
-    ENDPOINT("GET", "/control/heater/intensity", getHeaterIntensity);
-
-    /**
-     * @brief Retrieves the current temperature of the heater plate (metal heatspreader).
-     */
-    ENDPOINT_INFO(getHeaterPlateTemperature) {
-        info->summary = "Get heater plate temperature";
-        info->addTag("Control module");
-        info->description = "Retrieves temperature of plate (metal heatspreader) which is controlling temperature of bottle. Sensor is thermistor connected from back side of heater plate.";
-        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_404, "application/json", "Heater plate not available");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve heater plate temperature");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
-    }
-    ADD_CORS(getHeaterPlateTemperature)
-    ENDPOINT("GET", "/control/heater/plate_temperature", getHeaterPlateTemperature);
-
-    /**
      * @brief Sets the intensity of heating or cooling.
      */
     ENDPOINT_INFO(setHeaterIntensity) {
@@ -279,6 +236,20 @@ public:
     }
     ADD_CORS(setHeaterIntensity)
     ENDPOINT("POST", "/control/heater/intensity", setHeaterIntensity, BODY_DTO(Object<MyIntensityDto>, body));
+
+    /**
+     * @brief Retrieves the current intensity of heating or cooling.
+     */
+    ENDPOINT_INFO(getHeaterIntensity) {
+        info->summary = "Get heater intensity";
+        info->addTag("Control module");
+        info->description = "Retrieves current intensity of heating or cooling. Range is -1.0 (cooling) to 1.0 (heating). Intensity can be modified by regulation algorithm if temperature regulation (target temperature) is set.";
+        info->addResponse<Object<MyIntensityDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve heater intensity");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getHeaterIntensity)
+    ENDPOINT("GET", "/control/heater/intensity", getHeaterIntensity);
 
     /**
      * @brief Sets the target temperature for the heater.
@@ -296,6 +267,47 @@ public:
     ADD_CORS(setHeaterTargetTemperature)
     ENDPOINT("POST", "/control/heater/target_temperature", setHeaterTargetTemperature, BODY_DTO(Object<MyTempDto>, body));
 
+    /**
+     * @brief Retrieves the currently set target temperature for the heater.
+     */
+    ENDPOINT_INFO(getHeaterTargetTemperature) {
+        info->summary = "Get heater target temperature";
+        info->addTag("Control module");
+        info->description = "Retrieves the currently set target temperature for the heater (temperature of bottle) in °C.";
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve heater target temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getHeaterTargetTemperature)
+    ENDPOINT("GET", "/control/heater/target_temperature", getHeaterTargetTemperature);
+
+    /**
+     * @brief Retrieves the current temperature of the heater plate (metal heatspreader).
+     */
+    ENDPOINT_INFO(getHeaterPlateTemperature) {
+        info->summary = "Get heater plate temperature";
+        info->addTag("Control module");
+        info->description = "Retrieves temperature of plate (metal heatspreader) which is controlling temperature of bottle. Sensor is thermistor connected from back side of heater plate.";
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Heater plate not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve heater plate temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getHeaterPlateTemperature)
+    ENDPOINT("GET", "/control/heater/plate_temperature", getHeaterPlateTemperature);
+
+    /**
+     * @brief Turns off the heater.
+     */
+    ENDPOINT_INFO(turnOffHeater) {
+        info->summary = "Turn off heater";
+        info->description = "Turns off the heater by setting intensity to 0.0 and disabling temperature regulation.";
+        info->addTag("Control module");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Heater was turned off.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to turn off heater.");
+    }
+    ADD_CORS(turnOffHeater)
+    ENDPOINT("POST", "/control/heater/turn_off", turnOffHeater);
 
 
     /**

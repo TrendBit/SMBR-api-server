@@ -23,6 +23,7 @@
 #include "codes/messages/heater/get_plate_temperature_response.hpp"
 #include "codes/messages/heater/set_intensity.hpp"
 #include "codes/messages/heater/set_target_temperature.hpp"
+#include "codes/messages/heater/turn_off.hpp"
 
 
 /**
@@ -60,12 +61,13 @@ public:
     void getLedTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback); 
 
     /**
-     * @brief Retrieves the currently set target temperature for the heater.
+     * @brief Sets the intensity of heating or cooling.
      * 
-     * @param module Target module from which the heater target temperature will be retrieved.
-     * @param callback Callback function to handle the retrieved temperature.
+     * @param module Target module.
+     * @param intensity Value between -1.0 (cooling) and 1.0 (heating).
+     * @param callback Callback function to indicate success or failure.
      */
-    void getHeaterTargetTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+    void setHeaterIntensity(Codes::Module module, float intensity, std::function<void(bool)> callback);
 
     /**
      * @brief Retrieves the current intensity of heating or cooling.
@@ -76,6 +78,24 @@ public:
     void getHeaterIntensity(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
     /**
+     * @brief Sets the target temperature for the heater.
+     * 
+     * @param module Target module.
+     * @param targetTemperature Desired target temperature in ˚C.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setHeaterTargetTemperature(Codes::Module module, float targetTemperature, std::function<void(bool)> callback);
+
+    /**
+     * @brief Retrieves the currently set target temperature for the heater.
+     * 
+     * @param module Target module from which the heater target temperature will be retrieved.
+     * @param callback Callback function to handle the retrieved temperature.
+     */
+    void getHeaterTargetTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+
+    /**
      * @brief Retrieves the current temperature of the heater plate (metal heatspreader).
      *
      * @param module Target module from which the heater plate temperature will be retrieved.
@@ -84,22 +104,13 @@ public:
     void getHeaterPlateTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
     /**
-     * @brief Sets the intensity of heating or cooling.
+     * @brief Turns off the heater by setting intensity to 0.0 and disabling temperature regulation.
      * 
      * @param module Target module.
-     * @param intensity Value between -1.0 (cooling) and 1.0 (heating).
      * @param callback Callback function to indicate success or failure.
-     */
-    void setHeaterIntensity(Codes::Module module, float intensity, std::function<void(bool)> callback);
+ */
+void turnOffHeater(Codes::Module module, std::function<void(bool)> callback);
 
-    /**
-     * @brief Sets the target temperature for the heater.
-     * 
-     * @param module Target module.
-     * @param targetTemperature Desired target temperature in ˚C.
-     * @param callback Callback function to indicate success or failure.
-     */
-    void setHeaterTargetTemperature(Codes::Module module, float targetTemperature, std::function<void(bool)> callback);
 
 
 protected:

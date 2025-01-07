@@ -69,30 +69,14 @@ void ControlModule::getLedTemperature(CanRequestManager& manager, Codes::Module 
     }, timeoutSeconds);
 }
 
-void ControlModule::getHeaterTargetTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
-    App_messages::Heater::Get_target_temperature_request getTargetTempReq;
+void ControlModule::setHeaterIntensity(Codes::Module module, float intensity, std::function<void(bool)> callback) {
+    App_messages::Heater::Set_intensity setIntensity(intensity);
 
-    uint32_t requestCanId = createCanId(getTargetTempReq.Type(), module, Codes::Instance::Exclusive, false);
-    uint32_t responseCanId = createCanId(App_messages::Heater::Get_target_temperature_response(0.0f).Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t intensityCanId = createCanId(setIntensity.Type(), module, Codes::Instance::Exclusive, false);
 
-    double timeoutSeconds = 2;
-
-    manager.addRequest(requestCanId, getTargetTempReq.Export_data(), responseCanId, [callback](CanRequestStatus status, const CanMessage& response) {
-        if (status == CanRequestStatus::Success) {
-            can_data_vector_t dataCopy = response.getData();
-
-            App_messages::Heater::Get_target_temperature_response targetTempResponse(0.0f);
-            if (targetTempResponse.Interpret_data(dataCopy)) {
-                callback(targetTempResponse.temperature);  
-            } else {
-                callback(-1); 
-            }
-        } else if (status == CanRequestStatus::Timeout) {
-            callback(-2);
-        } else {
-            callback(-1); 
-        }
-    }, timeoutSeconds);
+    m_canRequestManager.sendWithoutResponse(intensityCanId, setIntensity.Export_data(), [callback](bool success) {
+        callback(success);
+    });
 }
 
 void ControlModule::getHeaterIntensity(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
@@ -110,6 +94,42 @@ void ControlModule::getHeaterIntensity(CanRequestManager& manager, Codes::Module
             App_messages::Heater::Get_intensity_response intensityResponse(0.0f);
             if (intensityResponse.Interpret_data(dataCopy)) {
                 callback(intensityResponse.intensity);  
+            } else {
+                callback(-1); 
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2);
+        } else {
+            callback(-1); 
+        }
+    }, timeoutSeconds);
+}
+
+void ControlModule::setHeaterTargetTemperature(Codes::Module module, float targetTemperature, std::function<void(bool)> callback) {
+    App_messages::Heater::Set_target_temperature setTargetTemperature(targetTemperature);
+
+    uint32_t targetTempCanId = createCanId(setTargetTemperature.Type(), module, Codes::Instance::Exclusive, false);
+
+    m_canRequestManager.sendWithoutResponse(targetTempCanId, setTargetTemperature.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}
+
+void ControlModule::getHeaterTargetTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+    App_messages::Heater::Get_target_temperature_request getTargetTempReq;
+
+    uint32_t requestCanId = createCanId(getTargetTempReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t responseCanId = createCanId(App_messages::Heater::Get_target_temperature_response(0.0f).Type(), module, Codes::Instance::Exclusive, false);
+
+    double timeoutSeconds = 2;
+
+    manager.addRequest(requestCanId, getTargetTempReq.Export_data(), responseCanId, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::Heater::Get_target_temperature_response targetTempResponse(0.0f);
+            if (targetTempResponse.Interpret_data(dataCopy)) {
+                callback(targetTempResponse.temperature);  
             } else {
                 callback(-1); 
             }
@@ -147,22 +167,13 @@ void ControlModule::getHeaterPlateTemperature(CanRequestManager& manager, Codes:
     }, timeoutSeconds);
 }
 
-void ControlModule::setHeaterIntensity(Codes::Module module, float intensity, std::function<void(bool)> callback) {
-    App_messages::Heater::Set_intensity setIntensity(intensity);
+void ControlModule::turnOffHeater(Codes::Module module, std::function<void(bool)> callback) {
+    App_messages::Heater::Heater_turn_off turnOff;
 
-    uint32_t intensityCanId = createCanId(setIntensity.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t turnOffCanId = createCanId(turnOff.Type(), module, Codes::Instance::Exclusive, false);
 
-    m_canRequestManager.sendWithoutResponse(intensityCanId, setIntensity.Export_data(), [callback](bool success) {
+    m_canRequestManager.sendWithoutResponse(turnOffCanId, turnOff.Export_data(), [callback](bool success) {
         callback(success);
     });
 }
 
-void ControlModule::setHeaterTargetTemperature(Codes::Module module, float targetTemperature, std::function<void(bool)> callback) {
-    App_messages::Heater::Set_target_temperature setTargetTemperature(targetTemperature);
-
-    uint32_t targetTempCanId = createCanId(setTargetTemperature.Type(), module, Codes::Instance::Exclusive, false);
-
-    m_canRequestManager.sendWithoutResponse(targetTempCanId, setTargetTemperature.Export_data(), [callback](bool success) {
-        callback(success);
-    });
-}
