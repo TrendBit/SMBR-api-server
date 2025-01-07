@@ -264,6 +264,22 @@ public:
     ADD_CORS(getHeaterPlateTemperature)
     ENDPOINT("GET", "/control/heater/plate_temperature", getHeaterPlateTemperature);
 
+    /**
+     * @brief Sets the intensity of heating or cooling.
+     */
+    ENDPOINT_INFO(setHeaterIntensity) {
+        info->summary = "Set heater intensity";
+        info->description = "Sets the intensity of heating or cooling in range -1.0 (cooling) to 1.0 (heating). "
+                            "This value can be overwritten by the regulation algorithm if temperature regulation (target temperature) is set.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyIntensityDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Intensity set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid intensity value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set intensity.");
+    }
+    ADD_CORS(setHeaterIntensity)
+    ENDPOINT("POST", "/control/heater/intensity", setHeaterIntensity, BODY_DTO(Object<MyIntensityDto>, body));
+
 
 
     /**

@@ -14,7 +14,7 @@ void ControlModule::setIntensity(Codes::Module module, float intensity, int chan
 
     m_canRequestManager.sendWithoutResponse(intensity_can_id, Set_intensity.Export_data(), [callback](bool success) {
         callback(success);
-});
+    });
 }
 
 void ControlModule::getIntensity(CanRequestManager& manager, Codes::Module module, int channel, std::function<void(float)> callback) {
@@ -146,3 +146,14 @@ void ControlModule::getHeaterPlateTemperature(CanRequestManager& manager, Codes:
         }
     }, timeoutSeconds);
 }
+
+void ControlModule::setHeaterIntensity(Codes::Module module, float intensity, std::function<void(bool)> callback) {
+    App_messages::Heater::Set_intensity setIntensity(intensity);
+
+    uint32_t intensityCanId = createCanId(setIntensity.Type(), module, Codes::Instance::Exclusive, false);
+
+    m_canRequestManager.sendWithoutResponse(intensityCanId, setIntensity.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}
+

@@ -632,6 +632,30 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setHeaterIntensity(const oatpp::Object<MyIntensityDto>& body) {
+    if (!body || body->intensity < -1.0f || body->intensity > 1.0f) {
+        return createResponse(Status::CODE_400, "Invalid intensity value. Must be between -1.0 and 1.0.");
+    }
+
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handleSetIntensityResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_controlModule.setHeaterIntensity(Codes::Module::Control_module, body->intensity, handleSetIntensityResult);
+
+    future.wait();
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Intensity set successfully.");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to set heater intensity.");
+    }
+}
+
 
 
 /*

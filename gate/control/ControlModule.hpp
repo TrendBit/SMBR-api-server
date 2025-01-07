@@ -21,6 +21,7 @@
 #include "codes/messages/heater/get_intensity_response.hpp"
 #include "codes/messages/heater/get_plate_temperature_request.hpp"
 #include "codes/messages/heater/get_plate_temperature_response.hpp"
+#include "codes/messages/heater/set_intensity.hpp"
 
 
 /**
@@ -80,6 +81,15 @@ public:
      * @param callback Callback function to handle the retrieved temperature.
      */
     void getHeaterPlateTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Asynchronously sets the intensity of heating or cooling.
+     * 
+     * @param module Target module.
+     * @param intensity Value between -1.0 (cooling) and 1.0 (heating).
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setHeaterIntensity(Codes::Module module, float intensity, std::function<void(bool)> callback);
 
 
 
