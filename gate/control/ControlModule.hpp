@@ -17,6 +17,8 @@
 #include "codes/messages/led_panel/temperature_response.hpp"
 #include "codes/messages/heater/get_target_temperature_request.hpp"
 #include "codes/messages/heater/get_target_temperature_response.hpp"
+#include "codes/messages/heater/get_intensity_request.hpp"
+#include "codes/messages/heater/get_intensity_response.hpp"
 
 
 /**
@@ -61,6 +63,13 @@ public:
      */
     void getHeaterTargetTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
+    /**
+     * @brief Retrieves the current intensity of heating or cooling.
+     * 
+     * @param module Target module from which the heater intensity will be retrieved.
+     * @param callback Callback function to handle the retrieved intensity.
+     */
+    void getHeaterIntensity(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
 
 protected:

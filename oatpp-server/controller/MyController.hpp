@@ -235,6 +235,20 @@ public:
     ADD_CORS(getHeaterTargetTemperature)
     ENDPOINT("GET", "/control/heater/target_temperature", getHeaterTargetTemperature);
 
+    /**
+     * @brief Retrieves the current intensity of heating or cooling.
+     */
+    ENDPOINT_INFO(getHeaterIntensity) {
+        info->summary = "Get heater intensity";
+        info->addTag("Control module");
+        info->description = "Retrieves current intensity of heating or cooling. Range is -1.0 (cooling) to 1.0 (heating). Intensity can be modified by regulation algorithm if temperature regulation (target temperature) is set.";
+        info->addResponse<Object<MyIntensityDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve heater intensity");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getHeaterIntensity)
+    ENDPOINT("GET", "/control/heater/intensity", getHeaterIntensity);
+
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.

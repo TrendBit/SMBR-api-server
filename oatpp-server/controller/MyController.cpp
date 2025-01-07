@@ -584,6 +584,29 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHeaterIntensity() {
+    auto intensityResponseDto = MyIntensityDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleIntensityResult = [&promise](float intensity) {
+        promise.set_value(intensity);
+    };
+
+    m_controlModule.getHeaterIntensity(m_canRequestManager, Codes::Module::Control_module, handleIntensityResult);
+
+    future.wait();
+    float intensity = future.get();
+
+    if (intensity >= -1.0f && intensity <= 1.0f) {
+        intensityResponseDto->intensity = intensity;
+        return createDtoResponse(Status::CODE_200, intensityResponseDto);  
+    } else if (intensity == -2) {
+        return createResponse(Status::CODE_504, "Request timed out"); 
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve heater intensity");  
+    }
+}
 
 
 /*
