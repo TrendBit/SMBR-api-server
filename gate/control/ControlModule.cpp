@@ -68,3 +68,29 @@ void ControlModule::getLedTemperature(CanRequestManager& manager, Codes::Module 
         }
     }, timeoutSeconds);
 }
+
+void ControlModule::getHeaterTargetTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+    App_messages::Heater::Get_target_temperature_request getTargetTempReq;
+
+    uint32_t requestCanId = createCanId(getTargetTempReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t responseCanId = createCanId(App_messages::Heater::Get_target_temperature_response(0.0f).Type(), module, Codes::Instance::Exclusive, false);
+
+    double timeoutSeconds = 2;
+
+    manager.addRequest(requestCanId, getTargetTempReq.Export_data(), responseCanId, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::Heater::Get_target_temperature_response targetTempResponse(0.0f);
+            if (targetTempResponse.Interpret_data(dataCopy)) {
+                callback(targetTempResponse.temperature);  
+            } else {
+                callback(-1); 
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2);
+        } else {
+            callback(-1); 
+        }
+    }, timeoutSeconds);
+}

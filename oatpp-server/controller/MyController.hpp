@@ -221,7 +221,19 @@ public:
     ADD_CORS(getLedTemperature)
     ENDPOINT("GET", "/control/led_temperature", getLedTemperature);
 
-
+    /**
+     * @brief Retrieves the currently set target temperature for the heater.
+     */
+    ENDPOINT_INFO(getHeaterTargetTemperature) {
+        info->summary = "Get heater target temperature";
+        info->addTag("Control module");
+        info->description = "Retrieves the currently set target temperature for the heater (temperature of bottle) in °C.";
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve heater target temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getHeaterTargetTemperature)
+    ENDPOINT("GET", "/control/heater/target_temperature", getHeaterTargetTemperature);
 
 
     /**

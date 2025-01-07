@@ -15,6 +15,8 @@
 #include "codes/messages/led_panel/get_intensity_response.hpp"
 #include "codes/messages/led_panel/temperature_request.hpp"
 #include "codes/messages/led_panel/temperature_response.hpp"
+#include "codes/messages/heater/get_target_temperature_request.hpp"
+#include "codes/messages/heater/get_target_temperature_response.hpp"
 
 
 /**
@@ -50,6 +52,14 @@ public:
      * @param callback Callback function to handle the retrieved temperature.
      */
     void getLedTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback); 
+
+    /**
+     * @brief Retrieves the currently set target temperature for the heater.
+     * 
+     * @param module Target module from which the heater target temperature will be retrieved.
+     * @param callback Callback function to handle the retrieved temperature.
+     */
+    void getHeaterTargetTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
 
 
