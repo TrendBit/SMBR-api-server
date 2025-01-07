@@ -608,6 +608,31 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHeaterPlateTemperature() {
+    auto plateTempResponseDto = MyTempDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handlePlateTempResult = [&promise](float plateTemperature) {
+        promise.set_value(plateTemperature);
+    };
+
+    m_controlModule.getHeaterPlateTemperature(m_canRequestManager, Codes::Module::Control_module, handlePlateTempResult);
+
+    future.wait();
+    float plateTemperature = future.get();
+
+    if (plateTemperature >= 0) {
+        plateTempResponseDto->temperature = plateTemperature;
+        return createDtoResponse(Status::CODE_200, plateTempResponseDto);
+    } else if (plateTemperature == -2) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve heater plate temperature");
+    }
+}
+
+
 
 /*
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pingDirect() {

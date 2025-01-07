@@ -19,6 +19,8 @@
 #include "codes/messages/heater/get_target_temperature_response.hpp"
 #include "codes/messages/heater/get_intensity_request.hpp"
 #include "codes/messages/heater/get_intensity_response.hpp"
+#include "codes/messages/heater/get_plate_temperature_request.hpp"
+#include "codes/messages/heater/get_plate_temperature_response.hpp"
 
 
 /**
@@ -70,6 +72,15 @@ public:
      * @param callback Callback function to handle the retrieved intensity.
      */
     void getHeaterIntensity(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Retrieves the current temperature of the heater plate (metal heatspreader).
+     *
+     * @param module Target module from which the heater plate temperature will be retrieved.
+     * @param callback Callback function to handle the retrieved temperature.
+     */
+    void getHeaterPlateTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
 
 
 protected:

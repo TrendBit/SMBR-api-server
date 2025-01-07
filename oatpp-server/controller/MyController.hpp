@@ -249,6 +249,22 @@ public:
     ADD_CORS(getHeaterIntensity)
     ENDPOINT("GET", "/control/heater/intensity", getHeaterIntensity);
 
+    /**
+     * @brief Retrieves the current temperature of the heater plate (metal heatspreader).
+     */
+    ENDPOINT_INFO(getHeaterPlateTemperature) {
+        info->summary = "Get heater plate temperature";
+        info->addTag("Control module");
+        info->description = "Retrieves temperature of plate (metal heatspreader) which is controlling temperature of bottle. Sensor is thermistor connected from back side of heater plate.";
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Heater plate not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve heater plate temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getHeaterPlateTemperature)
+    ENDPOINT("GET", "/control/heater/plate_temperature", getHeaterPlateTemperature);
+
+
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
