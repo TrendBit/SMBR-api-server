@@ -22,6 +22,7 @@
 #include "codes/messages/heater/get_plate_temperature_request.hpp"
 #include "codes/messages/heater/get_plate_temperature_response.hpp"
 #include "codes/messages/heater/set_intensity.hpp"
+#include "codes/messages/heater/set_target_temperature.hpp"
 
 
 /**
@@ -83,7 +84,7 @@ public:
     void getHeaterPlateTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
     /**
-     * @brief Asynchronously sets the intensity of heating or cooling.
+     * @brief Sets the intensity of heating or cooling.
      * 
      * @param module Target module.
      * @param intensity Value between -1.0 (cooling) and 1.0 (heating).
@@ -91,6 +92,14 @@ public:
      */
     void setHeaterIntensity(Codes::Module module, float intensity, std::function<void(bool)> callback);
 
+    /**
+     * @brief Sets the target temperature for the heater.
+     * 
+     * @param module Target module.
+     * @param targetTemperature Desired target temperature in ˚C.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setHeaterTargetTemperature(Codes::Module module, float targetTemperature, std::function<void(bool)> callback);
 
 
 protected:

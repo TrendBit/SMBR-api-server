@@ -280,6 +280,22 @@ public:
     ADD_CORS(setHeaterIntensity)
     ENDPOINT("POST", "/control/heater/intensity", setHeaterIntensity, BODY_DTO(Object<MyIntensityDto>, body));
 
+    /**
+     * @brief Sets the target temperature for the heater.
+     */
+    ENDPOINT_INFO(setHeaterTargetTemperature) {
+        info->summary = "Set heater target temperature";
+        info->description = "Sets the target temperature for the heater (temperature of bottle) in ˚C. "
+                            "The heater will adjust its intensity to reach this temperature.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyTempDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Target temperature set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid target temperature.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set target temperature.");
+    }
+    ADD_CORS(setHeaterTargetTemperature)
+    ENDPOINT("POST", "/control/heater/target_temperature", setHeaterTargetTemperature, BODY_DTO(Object<MyTempDto>, body));
+
 
 
     /**

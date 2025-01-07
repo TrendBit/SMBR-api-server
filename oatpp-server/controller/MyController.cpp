@@ -656,6 +656,29 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setHeaterTargetTemperature(const oatpp::Object<MyTempDto>& body) {
+    if (!body || body->temperature < 0.0f) {
+        return createResponse(Status::CODE_400, "Invalid target temperature. Must be a positive value.");
+    }
+
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handleSetTargetTempResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_controlModule.setHeaterTargetTemperature(Codes::Module::Control_module, body->temperature, handleSetTargetTempResult);
+
+    future.wait();
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Target temperature set successfully.");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to set target temperature.");
+    }
+}
 
 
 /*

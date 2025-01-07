@@ -157,3 +157,12 @@ void ControlModule::setHeaterIntensity(Codes::Module module, float intensity, st
     });
 }
 
+void ControlModule::setHeaterTargetTemperature(Codes::Module module, float targetTemperature, std::function<void(bool)> callback) {
+    App_messages::Heater::Set_target_temperature setTargetTemperature(targetTemperature);
+
+    uint32_t targetTempCanId = createCanId(setTargetTemperature.Type(), module, Codes::Instance::Exclusive, false);
+
+    m_canRequestManager.sendWithoutResponse(targetTempCanId, setTargetTemperature.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}
