@@ -732,6 +732,30 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCuvettePumpSpeed() {
+    auto speedResponseDto = MySpeedDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleSpeedResult = [&promise](float speed) {
+        promise.set_value(speed);
+    };
+
+    m_controlModule.getCuvettePumpSpeed(m_canRequestManager, Codes::Module::Control_module, handleSpeedResult);
+
+    future.wait();
+    float speed = future.get();
+
+    if (speed >= -1.0f && speed <= 1.0f) {
+        speedResponseDto->speed = speed;
+        return createDtoResponse(Status::CODE_200, speedResponseDto);  
+    } else if (speed == -2) {
+        return createResponse(Status::CODE_504, "Request timed out"); 
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve pump speed");  
+    }
+}
+
 
 /*
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pingDirect() {

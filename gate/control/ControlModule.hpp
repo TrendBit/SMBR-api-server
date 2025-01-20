@@ -25,6 +25,9 @@
 #include "codes/messages/heater/set_target_temperature.hpp"
 #include "codes/messages/heater/turn_off.hpp"
 #include "codes/messages/cuvette_pump/set_speed.hpp"
+#include "codes/messages/cuvette_pump/get_speed_request.hpp"
+#include "codes/messages/cuvette_pump/get_speed_response.hpp"
+
 
 /**
  * @class ControlModule
@@ -120,7 +123,13 @@ public:
      */
     void setCuvettePumpSpeed(Codes::Module module, float speed, std::function<void(bool)> callback);
 
-
+    /**
+     * @brief Retrieves the current speed of the cuvette pump.
+     * 
+     * @param module Target module from which the pump speed will be retrieved.
+     * @param callback Callback function to handle the retrieved speed.
+     */
+    void getCuvettePumpSpeed(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
 protected:
     boost::asio::io_context& m_ioContext; 

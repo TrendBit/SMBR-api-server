@@ -325,6 +325,20 @@ public:
     ADD_CORS(setCuvettePumpSpeed)
     ENDPOINT("POST", "/control/cuvette_pump/speed", setCuvettePumpSpeed, BODY_DTO(Object<MySpeedDto>, body));
 
+    /**
+     * @brief Retrieves the current speed of the cuvette pump.
+     */
+    ENDPOINT_INFO(getCuvettePumpSpeed) {
+        info->summary = "Get cuvette pump speed";
+        info->addTag("Control module");
+        info->description = "Retrieves current speed of the cuvette pump. Range is -1.0 (out) to 1.0 (in).";
+        info->addResponse<Object<MySpeedDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve pump speed");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getCuvettePumpSpeed)
+    ENDPOINT("GET", "/control/cuvette_pump/speed", getCuvettePumpSpeed);
+
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
