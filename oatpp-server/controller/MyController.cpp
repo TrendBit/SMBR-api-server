@@ -827,6 +827,28 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::mo
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::primeCuvettePump() {
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handlePrimeResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_controlModule.primeCuvettePump(Codes::Module::Control_module, handlePrimeResult);
+
+    future.wait();
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Cuvette pump priming was started.");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to start cuvette pump priming.");
+    }
+}
+
+
+
 /*
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pingDirect() {
     oatpp::String response = "{\"message\": \"Ping direct response successful\"}";

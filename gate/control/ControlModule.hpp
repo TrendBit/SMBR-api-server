@@ -31,6 +31,7 @@
 #include "codes/messages/cuvette_pump/get_flowrate_request.hpp"
 #include "codes/messages/cuvette_pump/get_flowrate_response.hpp"
 #include "codes/messages/cuvette_pump/move.hpp"
+#include "codes/messages/cuvette_pump/prime.hpp"
 
 
 /**
@@ -162,6 +163,14 @@ public:
      * @param callback Callback function to indicate success or failure.
      */
     void moveCuvettePump(Codes::Module module, float volume, float flowrate, std::function<void(bool)> callback);
+
+    /**
+     * @brief Sends a command to prime the cuvette pump.
+     * 
+     * @param module Target module.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void primeCuvettePump(Codes::Module module, std::function<void(bool)> callback);
 
 
 protected:

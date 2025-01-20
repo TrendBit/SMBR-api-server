@@ -276,3 +276,12 @@ void ControlModule::moveCuvettePump(Codes::Module module, float volume, float fl
     });
 }
 
+void ControlModule::primeCuvettePump(Codes::Module module, std::function<void(bool)> callback) {
+    App_messages::Cuvette_pump::Prime primeMessage;
+
+    uint32_t primeCanId = createCanId(primeMessage.Type(), module, Codes::Instance::Exclusive, false);
+
+    m_canRequestManager.sendWithoutResponse(primeCanId, primeMessage.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}

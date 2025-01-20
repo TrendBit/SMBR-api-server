@@ -384,6 +384,21 @@ public:
     }
     ADD_CORS(moveCuvettePump)
     ENDPOINT("POST", "/control/cuvette_pump/move", moveCuvettePump, BODY_DTO(Object<MyMoveDto>, body));
+
+    /**
+     * @brief Primes the cuvette pump.
+     */
+    ENDPOINT_INFO(primeCuvettePump) {
+        info->summary = "Prime cuvette pump";
+        info->description = "Primes the cuvette pump by pumping liquid into the cuvette. This is used to fill the cuvette with liquid and remove air from the system.";
+        info->addTag("Control module");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Cuvette pump priming was started.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to start cuvette pump priming.");
+    }
+    ADD_CORS(primeCuvettePump)
+    ENDPOINT("POST", "/control/cuvette_pump/prime", primeCuvettePump);
+
+
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
     */
