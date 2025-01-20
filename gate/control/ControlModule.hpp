@@ -35,6 +35,8 @@
 #include "codes/messages/cuvette_pump/purge.hpp"
 #include "codes/messages/cuvette_pump/stop.hpp"
 #include "codes/messages/aerator/set_speed.hpp"
+#include "codes/messages/aerator/get_speed_request.hpp"
+#include "codes/messages/aerator/get_speed_response.hpp"
 
 
 /**
@@ -200,6 +202,13 @@ public:
      */
     void setAeratorSpeed(Codes::Module module, float speed, std::function<void(bool)> callback);
 
+    /**
+     * @brief Retrieves the current speed of the aerator.
+     * 
+     * @param module Target module from which the aerator speed will be retrieved.
+     * @param callback Callback function to handle the retrieved speed.
+     */
+    void getAeratorSpeed(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
 protected:
     boost::asio::io_context& m_ioContext; 

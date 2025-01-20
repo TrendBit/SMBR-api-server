@@ -342,21 +342,6 @@ public:
     ENDPOINT("GET", "/control/cuvette_pump/speed", getCuvettePumpSpeed);
 
     /**
-     * @brief Sets the speed of the aerator.
-     */
-    ENDPOINT_INFO(setAeratorSpeed) {
-        info->summary = "Set aerator speed";
-        info->description = "Sets the speed of the aerator in range 0.0 to 1.0.";
-        info->addTag("Control module");
-        info->addConsumes<Object<MySpeedDto>>("application/json");
-        info->addResponse<String>(Status::CODE_200, "application/json", "Speed set successfully.");
-        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid speed value.");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set aerator speed.");
-    }
-    ADD_CORS(setAeratorSpeed)
-    ENDPOINT("POST", "/control/aerator/speed", setAeratorSpeed, BODY_DTO(Object<MySpeedDto>, body));
-
-    /**
      * @brief Sets flowrate of the cuvette pump
      */
     ENDPOINT_INFO(setCuvettePumpFlowrate) {
@@ -438,6 +423,35 @@ public:
     }
     ADD_CORS(stopCuvettePump)
     ENDPOINT("POST", "/control/cuvette_pump/stop", stopCuvettePump);
+
+    /**
+     * @brief Sets the speed of the aerator.
+     */
+    ENDPOINT_INFO(setAeratorSpeed) {
+        info->summary = "Set aerator speed";
+        info->description = "Sets the speed of the aerator in range 0.0 to 1.0.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MySpeedDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Speed set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid speed value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set aerator speed.");
+    }
+    ADD_CORS(setAeratorSpeed)
+    ENDPOINT("POST", "/control/aerator/speed", setAeratorSpeed, BODY_DTO(Object<MySpeedDto>, body));
+
+    /**
+     * @brief Retrieves the current speed of the aerator.
+     */
+    ENDPOINT_INFO(getAeratorSpeed) {
+        info->summary = "Get aerator speed";
+        info->addTag("Control module");
+        info->description = "Retrieves current speed of the aerator. Range is 0.0 to 1.0.";
+        info->addResponse<Object<MySpeedDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve aerator speed");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getAeratorSpeed)
+    ENDPOINT("GET", "/control/aerator/speed", getAeratorSpeed);
 
 
 
