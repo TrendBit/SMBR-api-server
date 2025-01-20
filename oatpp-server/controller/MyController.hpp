@@ -352,6 +352,16 @@ public:
     ADD_CORS(setCuvettePumpFlowrate)
     ENDPOINT("POST", "/control/cuvette_pump/flowrate", setCuvettePumpFlowrate, BODY_DTO(Object<MyFlowrateDto>, body));
 
+    ENDPOINT_INFO(getCuvettePumpFlowrate) {
+    info->summary = "Get cuvette pump flowrate";
+    info->description = "Retrieves the current flowrate of the cuvette pump. Positive value means pumping liquid in, negative value means pumping liquid out.";
+    info->addTag("Control module");
+    info->addResponse<Object<MyFlowrateDto>>(Status::CODE_200, "application/json");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve flowrate");
+    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getCuvettePumpFlowrate)
+    ENDPOINT("GET", "/control/cuvette_pump/flowrate", getCuvettePumpFlowrate);
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.

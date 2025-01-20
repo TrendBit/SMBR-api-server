@@ -240,3 +240,29 @@ void ControlModule::setCuvettePumpFlowrate(Codes::Module module, float flowrate,
     });
 }
 
+void ControlModule::getCuvettePumpFlowrate(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+    App_messages::Cuvette_pump::Get_flowrate_request getFlowrateReq;
+
+    uint32_t requestCanId = createCanId(getFlowrateReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t responseCanId = createCanId(App_messages::Cuvette_pump::Get_flowrate_response(0.0f).Type(), module, Codes::Instance::Exclusive, false);
+
+    double timeoutSeconds = 2;
+
+    manager.addRequest(requestCanId, getFlowrateReq.Export_data(), responseCanId, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::Cuvette_pump::Get_flowrate_response flowrateResponse(0.0f);
+            if (flowrateResponse.Interpret_data(dataCopy)) {
+                callback(flowrateResponse.flowrate);  
+            } else {
+                callback(-1); 
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2000); 
+        } else {
+            callback(-1); 
+        }
+    }, timeoutSeconds);
+}
+

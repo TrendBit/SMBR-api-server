@@ -780,6 +780,30 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCuvettePumpFlowrate() {
+    auto flowrateResponseDto = MyFlowrateDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleFlowrateResult = [&promise](float flowrate) {
+        promise.set_value(flowrate);
+    };
+
+    m_controlModule.getCuvettePumpFlowrate(m_canRequestManager, Codes::Module::Control_module, handleFlowrateResult);
+
+    future.wait();
+    float flowrate = future.get();
+
+    if (flowrate == -2000) {
+        return createResponse(Status::CODE_504, "Request timed out"); 
+    } else if (flowrate >= -1000.0f && flowrate <= 1000.0f) {
+        flowrateResponseDto->flowrate = flowrate;
+        return createDtoResponse(Status::CODE_200, flowrateResponseDto);  
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve cuvette pump flowrate");  
+    }
+}
+
 
 /*
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pingDirect() {
