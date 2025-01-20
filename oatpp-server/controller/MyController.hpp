@@ -398,6 +398,20 @@ public:
     ADD_CORS(primeCuvettePump)
     ENDPOINT("POST", "/control/cuvette_pump/prime", primeCuvettePump);
 
+    /**
+     * @brief Purges the cuvette pump.
+     */
+    ENDPOINT_INFO(purgeCuvettePump) {
+        info->summary = "Purge cuvette pump";
+        info->description = "Purges the cuvette pump by pumping liquid out of the cuvette. This is used to remove liquid from the cuvette and clean the system.";
+        info->addTag("Control module");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Cuvette pump purging was started.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to start cuvette pump purging.");
+    }
+    ADD_CORS(purgeCuvettePump)
+    ENDPOINT("POST", "/control/cuvette_pump/purge", purgeCuvettePump);
+
+
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.

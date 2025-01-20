@@ -285,3 +285,13 @@ void ControlModule::primeCuvettePump(Codes::Module module, std::function<void(bo
         callback(success);
     });
 }
+
+void ControlModule::purgeCuvettePump(Codes::Module module, std::function<void(bool)> callback) {
+    App_messages::Cuvette_pump::Purge purgeMessage;
+
+    uint32_t purgeCanId = createCanId(purgeMessage.Type(), module, Codes::Instance::Exclusive, false);
+
+    m_canRequestManager.sendWithoutResponse(purgeCanId, purgeMessage.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}

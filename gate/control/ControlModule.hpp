@@ -32,6 +32,7 @@
 #include "codes/messages/cuvette_pump/get_flowrate_response.hpp"
 #include "codes/messages/cuvette_pump/move.hpp"
 #include "codes/messages/cuvette_pump/prime.hpp"
+#include "codes/messages/cuvette_pump/purge.hpp"
 
 
 /**
@@ -171,6 +172,15 @@ public:
      * @param callback Callback function to indicate success or failure.
      */
     void primeCuvettePump(Codes::Module module, std::function<void(bool)> callback);
+
+    /**
+     * @brief Sends a command to purge the cuvette pump.
+     * 
+     * @param module Target module.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void purgeCuvettePump(Codes::Module module, std::function<void(bool)> callback);
+
 
 
 protected:

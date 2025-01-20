@@ -847,6 +847,26 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pr
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::purgeCuvettePump() {
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handlePurgeResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_controlModule.purgeCuvettePump(Codes::Module::Control_module, handlePurgeResult);
+
+    future.wait();
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Cuvette pump purging was started.");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to start cuvette pump purging.");
+    }
+}
+
 
 
 /*
