@@ -341,3 +341,13 @@ void ControlModule::getAeratorSpeed(CanRequestManager& manager, Codes::Module mo
         }
     }, timeoutSeconds);
 }
+
+void ControlModule::setAeratorFlowrate(Codes::Module module, float flowrate, std::function<void(bool)> callback) {
+    App_messages::Aerator::Set_flowrate setFlowrate(flowrate);
+
+    uint32_t flowrateCanId = createCanId(setFlowrate.Type(), module, Codes::Instance::Exclusive, false);
+
+    m_canRequestManager.sendWithoutResponse(flowrateCanId, setFlowrate.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}

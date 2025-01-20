@@ -37,6 +37,7 @@
 #include "codes/messages/aerator/set_speed.hpp"
 #include "codes/messages/aerator/get_speed_request.hpp"
 #include "codes/messages/aerator/get_speed_response.hpp"
+#include "codes/messages/aerator/set_flowrate.hpp"
 
 
 /**
@@ -209,6 +210,15 @@ public:
      * @param callback Callback function to handle the retrieved speed.
      */
     void getAeratorSpeed(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Sets the flowrate of the aerator.
+     * 
+     * @param module Target module.
+     * @param flowrate Value between 10.0 and 5000.0 ml/min.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setAeratorFlowrate(Codes::Module module, float flowrate, std::function<void(bool)> callback);
 
 protected:
     boost::asio::io_context& m_ioContext; 

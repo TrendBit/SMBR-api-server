@@ -453,7 +453,20 @@ public:
     ADD_CORS(getAeratorSpeed)
     ENDPOINT("GET", "/control/aerator/speed", getAeratorSpeed);
 
-
+    /**
+     * @brief Sets the flowrate of the aerator.
+     */
+    ENDPOINT_INFO(setAeratorFlowrate) {
+        info->summary = "Set aerator flowrate";
+        info->description = "Sets the flowrate of the aerator in range 10.0 to 5000.0 ml/min.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyFlowrateDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Flowrate set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid flowrate value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set aerator flowrate.");
+    }
+    ADD_CORS(setAeratorFlowrate)
+    ENDPOINT("POST", "/control/aerator/flowrate", setAeratorFlowrate, BODY_DTO(Object<MyFlowrateDto>, body));
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.

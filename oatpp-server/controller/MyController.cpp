@@ -935,6 +935,31 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setAeratorFlowrate(const oatpp::Object<MyFlowrateDto>& body) {
+    if (!body || body->flowrate < 10.0f || body->flowrate > 5000.0f) {
+        return createResponse(Status::CODE_400, "Invalid flowrate value. Must be between 10.0 and 5000.0 ml/min.");
+    }
+
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handleSetFlowrateResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_controlModule.setAeratorFlowrate(Codes::Module::Control_module, body->flowrate, handleSetFlowrateResult);
+
+    future.wait();
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Flowrate set successfully.");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to set aerator flowrate.");
+    }
+}
+
+
 
 
 /*
