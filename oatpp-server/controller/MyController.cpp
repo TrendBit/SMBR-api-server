@@ -756,6 +756,30 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setCuvettePumpFlowrate(const oatpp::Object<MyFlowrateDto>& body) {
+    if (!body || body->flowrate < -1000.0f || body->flowrate > 1000.0f) {
+        return createResponse(Status::CODE_400, "Invalid flowrate value. Must be between -1000.0 and 1000.0.");
+    }
+
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handleSetFlowrateResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_controlModule.setCuvettePumpFlowrate(Codes::Module::Control_module, body->flowrate, handleSetFlowrateResult);
+
+    future.wait();
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Flowrate set successfully.");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to set cuvette pump flowrate.");
+    }
+}
+
 
 /*
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pingDirect() {

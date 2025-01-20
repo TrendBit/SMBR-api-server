@@ -12,6 +12,7 @@
 #include "dto/MyIntensitiesDto.hpp"
 #include "dto/MyIntensityDto.hpp"
 #include "dto/MySpeedDto.hpp"
+#include "dto/MyFlowrateDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -338,6 +339,18 @@ public:
     }
     ADD_CORS(getCuvettePumpSpeed)
     ENDPOINT("GET", "/control/cuvette_pump/speed", getCuvettePumpSpeed);
+
+    ENDPOINT_INFO(setCuvettePumpFlowrate) {
+    info->summary = "Set cuvette pump flowrate";
+    info->description = "Sets the flowrate of the cuvette pump in range -1000.0 (pumping liquid out) to 1000.0 (pumping liquid in).";
+    info->addTag("Control module");
+    info->addConsumes<Object<MyFlowrateDto>>("application/json");
+    info->addResponse<String>(Status::CODE_200, "application/json", "Flowrate set successfully.");
+    info->addResponse<String>(Status::CODE_400, "application/json", "Invalid flowrate value.");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set flowrate.");
+    }
+    ADD_CORS(setCuvettePumpFlowrate)
+    ENDPOINT("POST", "/control/cuvette_pump/flowrate", setCuvettePumpFlowrate, BODY_DTO(Object<MyFlowrateDto>, body));
 
 
     /**

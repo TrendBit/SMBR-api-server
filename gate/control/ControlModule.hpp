@@ -27,6 +27,7 @@
 #include "codes/messages/cuvette_pump/set_speed.hpp"
 #include "codes/messages/cuvette_pump/get_speed_request.hpp"
 #include "codes/messages/cuvette_pump/get_speed_response.hpp"
+#include "codes/messages/cuvette_pump/set_flowrate.hpp"
 
 
 /**
@@ -130,6 +131,15 @@ public:
      * @param callback Callback function to handle the retrieved speed.
      */
     void getCuvettePumpSpeed(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Sets the flowrate of the cuvette pump.
+     * 
+     * @param module Target module.
+     * @param flowrate Flowrate value in ml/min, can range from -1000.0 (out) to 1000.0 (in).
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setCuvettePumpFlowrate(Codes::Module module, float flowrate, std::function<void(bool)> callback);
 
 protected:
     boost::asio::io_context& m_ioContext; 

@@ -230,3 +230,13 @@ void ControlModule::getCuvettePumpSpeed(CanRequestManager& manager, Codes::Modul
     }, timeoutSeconds);
 }
 
+void ControlModule::setCuvettePumpFlowrate(Codes::Module module, float flowrate, std::function<void(bool)> callback) {
+    App_messages::Cuvette_pump::Set_flowrate setFlowrate(flowrate);
+
+    uint32_t flowrateCanId = createCanId(setFlowrate.Type(), module, Codes::Instance::Exclusive, false);
+
+    m_canRequestManager.sendWithoutResponse(flowrateCanId, setFlowrate.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}
+
