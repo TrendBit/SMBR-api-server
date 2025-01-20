@@ -266,3 +266,13 @@ void ControlModule::getCuvettePumpFlowrate(CanRequestManager& manager, Codes::Mo
     }, timeoutSeconds);
 }
 
+void ControlModule::moveCuvettePump(Codes::Module module, float volume, float flowrate, std::function<void(bool)> callback) {
+    App_messages::Cuvette_pump::Move moveReq(volume, flowrate);
+
+    uint32_t moveCanId = createCanId(moveReq.Type(), module, Codes::Instance::Exclusive, false);
+
+    m_canRequestManager.sendWithoutResponse(moveCanId, moveReq.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}
+

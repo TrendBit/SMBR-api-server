@@ -13,6 +13,7 @@
 #include "dto/MyIntensityDto.hpp"
 #include "dto/MySpeedDto.hpp"
 #include "dto/MyFlowrateDto.hpp"
+#include "dto/MyMoveDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -340,6 +341,9 @@ public:
     ADD_CORS(getCuvettePumpSpeed)
     ENDPOINT("GET", "/control/cuvette_pump/speed", getCuvettePumpSpeed);
 
+    /**
+     * @brief Sets flowrate of the cuvette pump
+     */
     ENDPOINT_INFO(setCuvettePumpFlowrate) {
     info->summary = "Set cuvette pump flowrate";
     info->description = "Sets the flowrate of the cuvette pump in range -1000.0 (pumping liquid out) to 1000.0 (pumping liquid in).";
@@ -352,6 +356,9 @@ public:
     ADD_CORS(setCuvettePumpFlowrate)
     ENDPOINT("POST", "/control/cuvette_pump/flowrate", setCuvettePumpFlowrate, BODY_DTO(Object<MyFlowrateDto>, body));
 
+    /**
+     * @brief Retrieves current flowrate of the cuvette pump
+     */
     ENDPOINT_INFO(getCuvettePumpFlowrate) {
     info->summary = "Get cuvette pump flowrate";
     info->description = "Retrieves the current flowrate of the cuvette pump. Positive value means pumping liquid in, negative value means pumping liquid out.";
@@ -363,6 +370,20 @@ public:
     ADD_CORS(getCuvettePumpFlowrate)
     ENDPOINT("GET", "/control/cuvette_pump/flowrate", getCuvettePumpFlowrate);
 
+    /**
+     * @brief Moves requested amount of liquid in or out of the cuvette
+     */
+    ENDPOINT_INFO(moveCuvettePump) {
+    info->summary = "Move cuvette pump liquid";
+    info->description = "Moves the requested amount of liquid in or out of the cuvette. Positive volume means pumping liquid in, and negative volume means pumping liquid out. Flowrate is specified in ml/min and must be positive. If set to zero, the maximum flowrate of the pump will be used.";
+    info->addTag("Control module");
+    info->addConsumes<Object<MyMoveDto>>("application/json");
+    info->addResponse<String>(Status::CODE_200, "application/json", "Movement started successfully.");
+    info->addResponse<String>(Status::CODE_400, "application/json", "Invalid volume or flowrate value.");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Failed to start movement.");
+    }
+    ADD_CORS(moveCuvettePump)
+    ENDPOINT("POST", "/control/cuvette_pump/move", moveCuvettePump, BODY_DTO(Object<MyMoveDto>, body));
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
     */

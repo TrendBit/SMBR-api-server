@@ -30,6 +30,7 @@
 #include "codes/messages/cuvette_pump/set_flowrate.hpp"
 #include "codes/messages/cuvette_pump/get_flowrate_request.hpp"
 #include "codes/messages/cuvette_pump/get_flowrate_response.hpp"
+#include "codes/messages/cuvette_pump/move.hpp"
 
 
 /**
@@ -151,6 +152,17 @@ public:
      * @param callback Callback function to handle the retrieved flowrate.
      */
     void getCuvettePumpFlowrate(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Moves the requested amount of liquid in or out of the cuvette.
+     * 
+     * @param module Target module.
+     * @param volume Amount of liquid to move (ml). Positive for in, negative for out.
+     * @param flowrate Flowrate of the pump (ml/min). If zero, the pump will use its maximum flowrate.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void moveCuvettePump(Codes::Module module, float volume, float flowrate, std::function<void(bool)> callback);
+
 
 protected:
     boost::asio::io_context& m_ioContext; 
