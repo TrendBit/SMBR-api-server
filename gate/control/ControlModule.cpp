@@ -398,4 +398,12 @@ void ControlModule::stopAerator(Codes::Module module, std::function<void(bool)> 
     });
 }
 
+void ControlModule::setMixerSpeed(Codes::Module module, float speed, std::function<void(bool)> callback) {
+    App_messages::Mixer::Set_speed setSpeed(speed);
 
+    uint32_t speedCanId = createCanId(setSpeed.Type(), module, Codes::Instance::Exclusive, false);
+
+    m_canRequestManager.sendWithoutResponse(speedCanId, setSpeed.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}

@@ -510,6 +510,21 @@ public:
     ADD_CORS(stopAerator)
     ENDPOINT("POST", "/control/aerator/stop", stopAerator);
 
+    /**
+     * @brief Sets the speed of the mixer.
+     */
+    ENDPOINT_INFO(setMixerSpeed) {
+        info->summary = "Set mixer speed";
+        info->description = "Sets the speed of the mixer in the range [0.0, 1.0].";
+        info->addTag("Control module");
+        info->addConsumes<Object<MySpeedDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Speed set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid speed value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set mixer speed.");
+    }
+    ADD_CORS(setMixerSpeed)
+    ENDPOINT("POST", "/control/mixer/speed", setMixerSpeed, BODY_DTO(Object<MySpeedDto>, body));
+
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.

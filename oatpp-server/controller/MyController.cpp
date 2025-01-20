@@ -1026,6 +1026,29 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setMixerSpeed(const oatpp::Object<MySpeedDto>& body) {
+    if (!body || body->speed < 0.0f || body->speed > 1.0f) {
+        return createResponse(Status::CODE_400, "Invalid speed value. Must be between 0.0 and 1.0.");
+    }
+
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handleSetSpeedResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_controlModule.setMixerSpeed(Codes::Module::Control_module, body->speed, handleSetSpeedResult);
+
+    future.wait();
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Mixer speed set successfully.");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to set mixer speed.");
+    }
+}
 
 
 

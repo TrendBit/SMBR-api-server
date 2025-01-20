@@ -42,6 +42,7 @@
 #include "codes/messages/aerator/get_flowrate_response.hpp"
 #include "codes/messages/aerator/move.hpp"
 #include "codes/messages/aerator/stop.hpp"
+#include "codes/messages/mixer/set_speed.hpp"
 
 
 /**
@@ -249,6 +250,15 @@ public:
      * @param callback Callback function to indicate success or failure.
      */
     void stopAerator(Codes::Module module, std::function<void(bool)> callback);
+
+    /**
+     * @brief Sets the speed of the mixer.
+     * 
+     * @param module Target module.
+     * @param speed Value between 0.0 and 1.0.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setMixerSpeed(Codes::Module module, float speed, std::function<void(bool)> callback);
 
 
 
