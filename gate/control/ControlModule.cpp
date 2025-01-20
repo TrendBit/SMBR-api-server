@@ -407,3 +407,29 @@ void ControlModule::setMixerSpeed(Codes::Module module, float speed, std::functi
         callback(success);
     });
 }
+
+void ControlModule::getMixerSpeed(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+    App_messages::Mixer::Get_speed_request getSpeedReq;
+
+    uint32_t requestCanId = createCanId(getSpeedReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t responseCanId = createCanId(App_messages::Mixer::Get_speed_response(0.0f).Type(), module, Codes::Instance::Exclusive, false);
+
+    double timeoutSeconds = 2;
+
+    manager.addRequest(requestCanId, getSpeedReq.Export_data(), responseCanId, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::Mixer::Get_speed_response speedResponse(0.0f);
+            if (speedResponse.Interpret_data(dataCopy)) {
+                callback(speedResponse.speed);
+            } else {
+                callback(-1);
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2);
+        } else {
+            callback(-1); 
+        }
+    }, timeoutSeconds);
+}

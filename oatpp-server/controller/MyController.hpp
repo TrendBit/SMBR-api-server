@@ -525,6 +525,19 @@ public:
     ADD_CORS(setMixerSpeed)
     ENDPOINT("POST", "/control/mixer/speed", setMixerSpeed, BODY_DTO(Object<MySpeedDto>, body));
 
+    /**
+     * @brief Retrieves the current speed of the mixer.
+     */
+    ENDPOINT_INFO(getMixerSpeed) {
+        info->summary = "Get mixer speed";
+        info->description = "Retrieves the current speed of the mixer in the range [0.0, 1.0].";
+        info->addTag("Control module");
+        info->addResponse<Object<MySpeedDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve mixer speed");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getMixerSpeed)
+    ENDPOINT("GET", "/control/mixer/speed", getMixerSpeed);
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.

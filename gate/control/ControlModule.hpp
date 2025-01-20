@@ -43,6 +43,8 @@
 #include "codes/messages/aerator/move.hpp"
 #include "codes/messages/aerator/stop.hpp"
 #include "codes/messages/mixer/set_speed.hpp"
+#include "codes/messages/mixer/get_speed_request.hpp"
+#include "codes/messages/mixer/get_speed_response.hpp"
 
 
 /**
@@ -259,6 +261,14 @@ public:
      * @param callback Callback function to indicate success or failure.
      */
     void setMixerSpeed(Codes::Module module, float speed, std::function<void(bool)> callback);
+
+    /**
+     * @brief Retrieves the current speed of the mixer.
+     * 
+     * @param module Target module from which the mixer speed will be retrieved.
+     * @param callback Callback function to handle the retrieved speed.
+     */
+    void getMixerSpeed(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
 
 
