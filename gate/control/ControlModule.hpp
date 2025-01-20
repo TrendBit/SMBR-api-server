@@ -24,7 +24,7 @@
 #include "codes/messages/heater/set_intensity.hpp"
 #include "codes/messages/heater/set_target_temperature.hpp"
 #include "codes/messages/heater/turn_off.hpp"
-
+#include "codes/messages/cuvette_pump/set_speed.hpp"
 
 /**
  * @class ControlModule
@@ -108,8 +108,17 @@ public:
      * 
      * @param module Target module.
      * @param callback Callback function to indicate success or failure.
- */
-void turnOffHeater(Codes::Module module, std::function<void(bool)> callback);
+    */
+    void turnOffHeater(Codes::Module module, std::function<void(bool)> callback);
+
+    /**
+     * @brief Sets the speed of the cuvette pump.
+     * 
+     * @param module Target module.
+     * @param speed Value between -1.0 (out) and 1.0 (in).
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setCuvettePumpSpeed(Codes::Module module, float speed, std::function<void(bool)> callback);
 
 
 

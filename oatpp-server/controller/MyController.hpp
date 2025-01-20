@@ -11,6 +11,7 @@
 #include "dto/MyModuleActionRequestDto.hpp"
 #include "dto/MyIntensitiesDto.hpp"
 #include "dto/MyIntensityDto.hpp"
+#include "dto/MySpeedDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -308,6 +309,21 @@ public:
     }
     ADD_CORS(turnOffHeater)
     ENDPOINT("POST", "/control/heater/turn_off", turnOffHeater);
+
+    /**
+     * @brief Sets the speed of the cuvette pump.
+     */
+    ENDPOINT_INFO(setCuvettePumpSpeed) {
+        info->summary = "Set cuvette pump speed";
+        info->description = "Sets the speed of the cuvette pump in range -1.0 (out) to 1.0 (in).";
+        info->addTag("Control module");
+        info->addConsumes<Object<MySpeedDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Speed set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid speed value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set pump speed.");
+    }
+    ADD_CORS(setCuvettePumpSpeed)
+    ENDPOINT("POST", "/control/cuvette_pump/speed", setCuvettePumpSpeed, BODY_DTO(Object<MySpeedDto>, body));
 
 
     /**
