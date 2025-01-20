@@ -33,6 +33,8 @@
 #include "codes/messages/cuvette_pump/move.hpp"
 #include "codes/messages/cuvette_pump/prime.hpp"
 #include "codes/messages/cuvette_pump/purge.hpp"
+#include "codes/messages/cuvette_pump/stop.hpp"
+#include "codes/messages/aerator/set_speed.hpp"
 
 
 /**
@@ -181,6 +183,22 @@ public:
      */
     void purgeCuvettePump(Codes::Module module, std::function<void(bool)> callback);
 
+    /**
+     * @brief Sends a command to stop the cuvette pump and disable any planned movements.
+     * 
+     * @param module Target module.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void stopCuvettePump(Codes::Module module, std::function<void(bool)> callback);
+
+    /**
+     * @brief Sets the speed of the aerator.
+     * 
+     * @param module Target module.
+     * @param speed Value between 0.0 and 1.0.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setAeratorSpeed(Codes::Module module, float speed, std::function<void(bool)> callback);
 
 
 protected:

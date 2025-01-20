@@ -342,6 +342,21 @@ public:
     ENDPOINT("GET", "/control/cuvette_pump/speed", getCuvettePumpSpeed);
 
     /**
+     * @brief Sets the speed of the aerator.
+     */
+    ENDPOINT_INFO(setAeratorSpeed) {
+        info->summary = "Set aerator speed";
+        info->description = "Sets the speed of the aerator in range 0.0 to 1.0.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MySpeedDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Speed set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid speed value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set aerator speed.");
+    }
+    ADD_CORS(setAeratorSpeed)
+    ENDPOINT("POST", "/control/aerator/speed", setAeratorSpeed, BODY_DTO(Object<MySpeedDto>, body));
+
+    /**
      * @brief Sets flowrate of the cuvette pump
      */
     ENDPOINT_INFO(setCuvettePumpFlowrate) {
@@ -410,6 +425,19 @@ public:
     }
     ADD_CORS(purgeCuvettePump)
     ENDPOINT("POST", "/control/cuvette_pump/purge", purgeCuvettePump);
+
+    /**
+     * @brief Stops the cuvette pump.
+     */
+    ENDPOINT_INFO(stopCuvettePump) {
+        info->summary = "Stop cuvette pump";
+        info->description = "Stops the cuvette pump immediately and disables any planned movements.";
+        info->addTag("Control module");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Cuvette pump was stopped.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to stop cuvette pump.");
+    }
+    ADD_CORS(stopCuvettePump)
+    ENDPOINT("POST", "/control/cuvette_pump/stop", stopCuvettePump);
 
 
 
