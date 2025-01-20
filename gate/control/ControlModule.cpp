@@ -57,17 +57,23 @@ void ControlModule::getLedTemperature(CanRequestManager& manager, Codes::Module 
 
             App_messages::LED_panel::Temperature_response temperatureResponse(0.0f);
             if (temperatureResponse.Interpret_data(dataCopy)) {
-                callback(temperatureResponse.temperature);  
+                float temperature = temperatureResponse.temperature;
+                if (temperature < -30) {
+                    callback(-100); // Module not available
+                } else {
+                    callback(temperature); 
+                }
             } else {
-                callback(-1); 
+                callback(-1); // Invalid data
             }
         } else if (status == CanRequestStatus::Timeout) {
-            callback(-2);
+            callback(-30); // Timeout 
         } else {
-            callback(-1); 
+            callback(-1); // General error
         }
     }, timeoutSeconds);
 }
+
 
 void ControlModule::setHeaterIntensity(Codes::Module module, float intensity, std::function<void(bool)> callback) {
     App_messages::Heater::Set_intensity setIntensity(intensity);
@@ -129,12 +135,17 @@ void ControlModule::getHeaterTargetTemperature(CanRequestManager& manager, Codes
 
             App_messages::Heater::Get_target_temperature_response targetTempResponse(0.0f);
             if (targetTempResponse.Interpret_data(dataCopy)) {
-                callback(targetTempResponse.temperature);  
+                float temperature = targetTempResponse.temperature;
+                if (temperature < -30) {
+                    callback(-100); 
+                } else {
+                    callback(temperature); 
+                }
             } else {
-                callback(-1); 
+                callback(-1);
             }
         } else if (status == CanRequestStatus::Timeout) {
-            callback(-2);
+            callback(-30); 
         } else {
             callback(-1); 
         }
@@ -155,17 +166,23 @@ void ControlModule::getHeaterPlateTemperature(CanRequestManager& manager, Codes:
 
             App_messages::Heater::Get_plate_temperature_response plateTempResponse(0.0f);
             if (plateTempResponse.Interpret_data(dataCopy)) {
-                callback(plateTempResponse.temperature);
+                float temperature = plateTempResponse.temperature;
+                if (temperature < -30) {
+                    callback(-100); 
+                } else {
+                    callback(temperature);
+                }
             } else {
-                callback(-1);
+                callback(-1); 
             }
         } else if (status == CanRequestStatus::Timeout) {
-            callback(-2);
+            callback(-30);
         } else {
-            callback(-1);
+            callback(-1); 
         }
     }, timeoutSeconds);
 }
+
 
 void ControlModule::turnOffHeater(Codes::Module module, std::function<void(bool)> callback) {
     App_messages::Heater::Heater_turn_off turnOff;

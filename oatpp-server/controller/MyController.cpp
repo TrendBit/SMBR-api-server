@@ -550,15 +550,18 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     future.wait();
     float temperature = future.get();
 
-    if (temperature >= 0) {
+    if (temperature == -30) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (temperature == -100) {
+        return createResponse(Status::CODE_503, "Module not available"); 
+    } else if (temperature >= -30) {
         tempResponseDto->temperature = temperature;
-        return createDtoResponse(Status::CODE_200, tempResponseDto);  
-    } else if (temperature == -2) {
-        return createResponse(Status::CODE_504, "Request timed out"); 
+        return createDtoResponse(Status::CODE_200, tempResponseDto); 
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve LED temperature");  
+        return createResponse(Status::CODE_500, "Failed to retrieve LED temperature"); 
     }
 }
+
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setHeaterIntensity(const oatpp::Object<MyIntensityDto>& body) {
     if (!body || body->intensity < -1.0f || body->intensity > 1.0f) {
@@ -646,13 +649,15 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     future.wait();
     float temperature = future.get();
 
-    if (temperature >= 0) {
+    if (temperature == -30) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (temperature == -100) {
+        return createResponse(Status::CODE_503, "Module not available");
+    } else if (temperature >= -30) {
         tempResponseDto->temperature = temperature;
-        return createDtoResponse(Status::CODE_200, tempResponseDto);  
-    } else if (temperature == -2) {
-        return createResponse(Status::CODE_504, "Request timed out"); 
+        return createDtoResponse(Status::CODE_200, tempResponseDto);
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve heater target temperature");  
+        return createResponse(Status::CODE_500, "Failed to retrieve heater target temperature");
     }
 }
 
@@ -670,15 +675,18 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     future.wait();
     float plateTemperature = future.get();
 
-    if (plateTemperature >= 0) {
+    if (plateTemperature == -30) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (plateTemperature == -100) {
+        return createResponse(Status::CODE_503, "Module not available");
+    } else if (plateTemperature >= -30) {
         plateTempResponseDto->temperature = plateTemperature;
         return createDtoResponse(Status::CODE_200, plateTempResponseDto);
-    } else if (plateTemperature == -2) {
-        return createResponse(Status::CODE_504, "Request timed out");
     } else {
         return createResponse(Status::CODE_500, "Failed to retrieve heater plate temperature");
     }
 }
+
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::turnOffHeater() {
     std::promise<bool> promise;
