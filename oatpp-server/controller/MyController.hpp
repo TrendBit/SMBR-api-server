@@ -481,6 +481,23 @@ public:
     }
     ADD_CORS(getAeratorFlowrate)
     ENDPOINT("GET", "/control/aerator/flowrate", getAeratorFlowrate);
+
+    /**
+     * @brief Moves requested amount of air into the bottle using the aerator
+     */
+    ENDPOINT_INFO(moveAerator) {
+        info->summary = "Move aerator air";
+        info->description = "Moves the requested amount of air into the bottle. Volume is in ml. Flowrate is in ml/min, if set to zero, the maximal flowrate of the pump will be used.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyMoveDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Movement started successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid volume or flowrate value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to start movement.");
+    }
+    ADD_CORS(moveAerator)
+    ENDPOINT("POST", "/control/aerator/move", moveAerator, BODY_DTO(Object<MyMoveDto>, body));
+
+
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
     */

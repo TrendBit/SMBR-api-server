@@ -40,6 +40,7 @@
 #include "codes/messages/aerator/set_flowrate.hpp"
 #include "codes/messages/aerator/get_flowrate_request.hpp"
 #include "codes/messages/aerator/get_flowrate_response.hpp"
+#include "codes/messages/aerator/move.hpp"
 
 
 /**
@@ -229,6 +230,17 @@ public:
      * @param callback Callback function to handle the retrieved flowrate.
      */
     void getAeratorFlowrate(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Moves the requested amount of air into the bottle using the aerator.
+     * 
+     * @param module Target module.
+     * @param volume Amount of air to move (ml). Positive for in, negative for out.
+     * @param flowrate Flowrate of the aerator (ml/min). If zero, the pump will use its maximum flowrate.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void moveAerator(Codes::Module module, float volume, float flowrate, std::function<void(bool)> callback);
+
 
 protected:
     boost::asio::io_context& m_ioContext; 

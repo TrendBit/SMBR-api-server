@@ -983,6 +983,28 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::moveAerator(const oatpp::Object<MyMoveDto>& body) {
+    auto moveResponseDto = MyMoveDto::createShared();
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handleMoveResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_controlModule.moveAerator(Codes::Module::Control_module, body->volume, body->flowrate, handleMoveResult);
+
+    future.wait();
+    bool success = future.get();
+
+    if (success) {
+        moveResponseDto->volume = body->volume;
+        moveResponseDto->flowrate = body->flowrate;
+        return createDtoResponse(Status::CODE_200, moveResponseDto);  
+    } else {
+        return createResponse(Status::CODE_500, "Failed to start moving air");
+    }
+}
 
 
 
