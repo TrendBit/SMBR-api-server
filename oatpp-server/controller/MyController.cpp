@@ -936,7 +936,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setAeratorFlowrate(const oatpp::Object<MyFlowrateDto>& body) {
-    if (!body || body->flowrate < 10.0f || body->flowrate > 5000.0f) {
+    if (!body || body->flowrate < 0.0f || body->flowrate > 5000.0f) {
         return createResponse(Status::CODE_400, "Invalid flowrate value. Must be between 10.0 and 5000.0 ml/min.");
     }
 
@@ -956,6 +956,30 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
         return createResponse(Status::CODE_200, "Flowrate set successfully.");
     } else {
         return createResponse(Status::CODE_500, "Failed to set aerator flowrate.");
+    }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getAeratorFlowrate() {
+    auto flowrateResponseDto = MyFlowrateDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleFlowrateResult = [&promise](float flowrate) {
+        promise.set_value(flowrate);
+    };
+
+    m_controlModule.getAeratorFlowrate(m_canRequestManager, Codes::Module::Control_module, handleFlowrateResult);
+
+    future.wait();
+    float flowrate = future.get();
+
+    if (flowrate >= 0.0f && flowrate <= 5000.0f) {
+        flowrateResponseDto->flowrate = flowrate;
+        return createDtoResponse(Status::CODE_200, flowrateResponseDto);  
+    } else if (flowrate == -2) {
+        return createResponse(Status::CODE_504, "Request timed out"); 
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve aerator flowrate");  
     }
 }
 

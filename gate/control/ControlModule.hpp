@@ -38,6 +38,8 @@
 #include "codes/messages/aerator/get_speed_request.hpp"
 #include "codes/messages/aerator/get_speed_response.hpp"
 #include "codes/messages/aerator/set_flowrate.hpp"
+#include "codes/messages/aerator/get_flowrate_request.hpp"
+#include "codes/messages/aerator/get_flowrate_response.hpp"
 
 
 /**
@@ -219,6 +221,14 @@ public:
      * @param callback Callback function to indicate success or failure.
      */
     void setAeratorFlowrate(Codes::Module module, float flowrate, std::function<void(bool)> callback);
+
+    /**
+     * @brief Retrieves the current flowrate of the aerator.
+     * 
+     * @param module Target module from which the aerator flowrate will be retrieved.
+     * @param callback Callback function to handle the retrieved flowrate.
+     */
+    void getAeratorFlowrate(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
 protected:
     boost::asio::io_context& m_ioContext; 

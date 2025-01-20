@@ -458,7 +458,7 @@ public:
      */
     ENDPOINT_INFO(setAeratorFlowrate) {
         info->summary = "Set aerator flowrate";
-        info->description = "Sets the flowrate of the aerator in range 10.0 to 5000.0 ml/min.";
+        info->description = "Sets the flowrate of the aerator in range 0.0 to 5000.0 ml/min.";
         info->addTag("Control module");
         info->addConsumes<Object<MyFlowrateDto>>("application/json");
         info->addResponse<String>(Status::CODE_200, "application/json", "Flowrate set successfully.");
@@ -468,6 +468,19 @@ public:
     ADD_CORS(setAeratorFlowrate)
     ENDPOINT("POST", "/control/aerator/flowrate", setAeratorFlowrate, BODY_DTO(Object<MyFlowrateDto>, body));
 
+    /**
+     * @brief Retrieves the current flowrate of the aerator.
+     */
+    ENDPOINT_INFO(getAeratorFlowrate) {
+        info->summary = "Get aerator flowrate";
+        info->addTag("Control module");
+        info->description = "Retrieves current flowrate of the aerator. Range is 0.0 to 5000.0 ml/min.";
+        info->addResponse<Object<MyFlowrateDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve aerator flowrate");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getAeratorFlowrate)
+    ENDPOINT("GET", "/control/aerator/flowrate", getAeratorFlowrate);
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
     */
