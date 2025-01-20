@@ -388,3 +388,14 @@ void ControlModule::moveAerator(Codes::Module module, float volume, float flowra
     });
 }
 
+void ControlModule::stopAerator(Codes::Module module, std::function<void(bool)> callback) {
+    App_messages::Aerator::Stop stopMessage;
+
+    uint32_t stopCanId = createCanId(stopMessage.Type(), module, Codes::Instance::Exclusive, false);
+
+    m_canRequestManager.sendWithoutResponse(stopCanId, stopMessage.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}
+
+

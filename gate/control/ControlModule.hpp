@@ -41,6 +41,7 @@
 #include "codes/messages/aerator/get_flowrate_request.hpp"
 #include "codes/messages/aerator/get_flowrate_response.hpp"
 #include "codes/messages/aerator/move.hpp"
+#include "codes/messages/aerator/stop.hpp"
 
 
 /**
@@ -240,6 +241,15 @@ public:
      * @param callback Callback function to indicate success or failure.
      */
     void moveAerator(Codes::Module module, float volume, float flowrate, std::function<void(bool)> callback);
+
+    /**
+     * @brief Sends a command to stop the aerator and disable any planned movements.
+     * 
+     * @param module Target module.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void stopAerator(Codes::Module module, std::function<void(bool)> callback);
+
 
 
 protected:

@@ -1006,6 +1006,27 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::mo
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::stopAerator() {
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handleStopResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_controlModule.stopAerator(Codes::Module::Control_module, handleStopResult);
+
+    future.wait();
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Aerator was stopped.");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to stop aerator.");
+    }
+}
+
+
 
 
 /*

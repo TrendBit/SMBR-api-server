@@ -497,6 +497,19 @@ public:
     ADD_CORS(moveAerator)
     ENDPOINT("POST", "/control/aerator/move", moveAerator, BODY_DTO(Object<MyMoveDto>, body));
 
+    /**
+     * @brief Stops the aerator and disables any planned movements.
+     */
+    ENDPOINT_INFO(stopAerator) {
+        info->summary = "Stop aerator";
+        info->description = "Stops the aerator immediately and disables any planned movements.";
+        info->addTag("Control module");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Aerator was stopped.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to stop aerator.");
+    }
+    ADD_CORS(stopAerator)
+    ENDPOINT("POST", "/control/aerator/stop", stopAerator);
+
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
