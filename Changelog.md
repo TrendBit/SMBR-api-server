@@ -1,6 +1,15 @@
 # Changelog SMBR Api Server
 The version number consists of MAJOR.MINOR identifiers. The MINOR version changes correspond to the addition of new API endpoints.
 
+# 0.13 Mixer
+- Added endpoint GET and POST /control/mixer/speed
+- Added endpoint GET and POST /control/mixer/flowrate
+- Added endpoint GET and POST /control/mixer/rpm
+- Added endpoint /control/mixer/stir
+- Added endpoint /control/mixer/stop
+- Switching Git repository from SSH to HTTPS
+- Added installation target and system service configuration for the API server
+
 # 0.12 Aerator
 - Added endpoint GET and POST /control/aerator/speed
 - Added endpoint GET and POST /control/aerator/flowrate
