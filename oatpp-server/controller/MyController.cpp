@@ -5,12 +5,14 @@ MyController::MyController(const std::shared_ptr<oatpp::web::mime::ContentMapper
                            SystemModule& systemModule,
                            CommonModule& commonModule,
                            ControlModule& controlModule,
+                           CoreModule& coreModule,
                            CanRequestManager& canRequestManager)
     : oatpp::web::server::api::ApiController(apiContentMappers)
     , m_ioContext(ioContext)
     , m_systemModule(systemModule)
     , m_commonModule(commonModule)
     , m_controlModule(controlModule)
+    , m_coreModule(coreModule)
     , m_canRequestManager(canRequestManager) {}
 
   // ==========================================
@@ -403,7 +405,33 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
     }
 }
 
+// ==========================================
+// Core module
+// ==========================================
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getShortID() {
+    auto sidResponseDto = MySIDDto::createShared();
+    std::promise<std::string> promise;
+    auto future = promise.get_future();
+
+    auto handleSIDResult = [&promise](std::string sid) {
+        promise.set_value(sid);
+    };
+
+    m_coreModule.getShortID(m_canRequestManager, Codes::Module::Core_module, handleSIDResult);
+
+    future.wait();
+    std::string sid = future.get();
+
+    if (sid == "timeout") {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (!sid.empty()) {
+        sidResponseDto->sid = sid;
+        return createDtoResponse(Status::CODE_200, sidResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve SID");
+    }
+}
 
 
 

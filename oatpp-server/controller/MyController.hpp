@@ -16,10 +16,12 @@
 #include "dto/MyMoveDto.hpp"
 #include "dto/MyRpmDto.hpp"
 #include "dto/MyStirDto.hpp"
+#include "dto/MySIDDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
 #include "control/ControlModule.hpp"
+#include "core/CoreModule.hpp"
 #include "oatpp/data/mapping/ObjectMapper.hpp"
 
 
@@ -48,9 +50,13 @@ public:
                  SystemModule& systemModule,
                  CommonModule& commonModule,
                  ControlModule& controlModule,
+                 CoreModule& CoreModule,
                  CanRequestManager& canRequestManager);
 
 public:
+// ==========================================
+// System Endpoints
+// ==========================================
 
     /**
      * @brief Retrieves available modules and their unique CAN IDs.
@@ -160,7 +166,31 @@ public:
          PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
          BODY_DTO(Object<MyModuleActionRequestDto>, body));
 
+// ==========================================
+// Core module
+// ==========================================
 
+    /**
+     * @brief Retrieves the short ID (SID) of the device.
+     */
+    ENDPOINT_INFO(getShortID) {
+        info->summary = "Get Short ID (SID) of the device";
+        info->addTag("Core module");
+        info->description = "Retrieves the 4-character hexadecimal SID of the device. The SID may not be unique across devices.";
+        info->addResponse<Object<MySIDDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve SID");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getShortID)
+    ENDPOINT("GET", "/core/sid", getShortID);
+
+
+
+
+
+// ==========================================
+// Control module
+// ==========================================
 
     /**
     * @brief Sets all channels of LED panel to given intensity.
@@ -628,6 +658,7 @@ private:
     SystemModule& m_systemModule;
     CommonModule& m_commonModule;
     ControlModule& m_controlModule;
+    CoreModule& m_coreModule;
     CanRequestManager& m_canRequestManager;
     std::atomic<uint8_t> m_seqNum{0};  
 };
