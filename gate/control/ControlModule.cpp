@@ -433,3 +433,13 @@ void ControlModule::getMixerSpeed(CanRequestManager& manager, Codes::Module modu
         }
     }, timeoutSeconds);
 }
+
+void ControlModule::setMixerRpm(Codes::Module module, float rpm, std::function<void(bool)> callback) {
+    App_messages::Mixer::Set_rpm setRpm(rpm);
+
+    uint32_t rpmCanId = createCanId(setRpm.Type(), module, Codes::Instance::Exclusive, false);
+
+    m_canRequestManager.sendWithoutResponse(rpmCanId, setRpm.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}

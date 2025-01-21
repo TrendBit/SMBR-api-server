@@ -14,6 +14,7 @@
 #include "dto/MySpeedDto.hpp"
 #include "dto/MyFlowrateDto.hpp"
 #include "dto/MyMoveDto.hpp"
+#include "dto/MyRpmDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -538,6 +539,21 @@ public:
     }
     ADD_CORS(getMixerSpeed)
     ENDPOINT("GET", "/control/mixer/speed", getMixerSpeed);
+
+    /**
+     * @brief Sets the target RPM of the mixer.
+     */
+    ENDPOINT_INFO(setMixerRpm) {
+        info->summary = "Set mixer RPM";
+        info->description = "Sets the target RPM of the mixer. Range: 0 to 10000.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyRpmDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Target RPM set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid RPM value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set mixer RPM.");
+    }
+    ADD_CORS(setMixerRpm)
+    ENDPOINT("POST", "/control/mixer/rpm", setMixerRpm, BODY_DTO(Object<MyRpmDto>, body));
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.

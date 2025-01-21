@@ -1074,6 +1074,30 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setMixerRpm(const oatpp::Object<MyRpmDto>& body) {
+    if (!body || body->rpm < 0.0f || body->rpm > 10000.0f) {
+        return createResponse(Status::CODE_400, "Invalid RPM value. Must be between 0 and 10000.");
+    }
+
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handleSetRpmResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_controlModule.setMixerRpm(Codes::Module::Control_module, body->rpm, handleSetRpmResult);
+
+    future.wait();
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Target RPM set successfully.");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to set mixer RPM.");
+    }
+}
+
 
 
 /*

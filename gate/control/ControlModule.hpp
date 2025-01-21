@@ -45,6 +45,7 @@
 #include "codes/messages/mixer/set_speed.hpp"
 #include "codes/messages/mixer/get_speed_request.hpp"
 #include "codes/messages/mixer/get_speed_response.hpp"
+#include "codes/messages/mixer/set_rpm.hpp"
 
 
 /**
@@ -269,6 +270,15 @@ public:
      * @param callback Callback function to handle the retrieved speed.
      */
     void getMixerSpeed(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Sets the target RPM of the mixer.
+     * 
+     * @param module Target module.
+     * @param rpm Value between 0 and 10000.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setMixerRpm(Codes::Module module, float rpm, std::function<void(bool)> callback);
 
 
 
