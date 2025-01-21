@@ -48,6 +48,7 @@
 #include "codes/messages/mixer/set_rpm.hpp"
 #include "codes/messages/mixer/get_rpm_request.hpp"
 #include "codes/messages/mixer/get_rpm_response.hpp"
+#include "codes/messages/mixer/stir.hpp"
 
 
 
@@ -290,6 +291,17 @@ public:
      * @param callback Callback function to handle the retrieved RPM.
      */
     void getMixerRpm(CanRequestManager& manager, Codes::Module module, std::function<void(int)> callback);
+
+    /**
+     * @brief Sets the mixer to stir at a specified RPM for a specified time.
+     * 
+     * @param module Target module.
+     * @param rpm Speed of the mixer in RPM.
+     * @param time Duration of stirring in seconds.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void stirMixer(Codes::Module module, float rpm, float time, std::function<void(bool)> callback);
+
 
 
 

@@ -469,3 +469,14 @@ void ControlModule::getMixerRpm(CanRequestManager& manager, Codes::Module module
         }
     }, timeoutSeconds);
 }
+
+void ControlModule::stirMixer(Codes::Module module, float rpm, float time, std::function<void(bool)> callback) {
+    App_messages::Mixer::Stir stirReq(rpm, time);
+
+    uint32_t stirCanId = createCanId(stirReq.Type(), module, Codes::Instance::Exclusive, false);
+
+    m_canRequestManager.sendWithoutResponse(stirCanId, stirReq.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}
+

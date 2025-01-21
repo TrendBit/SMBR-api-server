@@ -1122,6 +1122,31 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::stirMixer(const oatpp::Object<MyStirDto>& body) {
+    if (!body || body->rpm < 0.0f || body->rpm > 10000.0f || body->time < 0.0f || body->time > 3600.0f) {
+        return createResponse(Status::CODE_400, "Invalid RPM or time value. RPM must be between 0 and 10000, and time must be between 0 and 3600 seconds.");
+    }
+
+    std::promise<bool> promise;
+    auto future = promise.get_future();
+
+    auto handleStirResult = [&promise](bool success) {
+        promise.set_value(success);
+    };
+
+    m_controlModule.stirMixer(Codes::Module::Control_module, body->rpm, body->time, handleStirResult);
+
+    future.wait();
+    bool success = future.get();
+
+    if (success) {
+        return createResponse(Status::CODE_200, "Stirring started successfully.");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to start stirring.");
+    }
+}
+
+
 
 
 /*

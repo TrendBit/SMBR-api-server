@@ -15,6 +15,7 @@
 #include "dto/MyFlowrateDto.hpp"
 #include "dto/MyMoveDto.hpp"
 #include "dto/MyRpmDto.hpp"
+#include "dto/MyStirDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -568,6 +569,22 @@ public:
     }
     ADD_CORS(getMixerRpm)
     ENDPOINT("GET", "/control/mixer/rpm", getMixerRpm);
+
+    /**
+     * @brief Sets the mixer to stir at a specified RPM for a specified time.
+     */
+    ENDPOINT_INFO(stirMixer) {
+        info->summary = "Stir mixer";
+        info->description = "Sets the mixer to stir at a specified RPM for a specified time. RPM is in RPM, time is in seconds.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyStirDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Stirring started successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid RPM or time value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to start stirring.");
+    }
+    ADD_CORS(stirMixer)
+    ENDPOINT("POST", "/control/mixer/stir", stirMixer, BODY_DTO(Object<MyStirDto>, body));
+
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
