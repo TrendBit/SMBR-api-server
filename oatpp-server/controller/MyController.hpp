@@ -556,6 +556,20 @@ public:
     ENDPOINT("POST", "/control/mixer/rpm", setMixerRpm, BODY_DTO(Object<MyRpmDto>, body));
 
     /**
+     * @brief Retrieves the current RPM of the mixer.
+     */
+    ENDPOINT_INFO(getMixerRpm) {
+        info->summary = "Get mixer RPM";
+        info->description = "Retrieves the current RPM of the mixer. Range: 0 to 10000.";
+        info->addTag("Control module");
+        info->addResponse<Object<MyRpmDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve mixer RPM");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getMixerRpm)
+    ENDPOINT("GET", "/control/mixer/rpm", getMixerRpm);
+
+    /**
     * @brief Measures API response time without communication with RPI/CAN bus.
     */
    /*

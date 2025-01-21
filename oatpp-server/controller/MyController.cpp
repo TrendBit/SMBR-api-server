@@ -1098,6 +1098,30 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getMixerRpm() {
+    auto rpmResponseDto = MyRpmDto::createShared();
+    std::promise<int> promise;
+    auto future = promise.get_future();
+
+    auto handleRpmResult = [&promise](int rpm) {
+        promise.set_value(rpm);
+    };
+
+    m_controlModule.getMixerRpm(m_canRequestManager, Codes::Module::Control_module, handleRpmResult);
+
+    future.wait();
+    int rpm = future.get();
+
+    if (rpm >= 0 && rpm <= 10000) {
+        rpmResponseDto->rpm = static_cast<float>(rpm);
+        return createDtoResponse(Status::CODE_200, rpmResponseDto);  
+    } else if (rpm == -2) {
+        return createResponse(Status::CODE_504, "Request timed out"); 
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve mixer RPM");  
+    }
+}
+
 
 
 /*

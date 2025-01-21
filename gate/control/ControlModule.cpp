@@ -443,3 +443,29 @@ void ControlModule::setMixerRpm(Codes::Module module, float rpm, std::function<v
         callback(success);
     });
 }
+
+void ControlModule::getMixerRpm(CanRequestManager& manager, Codes::Module module, std::function<void(int)> callback) {
+    App_messages::Mixer::Get_rpm_request getRpmReq;
+
+    uint32_t requestCanId = createCanId(getRpmReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t responseCanId = createCanId(App_messages::Mixer::Get_rpm_response(0).Type(), module, Codes::Instance::Exclusive, false);
+
+    double timeoutSeconds = 2;
+
+    manager.addRequest(requestCanId, getRpmReq.Export_data(), responseCanId, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::Mixer::Get_rpm_response rpmResponse(0);
+            if (rpmResponse.Interpret_data(dataCopy)) {
+                callback(rpmResponse.rpm);  
+            } else {
+                callback(-1); 
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2);
+        } else {
+            callback(-1); 
+        }
+    }, timeoutSeconds);
+}
