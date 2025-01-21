@@ -72,6 +72,29 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     return createDtoResponse(Status::CODE_200, result);
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getIpAddress() {
+    auto ipResponseDto = MyIpDto::createShared();
+    std::promise<std::string> promise;
+    auto future = promise.get_future();
+
+    auto handleIpAddressResult = [&promise](std::string ipAddress) {
+        promise.set_value(ipAddress);
+    };
+
+    m_coreModule.getIpAddress(m_canRequestManager, Codes::Module::Core_module, handleIpAddressResult);
+
+    future.wait();
+    std::string ipAddress = future.get();
+
+    if (!ipAddress.empty()) {
+        ipResponseDto->ipAddress = ipAddress;
+        return createDtoResponse(Status::CODE_200, ipResponseDto);  
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve IP address"); 
+    }
+}
+
+
 
   // ==========================================
   // Common Endpoints

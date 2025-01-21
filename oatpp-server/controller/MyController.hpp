@@ -17,6 +17,7 @@
 #include "dto/MyRpmDto.hpp"
 #include "dto/MyStirDto.hpp"
 #include "dto/MySIDDto.hpp"
+#include "dto/MyIpDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -183,6 +184,20 @@ public:
     }
     ADD_CORS(getShortID)
     ENDPOINT("GET", "/core/sid", getShortID);
+
+    /**
+     * @brief Retrieves the IP address of the device.
+     */
+    ENDPOINT_INFO(getIpAddress) {
+        info->summary = "Get IP address of the device";
+        info->addTag("Core module");
+        info->description = "Retrieves the IP address of the device. If not available, returns an empty string.";
+        info->addResponse<Object<MyIpDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve IP address");
+    }
+    ADD_CORS(getIpAddress)
+    ENDPOINT("GET", "/core/ip_address", getIpAddress);
+
 
 
 

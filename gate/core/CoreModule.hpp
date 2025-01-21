@@ -9,6 +9,8 @@
 
 #include "codes/messages/core/sid_request.hpp"
 #include "codes/messages/core/sid_response.hpp"
+#include "codes/messages/core/ip_request.hpp"
+#include "codes/messages/core/ip_response.hpp"
 
 
 /**
@@ -26,6 +28,17 @@ public:
      * @param callback Function to handle the retrieved SID as a string.
      */
     void getShortID(CanRequestManager& manager, Codes::Module module, std::function<void(std::string)> callback);
+
+    /**
+     * @brief Retrieves the IP address of the device.
+     * 
+     * @param manager Reference to the CAN request manager, responsible for managing requests and responses.
+     * @param module Target module from which the IP address will be retrieved.
+     * @param callback Callback function to handle the IP address or error message (empty string for failure).
+     */
+    void getIpAddress(CanRequestManager& manager, Codes::Module module, std::function<void(std::string)> callback);
+
+
 
 
 
