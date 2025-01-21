@@ -1,6 +1,12 @@
 # Changelog SMBR Api Server
 The version number consists of MAJOR.MINOR identifiers. The MINOR version changes correspond to the addition of new API endpoints.
 
+# 0.12 Aerator
+- Added endpoint GET and POST /control/aerator/speed
+- Added endpoint GET and POST /control/aerator/flowrate
+- Added endpoint /control/aerator/move
+- Added endpoint /control/aerator/stop
+
 # 0.11 Cuvette pump
 - Added endpoint GET and POST /control/cuvette_pump/speed
 - Added endpoint GET and POST /control/cuvette_pump/flowrate
