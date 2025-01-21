@@ -52,15 +52,30 @@ This project is actively developed in the `dev` branch. The `main` branch contai
     ```
 2. Create a build directory and compile the project:
     ```sh
-    mkdir build && cd build
+    mkdir -p build && cd build
     cmake ..
     make
+    sudo make install
+    ```
+Then start with api-server or install as service.
+
+## Installing and Managing the Service
+    ```sh
+    sudo make install-service  
+    # Restart daemon to load new service description  
+    sudo systemctl daemon-reload  
+    # Enable service startup after next reboot  
+    sudo systemctl enable api-server 
+    # Start service now  
+    sudo systemctl start api-server  
+    # Check if service is running  
+    sudo systemctl status api-server  
     ```
 
 ## Running the Application
 1. After a successful compilation, run the server:
     ```sh
-    ./Server
+    ./api-server
     ```
 
 ## Verifying Functionality
