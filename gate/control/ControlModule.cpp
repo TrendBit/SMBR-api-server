@@ -480,3 +480,14 @@ void ControlModule::stirMixer(Codes::Module module, float rpm, float time, std::
     });
 }
 
+void ControlModule::stopMixer(Codes::Module module, std::function<void(bool)> callback) {
+    App_messages::Mixer::Stop stopReq;
+
+    uint32_t stopCanId = createCanId(stopReq.Type(), module, Codes::Instance::Exclusive, false);
+
+    m_canRequestManager.sendWithoutResponse(stopCanId, stopReq.Export_data(), [callback](bool success) {
+        callback(success);
+    });
+}
+
+

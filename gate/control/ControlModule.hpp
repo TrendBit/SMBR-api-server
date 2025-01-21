@@ -49,6 +49,7 @@
 #include "codes/messages/mixer/get_rpm_request.hpp"
 #include "codes/messages/mixer/get_rpm_response.hpp"
 #include "codes/messages/mixer/stir.hpp"
+#include "codes/messages/mixer/stop.hpp"
 
 
 
@@ -302,6 +303,13 @@ public:
      */
     void stirMixer(Codes::Module module, float rpm, float time, std::function<void(bool)> callback);
 
+    /**
+     * @brief Stops the mixer immediately.
+     * 
+     * @param module Target module.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void stopMixer(Codes::Module module, std::function<void(bool)> callback);
 
 
 

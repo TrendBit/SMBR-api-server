@@ -585,6 +585,19 @@ public:
     ADD_CORS(stirMixer)
     ENDPOINT("POST", "/control/mixer/stir", stirMixer, BODY_DTO(Object<MyStirDto>, body));
 
+    /**
+     * @brief Stops the mixer immediately.
+     */
+    ENDPOINT_INFO(stopMixer) {
+        info->summary = "Stop mixer";
+        info->description = "Stops the mixer immediately and disables any planned movements.";
+        info->addTag("Control module");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Mixer was stopped.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to stop the mixer.");
+    }
+    ADD_CORS(stopMixer)
+    ENDPOINT("POST", "/control/mixer/stop", stopMixer);
+
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
