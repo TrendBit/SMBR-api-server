@@ -1,6 +1,16 @@
 # Changelog SMBR Api Server
 The version number consists of MAJOR.MINOR identifiers. The MINOR version changes correspond to the addition of new API endpoints.
 
+# 0.11 Cuvette pump
+- Added endpoint GET and POST /control/cuvette_pump/speed
+- Added endpoint GET and POST /control/cuvette_pump/flowrate
+- Added endpoint /control/cuvette_pump/move
+- Added endpoint /control/cuvette_pump/prime
+- Added endpoint /control/cuvette_pump/purge
+- Added endpoint /control/cuvette_pump/stop
+- Added script for testing throughput
+- Refactoring temperature control endpoints into retrieval functions to handle values below -30 for error reporting
+
 # 0.10 Heater
 - Added endpoint GET and POST /control/heater/intensity
 - Added endpoint GET and POST /control/heater/target_temperature
