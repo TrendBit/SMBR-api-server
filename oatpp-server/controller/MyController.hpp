@@ -257,6 +257,19 @@ public:
     ADD_CORS(getVoltage5V)
     ENDPOINT("GET", "/core/supply/5v", getVoltage5V);
 
+    /**
+     * @brief Retrieves the voltage at the VIN power rail (12V).
+     */
+    ENDPOINT_INFO(getVoltageVIN) {
+        info->summary = "Get Voltage at VIN Power Rail (12V)";
+        info->addTag("Core module");
+        info->description = "Retrieves the voltage at the VIN power rail on the device, which is supplied by an external power supply adapter.";
+        info->addResponse<Object<MyVoltageDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve VIN voltage");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getVoltageVIN)
+    ENDPOINT("GET", "/core/supply/vin", getVoltageVIN);
 
 
 
