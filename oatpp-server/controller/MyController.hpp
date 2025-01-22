@@ -271,6 +271,16 @@ public:
     ADD_CORS(getVoltageVIN)
     ENDPOINT("GET", "/core/supply/vin", getVoltageVIN);
 
+    ENDPOINT_INFO(getPoEVoltage) {
+    info->summary = "Get Voltage at PoE Power Rail (12V)";
+    info->addTag("Core module");
+    info->description = "Retrieves the voltage of the PoE power rail, supplied by Power over Ethernet (PoE) from RJ45 on RPi.";
+    info->addResponse<Object<MyVoltageDto>>(Status::CODE_200, "application/json");
+    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Internal error or invalid data");
+    }
+    ADD_CORS(getPoEVoltage)
+    ENDPOINT("GET", "/core/supply/poe", getPoEVoltage);
 
 
 

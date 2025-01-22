@@ -21,6 +21,8 @@
 #include "codes/messages/core/supply_5v_rail_response.hpp"
 #include "codes/messages/core/supply_vin_rail_request.hpp"
 #include "codes/messages/core/supply_vin_rail_response.hpp"
+#include "codes/messages/core/supply_poe_rail_request.hpp"
+#include "codes/messages/core/supply_poe_rail_response.hpp"
 
 
 /**
@@ -93,7 +95,14 @@ public:
      */
     void getVoltageVIN(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
-
+    /**
+     * @brief Retrieves the voltage of PoE power rail (12V).
+     * 
+     * @param manager The CAN request manager used to send the request.
+     * @param module The target module from which the voltage is requested.
+     * @param callback A callback function to handle the voltage response.
+     */
+    void getVoltagePoE(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
 
 

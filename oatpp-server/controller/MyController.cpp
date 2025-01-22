@@ -579,6 +579,29 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPoEVoltage() {
+    auto voltageResponseDto = MyVoltageDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handlePoEResult = [&promise](float voltage) {
+        promise.set_value(voltage);
+    };
+
+    m_coreModule.getVoltagePoE(m_canRequestManager, Codes::Module::Core_module, handlePoEResult);
+
+    future.wait();
+    float voltage = future.get();
+
+    if (voltage == -2.0f) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (voltage > -1.0f) {
+        voltageResponseDto->voltage = voltage;
+        return createDtoResponse(Status::CODE_200, voltageResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve POE voltage");
+    }
+}
 
 
 
