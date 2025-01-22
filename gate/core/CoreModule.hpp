@@ -25,6 +25,8 @@
 #include "codes/messages/core/supply_poe_rail_response.hpp"
 #include "codes/messages/core/supply_current_request.hpp"
 #include "codes/messages/core/supply_current_response.hpp"
+#include "codes/messages/core/supply_power_draw_request.hpp"
+#include "codes/messages/core/supply_power_draw_response.hpp"
 
 
 /**
@@ -114,6 +116,15 @@ public:
      * @param callback A callback function to handle the current consumption response.
      */
     void getCurrentConsumption(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Retrieves the power draw of the device in watts.
+     * 
+     * @param manager The CAN request manager used to send the request.
+     * @param module The target module from which the power draw is requested.
+     * @param callback A callback function to handle the power draw response.
+     */
+    void getPowerDraw(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
 
 

@@ -23,6 +23,7 @@
 #include "dto/MySupplyTypeDto.hpp"
 #include "dto/MyVoltageDto.hpp"
 #include "dto/MyCurrentDto.hpp"
+#include "dto/MyPowerDrawDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -272,6 +273,9 @@ public:
     ADD_CORS(getVoltageVIN)
     ENDPOINT("GET", "/core/supply/vin", getVoltageVIN);
 
+    /**
+     * @brief Retrieves the voltage of PoE power rail (12V).
+     */
     ENDPOINT_INFO(getPoEVoltage) {
     info->summary = "Get Voltage at PoE Power Rail (12V)";
     info->addTag("Core module");
@@ -283,6 +287,9 @@ public:
     ADD_CORS(getPoEVoltage)
     ENDPOINT("GET", "/core/supply/poe", getPoEVoltage);
 
+    /**
+     * @brief Retrieves the current consumption of the device.
+     */
     ENDPOINT_INFO(getCurrentConsumption) {
     info->summary = "Get Current Consumption of the Device";
     info->addTag("Core module");
@@ -294,6 +301,19 @@ public:
     ADD_CORS(getCurrentConsumption)
     ENDPOINT("GET", "/core/supply/current", getCurrentConsumption);
 
+    /**
+     * @brief Retrieves the power draw of the device in watts.
+     */
+    ENDPOINT_INFO(getPowerDraw) {
+    info->summary = "Get Power Draw of the Device";
+    info->addTag("Core module");
+    info->description = "Retrieves the power draw of the device, including RPi and all connected modules.";
+    info->addResponse<Object<MyPowerDrawDto>>(Status::CODE_200, "application/json");
+    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Internal error or invalid data");
+    }
+    ADD_CORS(getPowerDraw)
+    ENDPOINT("GET", "/core/supply/power_draw", getPowerDraw);
 
 
 

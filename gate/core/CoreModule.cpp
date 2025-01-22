@@ -254,6 +254,33 @@ void CoreModule::getCurrentConsumption(CanRequestManager& manager, Codes::Module
     }, timeoutSeconds);
 }
 
+void CoreModule::getPowerDraw(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+    App_messages::Core::Supply_power_draw_request getPowerDrawReq;
+
+    uint32_t requestCanId = createCanId(getPowerDrawReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t responseCanId = createCanId(App_messages::Core::Supply_power_draw_response(0).Type(), module, Codes::Instance::Exclusive, false);
+
+    double timeoutSeconds = 2;
+
+    manager.addRequest(requestCanId, getPowerDrawReq.Export_data(), responseCanId, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::Core::Supply_power_draw_response powerDrawResponse(0);
+            if (powerDrawResponse.Interpret_data(dataCopy)) {
+                callback(powerDrawResponse.power_draw); 
+            } else {
+                callback(-1.0f); 
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2.0f);  
+        } else {
+            callback(-1.0f);  
+        }
+    }, timeoutSeconds);
+}
+
+
 
 
 

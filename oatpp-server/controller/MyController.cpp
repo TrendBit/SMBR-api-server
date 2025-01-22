@@ -627,6 +627,31 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPowerDraw() {
+    auto powerDrawResponseDto = MyPowerDrawDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handlePowerDrawResult = [&promise](float powerDraw) {
+        promise.set_value(powerDraw);
+    };
+
+    m_coreModule.getPowerDraw(m_canRequestManager, Codes::Module::Core_module, handlePowerDrawResult);
+
+    future.wait();
+    float powerDraw = future.get();
+
+    if (powerDraw == -2.0f) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (powerDraw >= 0.0f && powerDraw <= 100.0f) {
+        powerDrawResponseDto->power_draw = powerDraw;
+        return createDtoResponse(Status::CODE_200, powerDrawResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve power draw");
+    }
+}
+
+
 
 
 
