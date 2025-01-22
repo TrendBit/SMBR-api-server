@@ -29,6 +29,7 @@
 #include "base/CommonModule.hpp"
 #include "control/ControlModule.hpp"
 #include "core/CoreModule.hpp"
+#include "sensor/SensorModule.hpp"
 #include "oatpp/data/mapping/ObjectMapper.hpp"
 
 
@@ -58,6 +59,7 @@ public:
                  CommonModule& commonModule,
                  ControlModule& controlModule,
                  CoreModule& CoreModule,
+                 SensorModule& SensorModule,
                  CanRequestManager& canRequestManager);
 
 public:
@@ -758,6 +760,22 @@ public:
     ADD_CORS(stopMixer)
     ENDPOINT("POST", "/control/mixer/stop", stopMixer);
 
+    /**
+     * @brief Retrieves the temperature of the bottle.
+     */
+    ENDPOINT_INFO(getBottleTemperature) {
+        info->summary = "Retrieves temperature of the bottle";
+        info->description = "Retrieves temperature of the bottle in °C.";
+        info->addTag("Sensor module");
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Bottle temperature not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getBottleTemperature)
+    ENDPOINT("GET", "/sensor/bottle/temperature", getBottleTemperature);
+
+
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
@@ -789,6 +807,7 @@ private:
     CommonModule& m_commonModule;
     ControlModule& m_controlModule;
     CoreModule& m_coreModule;
+    SensorModule& m_sensorModule;
     CanRequestManager& m_canRequestManager;
     std::atomic<uint8_t> m_seqNum{0};  
 };

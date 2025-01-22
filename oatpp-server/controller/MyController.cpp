@@ -6,6 +6,7 @@ MyController::MyController(const std::shared_ptr<oatpp::web::mime::ContentMapper
                            CommonModule& commonModule,
                            ControlModule& controlModule,
                            CoreModule& coreModule,
+                           SensorModule& sensorModule,
                            CanRequestManager& canRequestManager)
     : oatpp::web::server::api::ApiController(apiContentMappers)
     , m_ioContext(ioContext)
@@ -13,6 +14,7 @@ MyController::MyController(const std::shared_ptr<oatpp::web::mime::ContentMapper
     , m_commonModule(commonModule)
     , m_controlModule(controlModule)
     , m_coreModule(coreModule)
+    , m_sensorModule(sensorModule)
     , m_canRequestManager(canRequestManager) {}
 
   // ==========================================
@@ -650,10 +652,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         return createResponse(Status::CODE_500, "Failed to retrieve power draw");
     }
 }
-
-
-
-
 
 // ==========================================
 // Control module
@@ -1413,7 +1411,35 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
     }
 }
 
+// ==========================================
+// Sensor module
+// ==========================================
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBottleTemperature() {
+    auto tempResponseDto = MyTempDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleTemperatureResult = [&promise](float temperature) {
+        promise.set_value(temperature);
+    };
+
+    m_sensorModule.getBottleTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
+
+    future.wait();
+    float temperature = future.get();
+
+    if (temperature > -30) {
+        tempResponseDto->temperature = temperature;
+        return createDtoResponse(Status::CODE_200, tempResponseDto);
+    } else if (temperature == -100) {
+        return createResponse(Status::CODE_404, "Bottle temperature not available");
+    } else if (temperature == -30) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve temperature");
+    }
+}
 
 
 

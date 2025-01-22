@@ -32,9 +32,10 @@ void run(boost::asio::io_context& io_context) {
 
   ControlModule controlModule(io_context, canRequestManager); 
   CoreModule coreModule(io_context, canRequestManager); 
+  SensorModule sensorModule(io_context, canRequestManager); 
 
   auto myController = std::make_shared<MyController>(
-      contentMappers, io_context, systemModule, commonModule, controlModule, coreModule, canRequestManager
+      contentMappers, io_context, systemModule, commonModule, controlModule, coreModule, sensorModule, canRequestManager
   );  
   router->addController(myController);
 
