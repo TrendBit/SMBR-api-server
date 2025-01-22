@@ -603,6 +603,29 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCurrentConsumption() {
+    auto currentResponseDto = MyCurrentDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleCurrentResult = [&promise](float current) {
+        promise.set_value(current);
+    };
+
+    m_coreModule.getCurrentConsumption(m_canRequestManager, Codes::Module::Core_module, handleCurrentResult);
+
+    future.wait();
+    float current = future.get();
+
+    if (current == -2.0f) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (current > -1.0f && current <= 10.0f) {
+        currentResponseDto->current = current;
+        return createDtoResponse(Status::CODE_200, currentResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve current consumption");
+    }
+}
 
 
 

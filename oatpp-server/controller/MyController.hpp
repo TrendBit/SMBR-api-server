@@ -22,6 +22,7 @@
 #include "dto/MySerialDto.hpp"
 #include "dto/MySupplyTypeDto.hpp"
 #include "dto/MyVoltageDto.hpp"
+#include "dto/MyCurrentDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -282,6 +283,16 @@ public:
     ADD_CORS(getPoEVoltage)
     ENDPOINT("GET", "/core/supply/poe", getPoEVoltage);
 
+    ENDPOINT_INFO(getCurrentConsumption) {
+    info->summary = "Get Current Consumption of the Device";
+    info->addTag("Core module");
+    info->description = "Retrieves the current consumption of the device, including RPi and all connected modules. The current should be in the range 0-5 A.";
+    info->addResponse<Object<MyCurrentDto>>(Status::CODE_200, "application/json");
+    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Internal error or invalid data");
+    }
+    ADD_CORS(getCurrentConsumption)
+    ENDPOINT("GET", "/core/supply/current", getCurrentConsumption);
 
 
 

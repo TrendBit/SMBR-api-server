@@ -23,6 +23,8 @@
 #include "codes/messages/core/supply_vin_rail_response.hpp"
 #include "codes/messages/core/supply_poe_rail_request.hpp"
 #include "codes/messages/core/supply_poe_rail_response.hpp"
+#include "codes/messages/core/supply_current_request.hpp"
+#include "codes/messages/core/supply_current_response.hpp"
 
 
 /**
@@ -104,6 +106,14 @@ public:
      */
     void getVoltagePoE(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
+    /**
+     * @brief Retrieves the current consumption of the device.
+     * 
+     * @param manager The CAN request manager used to send the request.
+     * @param module The target module from which the current is requested.
+     * @param callback A callback function to handle the current consumption response.
+     */
+    void getCurrentConsumption(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
 
 
