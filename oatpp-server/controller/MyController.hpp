@@ -18,6 +18,7 @@
 #include "dto/MyStirDto.hpp"
 #include "dto/MySIDDto.hpp"
 #include "dto/MyIpDto.hpp"
+#include "dto/MyHostnameDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -197,6 +198,21 @@ public:
     }
     ADD_CORS(getIpAddress)
     ENDPOINT("GET", "/core/ip_address", getIpAddress);
+
+    /**
+     * @brief Retrieves the hostname of the device.
+     */
+    ENDPOINT_INFO(getHostname) {
+        info->summary = "Get Hostname of the device";
+        info->addTag("Core module");
+        info->description = "Retrieves the hostname of the device, truncated to 8 characters for CAN bus compatibility.";
+        info->addResponse<Object<MyHostnameDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve hostname");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getHostname)
+    ENDPOINT("GET", "/core/hostname", getHostname);
+
 
 
 

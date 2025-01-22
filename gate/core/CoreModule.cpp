@@ -66,6 +66,34 @@ void CoreModule::getIpAddress(CanRequestManager& manager, Codes::Module module, 
     }, timeoutSeconds);
 }
 
+void CoreModule::getHostname(CanRequestManager& manager, Codes::Module module, std::function<void(std::string)> callback) {
+    App_messages::Core::Hostname_request getHostnameReq;
+
+    uint32_t requestCanId = createCanId(getHostnameReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t responseCanId = createCanId(App_messages::Core::Hostname_response().Type(), module, Codes::Instance::Exclusive, false);
+
+    double timeoutSeconds = 2;
+
+    manager.addRequest(requestCanId, getHostnameReq.Export_data(), responseCanId, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::Core::Hostname_response hostnameResponse;
+            if (hostnameResponse.Interpret_data(dataCopy)) {
+                std::string hostname = hostnameResponse.hostname.substr(0, 8);  
+                callback(hostname);
+            } else {
+                callback("");
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback("timeout");
+        } else {
+            callback("");
+        }
+    }, timeoutSeconds);
+}
+
+
 
 
 

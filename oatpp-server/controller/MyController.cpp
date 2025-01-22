@@ -72,30 +72,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     return createDtoResponse(Status::CODE_200, result);
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getIpAddress() {
-    auto ipResponseDto = MyIpDto::createShared();
-    std::promise<std::string> promise;
-    auto future = promise.get_future();
-
-    auto handleIpAddressResult = [&promise](std::string ipAddress) {
-        promise.set_value(ipAddress);
-    };
-
-    m_coreModule.getIpAddress(m_canRequestManager, Codes::Module::Core_module, handleIpAddressResult);
-
-    future.wait();
-    std::string ipAddress = future.get();
-
-    if (!ipAddress.empty()) {
-        ipResponseDto->ipAddress = ipAddress;
-        return createDtoResponse(Status::CODE_200, ipResponseDto);  
-    } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve IP address"); 
-    }
-}
-
-
-
   // ==========================================
   // Common Endpoints
   // ==========================================
@@ -455,6 +431,53 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         return createResponse(Status::CODE_500, "Failed to retrieve SID");
     }
 }
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getIpAddress() {
+    auto ipResponseDto = MyIpDto::createShared();
+    std::promise<std::string> promise;
+    auto future = promise.get_future();
+
+    auto handleIpAddressResult = [&promise](std::string ipAddress) {
+        promise.set_value(ipAddress);
+    };
+
+    m_coreModule.getIpAddress(m_canRequestManager, Codes::Module::Core_module, handleIpAddressResult);
+
+    future.wait();
+    std::string ipAddress = future.get();
+
+    if (!ipAddress.empty()) {
+        ipResponseDto->ipAddress = ipAddress;
+        return createDtoResponse(Status::CODE_200, ipResponseDto);  
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve IP address"); 
+    }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHostname() {
+    auto hostnameResponseDto = MyHostnameDto::createShared();
+    std::promise<std::string> promise;
+    auto future = promise.get_future();
+
+    auto handleHostnameResult = [&promise](std::string hostname) {
+        promise.set_value(hostname);
+    };
+
+    m_coreModule.getHostname(m_canRequestManager, Codes::Module::Core_module, handleHostnameResult);
+
+    future.wait();
+    std::string hostname = future.get();
+
+    if (hostname == "timeout") {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (!hostname.empty()) {
+        hostnameResponseDto->hostname = hostname;
+        return createDtoResponse(Status::CODE_200, hostnameResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve hostname");
+    }
+}
+
 
 
 

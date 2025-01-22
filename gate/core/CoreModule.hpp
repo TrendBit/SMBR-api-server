@@ -11,6 +11,8 @@
 #include "codes/messages/core/sid_response.hpp"
 #include "codes/messages/core/ip_request.hpp"
 #include "codes/messages/core/ip_response.hpp"
+#include "codes/messages/core/hostname_request.hpp"
+#include "codes/messages/core/hostname_response.hpp"
 
 
 /**
@@ -37,6 +39,16 @@ public:
      * @param callback Callback function to handle the IP address or error message (empty string for failure).
      */
     void getIpAddress(CanRequestManager& manager, Codes::Module module, std::function<void(std::string)> callback);
+
+    /**
+     * @brief Retrieves the hostname of the device.
+     * 
+     * @param manager Reference to the CAN request manager, responsible for managing requests and responses.
+     * @param module Target module from which the hostname will be retrieved.
+     * @param callback Function to handle the retrieved hostname as a string.
+     */
+    void getHostname(CanRequestManager& manager, Codes::Module module, std::function<void(std::string)> callback);
+
 
 
 
