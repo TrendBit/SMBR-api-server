@@ -9,6 +9,8 @@
 
 #include "codes/messages/bottle_temperature/temperature_request.hpp"
 #include "codes/messages/bottle_temperature/temperature_response.hpp"
+#include "codes/messages/bottle_temperature/top_measured_temperature_request.hpp"
+#include "codes/messages/bottle_temperature/top_measured_temperature_response.hpp"
 
 /**
  * @class SensorModule
@@ -24,6 +26,15 @@ public:
      * @param callback Callback function to handle the retrieved temperature.
      */
     void getBottleTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Retrieves the measured temperature from the top sensor of the bottle.
+     * 
+     * @param module Target module from which the top temperature will be retrieved.
+     * @param callback Callback function to handle the retrieved temperature.
+     */
+    void getTopMeasuredTemperature(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
 
 
 protected:
