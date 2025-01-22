@@ -21,6 +21,7 @@
 #include "dto/MyHostnameDto.hpp"
 #include "dto/MySerialDto.hpp"
 #include "dto/MySupplyTypeDto.hpp"
+#include "dto/MyVoltageDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -241,6 +242,21 @@ public:
     }
     ADD_CORS(getPowerSupplyType)
     ENDPOINT("GET", "/core/supply/type", getPowerSupplyType);
+
+    /**
+     * @brief Retrieves the voltage of the 5V power rail.
+     */
+    ENDPOINT_INFO(getVoltage5V) {
+        info->summary = "Get voltage of 5V power rail";
+        info->addTag("Core module");
+        info->description = "Gets voltage of 5V power rail on device in volts.";
+        info->addResponse<Object<MyVoltageDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve voltage");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getVoltage5V)
+    ENDPOINT("GET", "/core/supply/5v", getVoltage5V);
+
 
 
 

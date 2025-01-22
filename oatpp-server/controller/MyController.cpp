@@ -531,6 +531,31 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     return createDtoResponse(Status::CODE_200, supplyTypeResponseDto);
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getVoltage5V() {
+    auto voltageResponseDto = MyVoltageDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleVoltageResult = [&promise](float voltage) {
+        promise.set_value(voltage);
+    };
+
+    m_coreModule.getVoltage5V(m_canRequestManager, Codes::Module::Core_module, handleVoltageResult);
+
+    future.wait();
+    float voltage = future.get();
+
+    if (voltage == -2.0f) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (voltage >= 0.0f) {
+        voltageResponseDto->voltage = voltage;
+        return createDtoResponse(Status::CODE_200, voltageResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve voltage");
+    }
+}
+
+
 
 
 

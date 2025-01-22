@@ -150,6 +150,33 @@ void CoreModule::getPowerSupplyType(CanRequestManager& manager, Codes::Module mo
 
 }
 
+void CoreModule::getVoltage5V(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+    App_messages::Core::Supply_5V_rail_request getVoltageReq;
+
+    uint32_t requestCanId = createCanId(getVoltageReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t responseCanId = createCanId(App_messages::Core::Supply_5V_rail_response(0).Type(), module, Codes::Instance::Exclusive, false);  
+
+    double timeoutSeconds = 2;
+
+    manager.addRequest(requestCanId, getVoltageReq.Export_data(), responseCanId, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::Core::Supply_5V_rail_response voltageResponse(0);  
+            if (voltageResponse.Interpret_data(dataCopy)) {
+                callback(voltageResponse.rail_5v);  
+            } else {
+                callback(-1.0f);  
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2.0f); 
+        } else {
+            callback(-1.0f);  
+        }
+    }, timeoutSeconds);
+}
+
+
 
 
 

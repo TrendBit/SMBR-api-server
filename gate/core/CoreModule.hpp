@@ -17,6 +17,8 @@
 #include "codes/messages/core/serial_response.hpp"
 #include "codes/messages/core/supply_type_request.hpp"
 #include "codes/messages/core/supply_type_response.hpp"
+#include "codes/messages/core/supply_5v_rail_request.hpp"
+#include "codes/messages/core/supply_5v_rail_response.hpp"
 
 
 /**
@@ -71,6 +73,14 @@ public:
      */
     void getPowerSupplyType(CanRequestManager& manager, Codes::Module module, std::function<void(bool, bool, bool, bool)> callback);
 
+    /**
+     * @brief Retrieves the voltage of the 5V power rail.
+     * 
+     * @param manager Reference to the CAN request manager.
+     * @param module Target module for the voltage query.
+     * @param callback Function to handle the retrieved voltage as a float.
+     */
+    void getVoltage5V(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
 
 
