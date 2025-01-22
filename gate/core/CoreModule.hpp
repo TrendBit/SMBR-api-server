@@ -13,6 +13,8 @@
 #include "codes/messages/core/ip_response.hpp"
 #include "codes/messages/core/hostname_request.hpp"
 #include "codes/messages/core/hostname_response.hpp"
+#include "codes/messages/core/serial_request.hpp"
+#include "codes/messages/core/serial_response.hpp"
 
 
 /**
@@ -48,6 +50,16 @@ public:
      * @param callback Function to handle the retrieved hostname as a string.
      */
     void getHostname(CanRequestManager& manager, Codes::Module module, std::function<void(std::string)> callback);
+
+    /**
+     * @brief Retrieves the serial number of the device.
+     * 
+     * @param manager Reference to the CAN request manager, responsible for managing requests and responses.
+     * @param module Target module from which the serial number will be retrieved.
+     * @param callback Function to handle the retrieved serial number as an int64_t.
+     */
+    void getSerialNumber(CanRequestManager& manager, Codes::Module module, std::function<void(int64_t)> callback);
+
 
 
 

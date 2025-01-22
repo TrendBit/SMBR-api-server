@@ -93,6 +93,33 @@ void CoreModule::getHostname(CanRequestManager& manager, Codes::Module module, s
     }, timeoutSeconds);
 }
 
+void CoreModule::getSerialNumber(CanRequestManager& manager, Codes::Module module, std::function<void(int64_t)> callback) {
+    App_messages::Core::Serial_request getSerialReq;
+
+    uint32_t requestCanId = createCanId(getSerialReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t responseCanId = createCanId(App_messages::Core::Serial_response().Type(), module, Codes::Instance::Exclusive, false);
+
+    double timeoutSeconds = 2;
+
+    manager.addRequest(requestCanId, getSerialReq.Export_data(), responseCanId, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::Core::Serial_response serialResponse;
+            if (serialResponse.Interpret_data(dataCopy)) {
+                callback(serialResponse.serial_number);  
+            } else {
+                callback(-1);  
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-2); 
+        } else {
+            callback(-1);  
+        }
+    }, timeoutSeconds);
+}
+
+
 
 
 

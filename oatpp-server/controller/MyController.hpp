@@ -19,6 +19,7 @@
 #include "dto/MySIDDto.hpp"
 #include "dto/MyIpDto.hpp"
 #include "dto/MyHostnameDto.hpp"
+#include "dto/MySerialDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -212,6 +213,21 @@ public:
     }
     ADD_CORS(getHostname)
     ENDPOINT("GET", "/core/hostname", getHostname);
+
+    /**
+     * @brief Retrieves the serial number of the device.
+     */
+    ENDPOINT_INFO(getSerialNumber) {
+        info->summary = "Get Serial Number of the device";
+        info->addTag("Core module");
+        info->description = "Retrieves the serial number of the device, which is unique and corresponds to the RPi serial number.";
+        info->addResponse<Object<MySerialDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve serial number");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getSerialNumber)
+    ENDPOINT("GET", "/core/serial", getSerialNumber);
+
 
 
 

@@ -478,6 +478,31 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getSerialNumber() {
+    auto serialResponseDto = MySerialDto::createShared();
+    std::promise<int64_t> promise;
+    auto future = promise.get_future();
+
+    auto handleSerialResult = [&promise](int64_t serial) {
+        promise.set_value(serial);
+    };
+
+    m_coreModule.getSerialNumber(m_canRequestManager, Codes::Module::Core_module, handleSerialResult);
+
+    future.wait();
+    int64_t serial = future.get();
+
+    if (serial == -2) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (serial >= 0) {
+        serialResponseDto->serial = serial;
+        return createDtoResponse(Status::CODE_200, serialResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve serial number");
+    }
+}
+
+
 
 
 
