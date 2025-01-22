@@ -446,13 +446,18 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     future.wait();
     std::string ipAddress = future.get();
 
-    if (!ipAddress.empty()) {
-        ipResponseDto->ipAddress = ipAddress;
-        return createDtoResponse(Status::CODE_200, ipResponseDto);  
-    } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve IP address"); 
+    if (ipAddress == "timeout") {
+        return createResponse(Status::CODE_504, "Request timed out");  
     }
+
+    if (ipAddress.empty()) {
+        return createResponse(Status::CODE_500, "Failed to retrieve IP address");  
+    }
+
+    ipResponseDto->ipAddress = ipAddress;
+    return createDtoResponse(Status::CODE_200, ipResponseDto); 
 }
+
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHostname() {
     auto hostnameResponseDto = MyHostnameDto::createShared();
@@ -500,6 +505,30 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     } else {
         return createResponse(Status::CODE_500, "Failed to retrieve serial number");
     }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPowerSupplyType() {
+    auto supplyTypeResponseDto = MySupplyTypeDto::createShared();
+    std::promise<std::tuple<bool, bool, bool, bool>> promise;
+    auto future = promise.get_future();
+
+    auto handleSupplyTypeResult = [&promise](bool success, bool vin, bool poe, bool poe_hb) {
+        promise.set_value(std::make_tuple(success, vin, poe, poe_hb));
+    };
+
+    m_coreModule.getPowerSupplyType(m_canRequestManager, Codes::Module::Core_module, handleSupplyTypeResult);
+
+    future.wait();
+    auto [success, vin, poe, poe_hb] = future.get();
+
+    if (!success) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
+
+    supplyTypeResponseDto->vin = vin;
+    supplyTypeResponseDto->poe = poe;
+    supplyTypeResponseDto->poe_hb = poe_hb;
+    return createDtoResponse(Status::CODE_200, supplyTypeResponseDto);
 }
 
 

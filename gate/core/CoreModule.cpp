@@ -45,26 +45,27 @@ void CoreModule::getIpAddress(CanRequestManager& manager, Codes::Module module, 
 
             App_messages::Core::IP_address_response ipResponse;
             if (ipResponse.Interpret_data(dataCopy)) {
-                std::string ipString;
                 if (ipResponse.IP_address.empty()) {
-                    ipString = "";  
+                    callback("");  
                 } else {
-                    ipString = std::to_string(ipResponse.IP_address[0]) + "." +
-                               std::to_string(ipResponse.IP_address[1]) + "." +
-                               std::to_string(ipResponse.IP_address[2]) + "." +
-                               std::to_string(ipResponse.IP_address[3]);
+                    std::string ipString = std::to_string(ipResponse.IP_address[0]) + "." +
+                                           std::to_string(ipResponse.IP_address[1]) + "." +
+                                           std::to_string(ipResponse.IP_address[2]) + "." +
+                                           std::to_string(ipResponse.IP_address[3]);
+                    callback(ipString);  
                 }
-                callback(ipString);
             } else {
-                callback("");  
+                callback(""); 
             }
         } else if (status == CanRequestStatus::Timeout) {
-            callback("");  
+            callback("timeout");  
         } else {
             callback("");  
         }
     }, timeoutSeconds);
 }
+
+
 
 void CoreModule::getHostname(CanRequestManager& manager, Codes::Module module, std::function<void(std::string)> callback) {
     App_messages::Core::Hostname_request getHostnameReq;
@@ -118,6 +119,37 @@ void CoreModule::getSerialNumber(CanRequestManager& manager, Codes::Module modul
         }
     }, timeoutSeconds);
 }
+
+void CoreModule::getPowerSupplyType(CanRequestManager& manager, Codes::Module module, std::function<void(bool, bool, bool, bool)> callback) {
+    App_messages::Core::Supply_type_request getSupplyTypeReq;
+
+    uint32_t requestCanId = createCanId(getSupplyTypeReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t responseCanId = createCanId(App_messages::Core::Supply_type_response().Type(), module, Codes::Instance::Exclusive, false);
+
+    double timeoutSeconds = 2;
+
+    manager.addRequest(requestCanId, getSupplyTypeReq.Export_data(), responseCanId, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::Core::Supply_type_response supplyTypeResponse;
+            if (supplyTypeResponse.Interpret_data(dataCopy)) {
+                callback(true, 
+                        supplyTypeResponse.vin, 
+                        supplyTypeResponse.poe, 
+                        supplyTypeResponse.poe_hb); 
+            } else {
+                callback(false, false, false, false); 
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(false, false, false, false);
+        } else {
+            callback(false, false, false, false); 
+        }
+    }, timeoutSeconds);
+
+}
+
 
 
 

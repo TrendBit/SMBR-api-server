@@ -15,6 +15,8 @@
 #include "codes/messages/core/hostname_response.hpp"
 #include "codes/messages/core/serial_request.hpp"
 #include "codes/messages/core/serial_response.hpp"
+#include "codes/messages/core/supply_type_request.hpp"
+#include "codes/messages/core/supply_type_response.hpp"
 
 
 /**
@@ -59,6 +61,16 @@ public:
      * @param callback Function to handle the retrieved serial number as an int64_t.
      */
     void getSerialNumber(CanRequestManager& manager, Codes::Module module, std::function<void(int64_t)> callback);
+
+    /**
+     * @brief Retrieves the type of power supply powering the device.
+     * 
+     * @param manager Reference to the CAN request manager, responsible for managing requests and responses.
+     * @param module Target module from which the power supply type will be retrieved.
+     * @param callback Function to handle the retrieved power supply types (VIN, PoE, PoE_HB) as booleans.
+     */
+    void getPowerSupplyType(CanRequestManager& manager, Codes::Module module, std::function<void(bool, bool, bool, bool)> callback);
+
 
 
 

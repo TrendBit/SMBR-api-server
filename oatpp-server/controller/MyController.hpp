@@ -20,6 +20,7 @@
 #include "dto/MyIpDto.hpp"
 #include "dto/MyHostnameDto.hpp"
 #include "dto/MySerialDto.hpp"
+#include "dto/MySupplyTypeDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -228,6 +229,18 @@ public:
     ADD_CORS(getSerialNumber)
     ENDPOINT("GET", "/core/serial", getSerialNumber);
 
+    /**
+     * @brief Retrieves the type of power supply powering the device.
+     */
+    ENDPOINT_INFO(getPowerSupplyType) {
+        info->summary = "Get type of power supply";
+        info->addTag("Core module");
+        info->description = "Retrieves the type of power supply powering the device. The options are: - VIN: external power supply adapter. - PoE: Power over Ethernet from RJ45 on RPi (15W). - PoE_HB: Variant of PoE with higher power budget (25-30W).";
+        info->addResponse<Object<MySupplyTypeDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve power supply type");
+    }
+    ADD_CORS(getPowerSupplyType)
+    ENDPOINT("GET", "/core/supply/type", getPowerSupplyType);
 
 
 
