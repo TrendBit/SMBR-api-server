@@ -24,6 +24,33 @@
 #include "codes/messages/heater/set_intensity.hpp"
 #include "codes/messages/heater/set_target_temperature.hpp"
 #include "codes/messages/heater/turn_off.hpp"
+#include "codes/messages/cuvette_pump/set_speed.hpp"
+#include "codes/messages/cuvette_pump/get_speed_request.hpp"
+#include "codes/messages/cuvette_pump/get_speed_response.hpp"
+#include "codes/messages/cuvette_pump/set_flowrate.hpp"
+#include "codes/messages/cuvette_pump/get_flowrate_request.hpp"
+#include "codes/messages/cuvette_pump/get_flowrate_response.hpp"
+#include "codes/messages/cuvette_pump/move.hpp"
+#include "codes/messages/cuvette_pump/prime.hpp"
+#include "codes/messages/cuvette_pump/purge.hpp"
+#include "codes/messages/cuvette_pump/stop.hpp"
+#include "codes/messages/aerator/set_speed.hpp"
+#include "codes/messages/aerator/get_speed_request.hpp"
+#include "codes/messages/aerator/get_speed_response.hpp"
+#include "codes/messages/aerator/set_flowrate.hpp"
+#include "codes/messages/aerator/get_flowrate_request.hpp"
+#include "codes/messages/aerator/get_flowrate_response.hpp"
+#include "codes/messages/aerator/move.hpp"
+#include "codes/messages/aerator/stop.hpp"
+#include "codes/messages/mixer/set_speed.hpp"
+#include "codes/messages/mixer/get_speed_request.hpp"
+#include "codes/messages/mixer/get_speed_response.hpp"
+#include "codes/messages/mixer/set_rpm.hpp"
+#include "codes/messages/mixer/get_rpm_request.hpp"
+#include "codes/messages/mixer/get_rpm_response.hpp"
+#include "codes/messages/mixer/stir.hpp"
+#include "codes/messages/mixer/stop.hpp"
+
 
 
 /**
@@ -108,8 +135,181 @@ public:
      * 
      * @param module Target module.
      * @param callback Callback function to indicate success or failure.
- */
-void turnOffHeater(Codes::Module module, std::function<void(bool)> callback);
+    */
+    void turnOffHeater(Codes::Module module, std::function<void(bool)> callback);
+
+    /**
+     * @brief Sets the speed of the cuvette pump.
+     * 
+     * @param module Target module.
+     * @param speed Value between -1.0 (out) and 1.0 (in).
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setCuvettePumpSpeed(Codes::Module module, float speed, std::function<void(bool)> callback);
+
+    /**
+     * @brief Retrieves the current speed of the cuvette pump.
+     * 
+     * @param module Target module from which the pump speed will be retrieved.
+     * @param callback Callback function to handle the retrieved speed.
+     */
+    void getCuvettePumpSpeed(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Sets the flowrate of the cuvette pump.
+     * 
+     * @param module Target module.
+     * @param flowrate Flowrate value in ml/min, can range from -1000.0 (out) to 1000.0 (in).
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setCuvettePumpFlowrate(Codes::Module module, float flowrate, std::function<void(bool)> callback);
+
+    /**
+     * @brief Retrieves the current flowrate of the cuvette pump.
+     * 
+     * @param manager CAN request manager used for communication.
+     * @param module Target module from which the pump flowrate will be retrieved.
+     * @param callback Callback function to handle the retrieved flowrate.
+     */
+    void getCuvettePumpFlowrate(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Moves the requested amount of liquid in or out of the cuvette.
+     * 
+     * @param module Target module.
+     * @param volume Amount of liquid to move (ml). Positive for in, negative for out.
+     * @param flowrate Flowrate of the pump (ml/min). If zero, the pump will use its maximum flowrate.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void moveCuvettePump(Codes::Module module, float volume, float flowrate, std::function<void(bool)> callback);
+
+    /**
+     * @brief Sends a command to prime the cuvette pump.
+     * 
+     * @param module Target module.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void primeCuvettePump(Codes::Module module, std::function<void(bool)> callback);
+
+    /**
+     * @brief Sends a command to purge the cuvette pump.
+     * 
+     * @param module Target module.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void purgeCuvettePump(Codes::Module module, std::function<void(bool)> callback);
+
+    /**
+     * @brief Sends a command to stop the cuvette pump and disable any planned movements.
+     * 
+     * @param module Target module.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void stopCuvettePump(Codes::Module module, std::function<void(bool)> callback);
+
+    /**
+     * @brief Sets the speed of the aerator.
+     * 
+     * @param module Target module.
+     * @param speed Value between 0.0 and 1.0.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setAeratorSpeed(Codes::Module module, float speed, std::function<void(bool)> callback);
+
+    /**
+     * @brief Retrieves the current speed of the aerator.
+     * 
+     * @param module Target module from which the aerator speed will be retrieved.
+     * @param callback Callback function to handle the retrieved speed.
+     */
+    void getAeratorSpeed(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Sets the flowrate of the aerator.
+     * 
+     * @param module Target module.
+     * @param flowrate Value between 10.0 and 5000.0 ml/min.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setAeratorFlowrate(Codes::Module module, float flowrate, std::function<void(bool)> callback);
+
+    /**
+     * @brief Retrieves the current flowrate of the aerator.
+     * 
+     * @param module Target module from which the aerator flowrate will be retrieved.
+     * @param callback Callback function to handle the retrieved flowrate.
+     */
+    void getAeratorFlowrate(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Moves the requested amount of air into the bottle using the aerator.
+     * 
+     * @param module Target module.
+     * @param volume Amount of air to move (ml). Positive for in, negative for out.
+     * @param flowrate Flowrate of the aerator (ml/min). If zero, the pump will use its maximum flowrate.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void moveAerator(Codes::Module module, float volume, float flowrate, std::function<void(bool)> callback);
+
+    /**
+     * @brief Sends a command to stop the aerator and disable any planned movements.
+     * 
+     * @param module Target module.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void stopAerator(Codes::Module module, std::function<void(bool)> callback);
+
+    /**
+     * @brief Sets the speed of the mixer.
+     * 
+     * @param module Target module.
+     * @param speed Value between 0.0 and 1.0.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setMixerSpeed(Codes::Module module, float speed, std::function<void(bool)> callback);
+
+    /**
+     * @brief Retrieves the current speed of the mixer.
+     * 
+     * @param module Target module from which the mixer speed will be retrieved.
+     * @param callback Callback function to handle the retrieved speed.
+     */
+    void getMixerSpeed(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Sets the target RPM of the mixer.
+     * 
+     * @param module Target module.
+     * @param rpm Value between 0 and 10000.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void setMixerRpm(Codes::Module module, float rpm, std::function<void(bool)> callback);
+
+    /**
+     * @brief Retrieves the current RPM of the mixer.
+     * 
+     * @param module Target module from which the mixer RPM will be retrieved.
+     * @param callback Callback function to handle the retrieved RPM.
+     */
+    void getMixerRpm(CanRequestManager& manager, Codes::Module module, std::function<void(int)> callback);
+
+    /**
+     * @brief Sets the mixer to stir at a specified RPM for a specified time.
+     * 
+     * @param module Target module.
+     * @param rpm Speed of the mixer in RPM.
+     * @param time Duration of stirring in seconds.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void stirMixer(Codes::Module module, float rpm, float time, std::function<void(bool)> callback);
+
+    /**
+     * @brief Stops the mixer immediately.
+     * 
+     * @param module Target module.
+     * @param callback Callback function to indicate success or failure.
+     */
+    void stopMixer(Codes::Module module, std::function<void(bool)> callback);
 
 
 
