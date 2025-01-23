@@ -1,6 +1,9 @@
 # Changelog SMBR Api Server
 The version number consists of MAJOR.MINOR identifiers. The MINOR version changes correspond to the addition of new API endpoints.
 
+# 0.16 Common - board temperature
+- Added endpoint GET /{module}/board_temp
+
 # 0.15 Sensor
 - Added endpoint GET bottle/temperature
 - Added endpoint GET top and bottom bottle/measured_temperature
