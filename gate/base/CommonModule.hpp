@@ -15,6 +15,8 @@
 #include "codes/messages/common/device_can_bootloader.hpp"
 #include "codes/messages/common/core_load_request.hpp"
 #include "codes/messages/common/core_load_response.hpp"
+#include "codes/messages/common/board_temp_request.hpp"
+#include "codes/messages/common/board_temp_response.hpp"
 
 
 /**
@@ -79,6 +81,15 @@ public:
      *                 A negative value indicates an error (-1 for failure, -2 for timeout).
      */
     void getCoreTemp(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
+
+    /**
+     * @brief Sends a request to retrieve the board temperature from the specified module.
+     *
+     * @param manager Reference to the CanRequestManager used to manage CAN requests.
+     * @param module The module from which the board temperature is being requested (defined in Codes::Module).
+     * @param callback Function to be called with the temperature value (in degrees Celsius).
+     */
+    void getBoardTemp(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback);
 
     /**
     * @brief Sends a request to restart the specified CAN module.

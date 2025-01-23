@@ -182,16 +182,49 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     future.wait();
     float temperature = future.get();
 
-    if (/*temperature >= 0*/temperature != -2 && temperature != -1) {
+    if (temperature == -30) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (temperature == -100) {
+        return createResponse(Status::CODE_503, "Module not available"); 
+    } else if (temperature >= -30) {
         tempResponseDto->temperature = temperature;
-        return createDtoResponse(Status::CODE_200, tempResponseDto);  
-    } else if (temperature == -2) {
-        return createResponse(Status::CODE_504, "Request timed out"); 
+        return createDtoResponse(Status::CODE_200, tempResponseDto); 
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve temperature");  
+        return createResponse(Status::CODE_500, "Failed to retrieve temperature"); 
     }
 }
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBoardTemp(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
+    auto tempResponseDto = MyTempDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleTempResult = [&promise](float temperature) {
+        promise.set_value(temperature);
+    };
+
+    auto targetModuleOpt = getTargetModule(module);  
+    if (!targetModuleOpt.has_value()) {
+        return createResponse(Status::CODE_404, "Module not found");  
+    }
+    Codes::Module targetModule = targetModuleOpt.value();
+
+    m_commonModule.getBoardTemp(m_canRequestManager, targetModule, handleTempResult);
+
+    future.wait();
+    float temperature = future.get();
+
+    if (temperature == -30) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (temperature == -100) {
+        return createResponse(Status::CODE_503, "Module not available"); 
+    } else if (temperature >= -30) {
+        tempResponseDto->temperature = temperature;
+        return createDtoResponse(Status::CODE_200, tempResponseDto); 
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve temperature"); 
+    }
+}
 
 std::future<bool> MyController::checkModuleAndUidAvailability(
     const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false>>& module,

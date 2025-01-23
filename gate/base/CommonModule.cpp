@@ -76,23 +76,59 @@ void CommonModule::getCoreTemp(CanRequestManager& manager, Codes::Module module,
 
             App_messages::Common::Core_temp_response coreTempRes;
             if (coreTempRes.Interpret_data(dataCopy)) {
-                callback(coreTempRes.temperature);
+                float temperature = coreTempRes.temperature;
+                if (temperature < -30) {
+                    callback(-100); 
+                } else {
+                    callback(temperature); 
+                }
             } else {
-                callback(-1);  
+                callback(-1); 
             }
         } else if (status == CanRequestStatus::Timeout) {
-            callback(-2);  
+            callback(-30); 
         } else {
-            callback(-1);  
+            callback(-1); 
         }
     }, timeoutSeconds);
 }
+
+void CommonModule::getBoardTemp(CanRequestManager& manager, Codes::Module module, std::function<void(float)> callback) {
+    App_messages::Common::Board_temp_request set_boardTempReq;
+
+    uint32_t temp_can_id = createCanId(set_boardTempReq.Type(), module, Codes::Instance::Exclusive, false);
+    uint32_t temp_response_id = createCanId(App_messages::Common::Board_temp_response().Type(), module, Codes::Instance::Exclusive, false);
+
+    double timeoutSeconds = 2;
+
+    manager.addRequest(temp_can_id, set_boardTempReq.Export_data(), temp_response_id, [callback](CanRequestStatus status, const CanMessage& response) {
+        if (status == CanRequestStatus::Success) {
+            can_data_vector_t dataCopy = response.getData();
+
+            App_messages::Common::Board_temp_response boardTempRes;
+            if (boardTempRes.Interpret_data(dataCopy)) {
+                float temperature = boardTempRes.temperature;
+                if (temperature < -30) {
+                    callback(-100); 
+                } else {
+                    callback(temperature); 
+                }
+            } else {
+                callback(-1); 
+            }
+        } else if (status == CanRequestStatus::Timeout) {
+            callback(-30); 
+        } else {
+            callback(-1); 
+        }
+    }, timeoutSeconds);
+}
+
 
 void CommonModule::sendDeviceReset(CanRequestManager& manager, Codes::Module module, std::function<void(bool)> callback) {
     App_messages::Common::Device_reset resetRequest; 
         
     uint32_t reset_can_id = createCanId(resetRequest.Type(), module, Codes::Instance::Exclusive, false);
-    //uint32_t reset_response_can_id = createCanId(resetRequest.Type(), module, Codes::Instance::Exclusive, false);
 
     manager.sendWithoutResponse(reset_can_id, resetRequest.Export_data(), [callback](bool success) {
         callback(success);
@@ -103,7 +139,6 @@ void CommonModule::sendDeviceUsbBootloader(CanRequestManager& manager, Codes::Mo
     App_messages::Common::Device_usb_bootloader usbBootloaderRequest;
         
     uint32_t usbBootloader_can_id = createCanId(usbBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
-    //uint32_t usbBootloader_response_can_id = createCanId(usbBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
 
     manager.sendWithoutResponse(usbBootloader_can_id, usbBootloaderRequest.Export_data(), [callback](bool success) {
         callback(success);
@@ -114,7 +149,6 @@ void CommonModule::sendDeviceCanBootloader(CanRequestManager& manager, Codes::Mo
     App_messages::Common::Device_can_bootloader canBootloaderRequest;
         
     uint32_t canBootloader_can_id = createCanId(canBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
-    //uint32_t canBootloader_response_can_id = createCanId(canBootloaderRequest.Type(), module, Codes::Instance::Exclusive, false);
 
     manager.sendWithoutResponse(canBootloader_can_id, canBootloaderRequest.Export_data(), [callback](bool success) {
         callback(success);

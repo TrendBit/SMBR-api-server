@@ -126,6 +126,22 @@ public:
     ENDPOINT("GET", "/{module}/core_temp", getCoreTemp, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
 
     /**
+     * @brief Retrieves the board temperature of the specified module.
+     */
+    ENDPOINT_INFO(getBoardTemp) {
+    info->summary = "Get module board temperature";
+    info->addTag("Common");
+    info->description = "Gets the current temperature of the module board, typically measured around temperature-intensive components or equipment.";
+    info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+    info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
+    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getBoardTemp)
+    ENDPOINT("GET", "/{module}/board_temp", getBoardTemp, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
+
+
+    /**
     * @brief Restarts the specified module into application mode.
     */
     ENDPOINT_INFO(postRestart) {
