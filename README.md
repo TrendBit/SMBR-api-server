@@ -67,7 +67,7 @@ sudo systemctl daemon-reload
 # Enable service startup after next reboot  
 sudo systemctl enable api-server  
 # Start service now  
-sudo systemctl start api-server  
+sudo systemctl start api-server
 # Check if service is running  
 sudo systemctl status api-server  
 ```  

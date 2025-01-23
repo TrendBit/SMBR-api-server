@@ -16,10 +16,20 @@
 #include "dto/MyMoveDto.hpp"
 #include "dto/MyRpmDto.hpp"
 #include "dto/MyStirDto.hpp"
+#include "dto/MySIDDto.hpp"
+#include "dto/MyIpDto.hpp"
+#include "dto/MyHostnameDto.hpp"
+#include "dto/MySerialDto.hpp"
+#include "dto/MySupplyTypeDto.hpp"
+#include "dto/MyVoltageDto.hpp"
+#include "dto/MyCurrentDto.hpp"
+#include "dto/MyPowerDrawDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
 #include "control/ControlModule.hpp"
+#include "core/CoreModule.hpp"
+#include "sensor/SensorModule.hpp"
 #include "oatpp/data/mapping/ObjectMapper.hpp"
 
 
@@ -48,9 +58,14 @@ public:
                  SystemModule& systemModule,
                  CommonModule& commonModule,
                  ControlModule& controlModule,
+                 CoreModule& CoreModule,
+                 SensorModule& SensorModule,
                  CanRequestManager& canRequestManager);
 
 public:
+// ==========================================
+// System Endpoints
+// ==========================================
 
     /**
      * @brief Retrieves available modules and their unique CAN IDs.
@@ -160,7 +175,154 @@ public:
          PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
          BODY_DTO(Object<MyModuleActionRequestDto>, body));
 
+// ==========================================
+// Core module
+// ==========================================
 
+    /**
+     * @brief Retrieves the short ID (SID) of the device.
+     */
+    ENDPOINT_INFO(getShortID) {
+        info->summary = "Get Short ID (SID) of the device";
+        info->addTag("Core module");
+        info->description = "Retrieves the 4-character hexadecimal SID of the device. The SID may not be unique across devices.";
+        info->addResponse<Object<MySIDDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve SID");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getShortID)
+    ENDPOINT("GET", "/core/sid", getShortID);
+
+    /**
+     * @brief Retrieves the IP address of the device.
+     */
+    ENDPOINT_INFO(getIpAddress) {
+        info->summary = "Get IP address of the device";
+        info->addTag("Core module");
+        info->description = "Retrieves the IP address of the device. If not available, returns an empty string.";
+        info->addResponse<Object<MyIpDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve IP address");
+    }
+    ADD_CORS(getIpAddress)
+    ENDPOINT("GET", "/core/ip_address", getIpAddress);
+
+    /**
+     * @brief Retrieves the hostname of the device.
+     */
+    ENDPOINT_INFO(getHostname) {
+        info->summary = "Get Hostname of the device";
+        info->addTag("Core module");
+        info->description = "Retrieves the hostname of the device, truncated to 8 characters for CAN bus compatibility.";
+        info->addResponse<Object<MyHostnameDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve hostname");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getHostname)
+    ENDPOINT("GET", "/core/hostname", getHostname);
+
+    /**
+     * @brief Retrieves the serial number of the device.
+     */
+    ENDPOINT_INFO(getSerialNumber) {
+        info->summary = "Get Serial Number of the device";
+        info->addTag("Core module");
+        info->description = "Retrieves the serial number of the device, which is unique and corresponds to the RPi serial number.";
+        info->addResponse<Object<MySerialDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve serial number");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getSerialNumber)
+    ENDPOINT("GET", "/core/serial", getSerialNumber);
+
+    /**
+     * @brief Retrieves the type of power supply powering the device.
+     */
+    ENDPOINT_INFO(getPowerSupplyType) {
+        info->summary = "Get type of power supply";
+        info->addTag("Core module");
+        info->description = "Retrieves the type of power supply powering the device. The options are: - VIN: external power supply adapter. - PoE: Power over Ethernet from RJ45 on RPi (15W). - PoE_HB: Variant of PoE with higher power budget (25-30W).";
+        info->addResponse<Object<MySupplyTypeDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve power supply type");
+    }
+    ADD_CORS(getPowerSupplyType)
+    ENDPOINT("GET", "/core/supply/type", getPowerSupplyType);
+
+    /**
+     * @brief Retrieves the voltage of the 5V power rail.
+     */
+    ENDPOINT_INFO(getVoltage5V) {
+        info->summary = "Get voltage of 5V power rail";
+        info->addTag("Core module");
+        info->description = "Gets voltage of 5V power rail on device in volts.";
+        info->addResponse<Object<MyVoltageDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve voltage");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getVoltage5V)
+    ENDPOINT("GET", "/core/supply/5v", getVoltage5V);
+
+    /**
+     * @brief Retrieves the voltage at the VIN power rail (12V).
+     */
+    ENDPOINT_INFO(getVoltageVIN) {
+        info->summary = "Get Voltage at VIN Power Rail (12V)";
+        info->addTag("Core module");
+        info->description = "Retrieves the voltage at the VIN power rail on the device, which is supplied by an external power supply adapter.";
+        info->addResponse<Object<MyVoltageDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve VIN voltage");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getVoltageVIN)
+    ENDPOINT("GET", "/core/supply/vin", getVoltageVIN);
+
+    /**
+     * @brief Retrieves the voltage of PoE power rail (12V).
+     */
+    ENDPOINT_INFO(getPoEVoltage) {
+    info->summary = "Get Voltage at PoE Power Rail (12V)";
+    info->addTag("Core module");
+    info->description = "Retrieves the voltage of the PoE power rail, supplied by Power over Ethernet (PoE) from RJ45 on RPi.";
+    info->addResponse<Object<MyVoltageDto>>(Status::CODE_200, "application/json");
+    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Internal error or invalid data");
+    }
+    ADD_CORS(getPoEVoltage)
+    ENDPOINT("GET", "/core/supply/poe", getPoEVoltage);
+
+    /**
+     * @brief Retrieves the current consumption of the device.
+     */
+    ENDPOINT_INFO(getCurrentConsumption) {
+    info->summary = "Get Current Consumption of the Device";
+    info->addTag("Core module");
+    info->description = "Retrieves the current consumption of the device, including RPi and all connected modules. The current should be in the range 0-5 A.";
+    info->addResponse<Object<MyCurrentDto>>(Status::CODE_200, "application/json");
+    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Internal error or invalid data");
+    }
+    ADD_CORS(getCurrentConsumption)
+    ENDPOINT("GET", "/core/supply/current", getCurrentConsumption);
+
+    /**
+     * @brief Retrieves the power draw of the device in watts.
+     */
+    ENDPOINT_INFO(getPowerDraw) {
+    info->summary = "Get Power Draw of the Device";
+    info->addTag("Core module");
+    info->description = "Retrieves the power draw of the device, including RPi and all connected modules.";
+    info->addResponse<Object<MyPowerDrawDto>>(Status::CODE_200, "application/json");
+    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Internal error or invalid data");
+    }
+    ADD_CORS(getPowerDraw)
+    ENDPOINT("GET", "/core/supply/power_draw", getPowerDraw);
+
+
+
+
+// ==========================================
+// Control module
+// ==========================================
 
     /**
     * @brief Sets all channels of LED panel to given intensity.
@@ -598,6 +760,84 @@ public:
     ADD_CORS(stopMixer)
     ENDPOINT("POST", "/control/mixer/stop", stopMixer);
 
+    /**
+     * @brief Retrieves the temperature of the bottle.
+     */
+    ENDPOINT_INFO(getBottleTemperature) {
+        info->summary = "Retrieves temperature of the bottle";
+        info->description = "Retrieves temperature of the bottle in °C.";
+        info->addTag("Sensor module");
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Bottle temperature not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getBottleTemperature)
+    ENDPOINT("GET", "/sensor/bottle/temperature", getBottleTemperature);
+
+    /**
+     * @brief Retrieves the measured temperature from the top sensor of the bottle.
+     */
+    ENDPOINT_INFO(getTopMeasuredTemperature) {
+        info->summary = "Retrieves measured temperature from top sensor";
+        info->description = "Retrieves measured temperature of the top of the bottle in °C.";
+        info->addTag("Sensor module");
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Top temperature not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getTopMeasuredTemperature)
+    ENDPOINT("GET", "/sensor/bottle/top/measured_temperature", getTopMeasuredTemperature);
+
+    /**
+     * @brief Retrieves the measured temperature from the bottom sensor of the bottle.
+     */
+    ENDPOINT_INFO(getBottomMeasuredTemperature) {
+        info->summary = "Retrieves measured temperature from bottom sensor";
+        info->description = "Retrieves measured temperature of the bottom of the bottle in °C.";
+        info->addTag("Sensor module");
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Bottom temperature not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getBottomMeasuredTemperature)
+    ENDPOINT("GET", "/sensor/bottle/bottom/measured_temperature", getBottomMeasuredTemperature);
+
+    /**
+     * @brief Retrieves the temperature of the top sensor case of the bottle.
+     */
+    ENDPOINT_INFO(getTopSensorTemperature) {
+        info->summary = "Retrieves temperature of the top sensor case";
+        info->description = "Retrieves temperature of the sensor on top of the bottle in °C.";
+        info->addTag("Sensor module");
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Top sensor temperature not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getTopSensorTemperature)
+    ENDPOINT("GET", "/sensor/bottle/top/sensor_temperature", getTopSensorTemperature);
+
+    /**
+     * @brief Retrieves the temperature of the bottom sensor case of the bottle.
+     */
+    ENDPOINT_INFO(getBottomSensorTemperature) {
+        info->summary = "Retrieves temperature of the bottom sensor case";
+        info->description = "Retrieves temperature of the sensor on bottom of the bottle in °C.";
+        info->addTag("Sensor module");
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Bottom sensor temperature not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getBottomSensorTemperature)
+    ENDPOINT("GET", "/sensor/bottle/bottom/sensor_temperature", getBottomSensorTemperature);
+
+
+
+
 
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
@@ -628,6 +868,8 @@ private:
     SystemModule& m_systemModule;
     CommonModule& m_commonModule;
     ControlModule& m_controlModule;
+    CoreModule& m_coreModule;
+    SensorModule& m_sensorModule;
     CanRequestManager& m_canRequestManager;
     std::atomic<uint8_t> m_seqNum{0};  
 };

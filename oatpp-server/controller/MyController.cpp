@@ -5,12 +5,16 @@ MyController::MyController(const std::shared_ptr<oatpp::web::mime::ContentMapper
                            SystemModule& systemModule,
                            CommonModule& commonModule,
                            ControlModule& controlModule,
+                           CoreModule& coreModule,
+                           SensorModule& sensorModule,
                            CanRequestManager& canRequestManager)
     : oatpp::web::server::api::ApiController(apiContentMappers)
     , m_ioContext(ioContext)
     , m_systemModule(systemModule)
     , m_commonModule(commonModule)
     , m_controlModule(controlModule)
+    , m_coreModule(coreModule)
+    , m_sensorModule(sensorModule)
     , m_canRequestManager(canRequestManager) {}
 
   // ==========================================
@@ -69,7 +73,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     return createDtoResponse(Status::CODE_200, result);
 }
-
 
   // ==========================================
   // Common Endpoints
@@ -403,10 +406,252 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
     }
 }
 
+// ==========================================
+// Core module
+// ==========================================
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getShortID() {
+    auto sidResponseDto = MySIDDto::createShared();
+    std::promise<std::string> promise;
+    auto future = promise.get_future();
+
+    auto handleSIDResult = [&promise](std::string sid) {
+        promise.set_value(sid);
+    };
+
+    m_coreModule.getShortID(m_canRequestManager, Codes::Module::Core_module, handleSIDResult);
+
+    future.wait();
+    std::string sid = future.get();
+
+    if (sid == "timeout") {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (!sid.empty()) {
+        sidResponseDto->sid = sid;
+        return createDtoResponse(Status::CODE_200, sidResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve SID");
+    }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getIpAddress() {
+    auto ipResponseDto = MyIpDto::createShared();
+    std::promise<std::string> promise;
+    auto future = promise.get_future();
+
+    auto handleIpAddressResult = [&promise](std::string ipAddress) {
+        promise.set_value(ipAddress);
+    };
+
+    m_coreModule.getIpAddress(m_canRequestManager, Codes::Module::Core_module, handleIpAddressResult);
+
+    future.wait();
+    std::string ipAddress = future.get();
+
+    if (ipAddress == "timeout") {
+        return createResponse(Status::CODE_504, "Request timed out");  
+    }
+
+    if (ipAddress.empty()) {
+        return createResponse(Status::CODE_500, "Failed to retrieve IP address");  
+    }
+
+    ipResponseDto->ipAddress = ipAddress;
+    return createDtoResponse(Status::CODE_200, ipResponseDto); 
+}
 
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHostname() {
+    auto hostnameResponseDto = MyHostnameDto::createShared();
+    std::promise<std::string> promise;
+    auto future = promise.get_future();
 
+    auto handleHostnameResult = [&promise](std::string hostname) {
+        promise.set_value(hostname);
+    };
 
+    m_coreModule.getHostname(m_canRequestManager, Codes::Module::Core_module, handleHostnameResult);
+
+    future.wait();
+    std::string hostname = future.get();
+
+    if (hostname == "timeout") {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (!hostname.empty()) {
+        hostnameResponseDto->hostname = hostname;
+        return createDtoResponse(Status::CODE_200, hostnameResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve hostname");
+    }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getSerialNumber() {
+    auto serialResponseDto = MySerialDto::createShared();
+    std::promise<int64_t> promise;
+    auto future = promise.get_future();
+
+    auto handleSerialResult = [&promise](int64_t serial) {
+        promise.set_value(serial);
+    };
+
+    m_coreModule.getSerialNumber(m_canRequestManager, Codes::Module::Core_module, handleSerialResult);
+
+    future.wait();
+    int64_t serial = future.get();
+
+    if (serial == -2) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (serial >= 0) {
+        serialResponseDto->serial = serial;
+        return createDtoResponse(Status::CODE_200, serialResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve serial number");
+    }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPowerSupplyType() {
+    auto supplyTypeResponseDto = MySupplyTypeDto::createShared();
+    std::promise<std::tuple<bool, bool, bool, bool>> promise;
+    auto future = promise.get_future();
+
+    auto handleSupplyTypeResult = [&promise](bool success, bool vin, bool poe, bool poe_hb) {
+        promise.set_value(std::make_tuple(success, vin, poe, poe_hb));
+    };
+
+    m_coreModule.getPowerSupplyType(m_canRequestManager, Codes::Module::Core_module, handleSupplyTypeResult);
+
+    future.wait();
+    auto [success, vin, poe, poe_hb] = future.get();
+
+    if (!success) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
+
+    supplyTypeResponseDto->vin = vin;
+    supplyTypeResponseDto->poe = poe;
+    supplyTypeResponseDto->poe_hb = poe_hb;
+    return createDtoResponse(Status::CODE_200, supplyTypeResponseDto);
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getVoltage5V() {
+    auto voltageResponseDto = MyVoltageDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleVoltageResult = [&promise](float voltage) {
+        promise.set_value(voltage);
+    };
+
+    m_coreModule.getVoltage5V(m_canRequestManager, Codes::Module::Core_module, handleVoltageResult);
+
+    future.wait();
+    float voltage = future.get();
+
+    if (voltage == -2.0f) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (voltage >= 0.0f) {
+        voltageResponseDto->voltage = voltage;
+        return createDtoResponse(Status::CODE_200, voltageResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve voltage");
+    }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getVoltageVIN() {
+    auto voltageResponseDto = MyVoltageDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleVoltageResult = [&promise](float voltage) {
+        promise.set_value(voltage);
+    };
+
+    m_coreModule.getVoltageVIN(m_canRequestManager, Codes::Module::Core_module, handleVoltageResult);
+
+    future.wait();
+    float voltage = future.get();
+
+    if (voltage == -2.0f) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (voltage > -1.0f) {
+        voltageResponseDto->voltage = voltage;
+        return createDtoResponse(Status::CODE_200, voltageResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve VIN voltage");
+    }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPoEVoltage() {
+    auto voltageResponseDto = MyVoltageDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handlePoEResult = [&promise](float voltage) {
+        promise.set_value(voltage);
+    };
+
+    m_coreModule.getVoltagePoE(m_canRequestManager, Codes::Module::Core_module, handlePoEResult);
+
+    future.wait();
+    float voltage = future.get();
+
+    if (voltage == -2.0f) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (voltage > -1.0f) {
+        voltageResponseDto->voltage = voltage;
+        return createDtoResponse(Status::CODE_200, voltageResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve POE voltage");
+    }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCurrentConsumption() {
+    auto currentResponseDto = MyCurrentDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleCurrentResult = [&promise](float current) {
+        promise.set_value(current);
+    };
+
+    m_coreModule.getCurrentConsumption(m_canRequestManager, Codes::Module::Core_module, handleCurrentResult);
+
+    future.wait();
+    float current = future.get();
+
+    if (current == -2.0f) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (current > -1.0f && current <= 10.0f) {
+        currentResponseDto->current = current;
+        return createDtoResponse(Status::CODE_200, currentResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve current consumption");
+    }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPowerDraw() {
+    auto powerDrawResponseDto = MyPowerDrawDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handlePowerDrawResult = [&promise](float powerDraw) {
+        promise.set_value(powerDraw);
+    };
+
+    m_coreModule.getPowerDraw(m_canRequestManager, Codes::Module::Core_module, handlePowerDrawResult);
+
+    future.wait();
+    float powerDraw = future.get();
+
+    if (powerDraw == -2.0f) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else if (powerDraw >= 0.0f && powerDraw <= 100.0f) {
+        powerDrawResponseDto->power_draw = powerDraw;
+        return createDtoResponse(Status::CODE_200, powerDrawResponseDto);
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve power draw");
+    }
+}
 
 // ==========================================
 // Control module
@@ -1166,6 +1411,139 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
     }
 }
 
+// ==========================================
+// Sensor module
+// ==========================================
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBottleTemperature() {
+    auto tempResponseDto = MyTempDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleTemperatureResult = [&promise](float temperature) {
+        promise.set_value(temperature);
+    };
+
+    m_sensorModule.getBottleTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
+
+    future.wait();
+    float temperature = future.get();
+
+    if (temperature > -30) {
+        tempResponseDto->temperature = temperature;
+        return createDtoResponse(Status::CODE_200, tempResponseDto);
+    } else if (temperature == -100) {
+        return createResponse(Status::CODE_404, "Bottle temperature not available");
+    } else if (temperature == -30) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve temperature");
+    }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getTopMeasuredTemperature() {
+    auto tempResponseDto = MyTempDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleTemperatureResult = [&promise](float temperature) {
+        promise.set_value(temperature);
+    };
+
+    m_sensorModule.getTopMeasuredTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
+
+    future.wait();
+    float temperature = future.get();
+
+    if (temperature > -30) {
+        tempResponseDto->temperature = temperature;
+        return createDtoResponse(Status::CODE_200, tempResponseDto);
+    } else if (temperature == -100) {
+        return createResponse(Status::CODE_404, "Top temperature not available");
+    } else if (temperature == -30) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve temperature");
+    }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBottomMeasuredTemperature() {
+    auto tempResponseDto = MyTempDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleTemperatureResult = [&promise](float temperature) {
+        promise.set_value(temperature);
+    };
+
+    m_sensorModule.getBottomMeasuredTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
+
+    future.wait();
+    float temperature = future.get();
+
+    if (temperature > -30) {
+        tempResponseDto->temperature = temperature;
+        return createDtoResponse(Status::CODE_200, tempResponseDto);
+    } else if (temperature == -100) {
+        return createResponse(Status::CODE_404, "Bottom temperature not available");
+    } else if (temperature == -30) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve temperature");
+    }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getTopSensorTemperature() {
+    auto tempResponseDto = MyTempDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleTemperatureResult = [&promise](float temperature) {
+        promise.set_value(temperature);
+    };
+
+    m_sensorModule.getTopSensorTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
+
+    future.wait();
+    float temperature = future.get();
+
+    if (temperature > -30) {
+        tempResponseDto->temperature = temperature;
+        return createDtoResponse(Status::CODE_200, tempResponseDto);
+    } else if (temperature == -100) {
+        return createResponse(Status::CODE_404, "Top sensor temperature not available");
+    } else if (temperature == -30) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve temperature");
+    }
+}
+
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBottomSensorTemperature() {
+    auto tempResponseDto = MyTempDto::createShared();
+    std::promise<float> promise;
+    auto future = promise.get_future();
+
+    auto handleTemperatureResult = [&promise](float temperature) {
+        promise.set_value(temperature);
+    };
+
+    m_sensorModule.getBottomSensorTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
+
+    future.wait();
+    float temperature = future.get();
+
+    if (temperature > -30) {
+        tempResponseDto->temperature = temperature;
+        return createDtoResponse(Status::CODE_200, tempResponseDto);
+    } else if (temperature == -100) {
+        return createResponse(Status::CODE_404, "Bottom sensor temperature not available");
+    } else if (temperature == -30) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else {
+        return createResponse(Status::CODE_500, "Failed to retrieve temperature");
+    }
+}
 
 
 
