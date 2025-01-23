@@ -65,11 +65,11 @@ sudo make install-service
 # Restart daemon to load new service description  
 sudo systemctl daemon-reload  
 # Enable service startup after next reboot  
-sudo systemctl enable core-module  
+sudo systemctl enable api-server   
 # Start service now  
-sudo systemctl start core-module  
+sudo systemctl start api-server   
 # Check if service is running  
-sudo systemctl status core-module  
+sudo systemctl status api-server   
 ```  
 
 ## Running the Application
