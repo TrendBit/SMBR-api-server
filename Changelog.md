@@ -1,6 +1,11 @@
 # Changelog SMBR Api Server
 The version number consists of MAJOR.MINOR identifiers. The MINOR version changes correspond to the addition of new API endpoints.
 
+# 0.15 Sensor
+- Added endpoint GET bottle/temperature
+- Added endpoint GET top and bottom bottle/measured_temperature
+- Added endpoint GET top and bottom bottle/sensor_temperature
+
 # 0.14 Core
 - Added endpoint GET /core/sid
 - Added endpoint GET /core/ip_address
