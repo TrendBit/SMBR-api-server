@@ -820,6 +820,22 @@ public:
     ADD_CORS(getTopSensorTemperature)
     ENDPOINT("GET", "/sensor/bottle/top/sensor_temperature", getTopSensorTemperature);
 
+    /**
+     * @brief Retrieves the temperature of the bottom sensor case of the bottle.
+     */
+    ENDPOINT_INFO(getBottomSensorTemperature) {
+        info->summary = "Retrieves temperature of the bottom sensor case";
+        info->description = "Retrieves temperature of the sensor on bottom of the bottle in °C.";
+        info->addTag("Sensor module");
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Bottom sensor temperature not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getBottomSensorTemperature)
+    ENDPOINT("GET", "/sensor/bottle/bottom/sensor_temperature", getBottomSensorTemperature);
+
+
 
 
 
