@@ -1,6 +1,56 @@
 # Changelog SMBR Api Server
 The version number consists of MAJOR.MINOR identifiers. The MINOR version changes correspond to the addition of new API endpoints.
 
+# 0.15 Sensor
+- Added endpoint GET bottle/temperature
+- Added endpoint GET top and bottom bottle/measured_temperature
+- Added endpoint GET top and bottom bottle/sensor_temperature
+
+# 0.14 Core
+- Added endpoint GET /core/sid
+- Added endpoint GET /core/ip_address
+- Added endpoint GET /core/hostname
+- Added endpoint GET /core/serial
+- Added endpoint GET /core/supply/type
+- Added endpoint GET /core/supply/5v
+- Added endpoint GET /core/supply/vin
+- Added endpoint GET /core/supply/poe
+- Added endpoint GET /core/supply/current
+- Added endpoint GET /core/supply/power_draw
+
+# 0.13 Mixer
+- Added endpoint GET and POST /control/mixer/speed
+- Added endpoint GET and POST /control/mixer/flowrate
+- Added endpoint GET and POST /control/mixer/rpm
+- Added endpoint /control/mixer/stir
+- Added endpoint /control/mixer/stop
+- Switching Git repository from SSH to HTTPS
+- Added installation target and system service configuration for the API server
+
+# 0.12 Aerator
+- Added endpoint GET and POST /control/aerator/speed
+- Added endpoint GET and POST /control/aerator/flowrate
+- Added endpoint /control/aerator/move
+- Added endpoint /control/aerator/stop
+
+# 0.11 Cuvette pump
+- Added endpoint GET and POST /control/cuvette_pump/speed
+- Added endpoint GET and POST /control/cuvette_pump/flowrate
+- Added endpoint /control/cuvette_pump/move
+- Added endpoint /control/cuvette_pump/prime
+- Added endpoint /control/cuvette_pump/purge
+- Added endpoint /control/cuvette_pump/stop
+- Added script for testing throughput
+- Refactoring temperature control endpoints into retrieval functions to handle values below -30 for error reporting
+
+# 0.10 Heater
+- Added endpoint GET and POST /control/heater/intensity
+- Added endpoint GET and POST /control/heater/target_temperature
+- Added endpoint GET /control/heater/plate_temperature
+- Added endpoint POST /control/heater/turn_off
+- Fixing API crashes in CanRequestManager by handling them with mutexes
+- Replaced shared_ptr with unique_ptr where possible
+
 # 0.9 Load
 - Added endpoint /{module}/load 
 - Gets module CPU/MCU load
@@ -20,7 +70,7 @@ The version number consists of MAJOR.MINOR identifiers. The MINOR version change
 # 0.6 Restart
 - Added endpoint {module}/restart
 - Resets the module and starts main application firmware again
-- added new method for data filling - ping, module request, core temp
+- Added new method for data filling - ping, module request, core temp
 
 # 0.5.1 LED
 - Endpoint control/set-led-intensity rename to /control/led_intensity/{channel}

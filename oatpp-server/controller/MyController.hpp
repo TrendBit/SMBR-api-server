@@ -11,10 +11,25 @@
 #include "dto/MyModuleActionRequestDto.hpp"
 #include "dto/MyIntensitiesDto.hpp"
 #include "dto/MyIntensityDto.hpp"
+#include "dto/MySpeedDto.hpp"
+#include "dto/MyFlowrateDto.hpp"
+#include "dto/MyMoveDto.hpp"
+#include "dto/MyRpmDto.hpp"
+#include "dto/MyStirDto.hpp"
+#include "dto/MySIDDto.hpp"
+#include "dto/MyIpDto.hpp"
+#include "dto/MyHostnameDto.hpp"
+#include "dto/MySerialDto.hpp"
+#include "dto/MySupplyTypeDto.hpp"
+#include "dto/MyVoltageDto.hpp"
+#include "dto/MyCurrentDto.hpp"
+#include "dto/MyPowerDrawDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
 #include "control/ControlModule.hpp"
+#include "core/CoreModule.hpp"
+#include "sensor/SensorModule.hpp"
 #include "oatpp/data/mapping/ObjectMapper.hpp"
 
 
@@ -43,9 +58,14 @@ public:
                  SystemModule& systemModule,
                  CommonModule& commonModule,
                  ControlModule& controlModule,
+                 CoreModule& CoreModule,
+                 SensorModule& SensorModule,
                  CanRequestManager& canRequestManager);
 
 public:
+// ==========================================
+// System Endpoints
+// ==========================================
 
     /**
      * @brief Retrieves available modules and their unique CAN IDs.
@@ -155,7 +175,154 @@ public:
          PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
          BODY_DTO(Object<MyModuleActionRequestDto>, body));
 
+// ==========================================
+// Core module
+// ==========================================
 
+    /**
+     * @brief Retrieves the short ID (SID) of the device.
+     */
+    ENDPOINT_INFO(getShortID) {
+        info->summary = "Get Short ID (SID) of the device";
+        info->addTag("Core module");
+        info->description = "Retrieves the 4-character hexadecimal SID of the device. The SID may not be unique across devices.";
+        info->addResponse<Object<MySIDDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve SID");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getShortID)
+    ENDPOINT("GET", "/core/sid", getShortID);
+
+    /**
+     * @brief Retrieves the IP address of the device.
+     */
+    ENDPOINT_INFO(getIpAddress) {
+        info->summary = "Get IP address of the device";
+        info->addTag("Core module");
+        info->description = "Retrieves the IP address of the device. If not available, returns an empty string.";
+        info->addResponse<Object<MyIpDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve IP address");
+    }
+    ADD_CORS(getIpAddress)
+    ENDPOINT("GET", "/core/ip_address", getIpAddress);
+
+    /**
+     * @brief Retrieves the hostname of the device.
+     */
+    ENDPOINT_INFO(getHostname) {
+        info->summary = "Get Hostname of the device";
+        info->addTag("Core module");
+        info->description = "Retrieves the hostname of the device, truncated to 8 characters for CAN bus compatibility.";
+        info->addResponse<Object<MyHostnameDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve hostname");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getHostname)
+    ENDPOINT("GET", "/core/hostname", getHostname);
+
+    /**
+     * @brief Retrieves the serial number of the device.
+     */
+    ENDPOINT_INFO(getSerialNumber) {
+        info->summary = "Get Serial Number of the device";
+        info->addTag("Core module");
+        info->description = "Retrieves the serial number of the device, which is unique and corresponds to the RPi serial number.";
+        info->addResponse<Object<MySerialDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve serial number");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getSerialNumber)
+    ENDPOINT("GET", "/core/serial", getSerialNumber);
+
+    /**
+     * @brief Retrieves the type of power supply powering the device.
+     */
+    ENDPOINT_INFO(getPowerSupplyType) {
+        info->summary = "Get type of power supply";
+        info->addTag("Core module");
+        info->description = "Retrieves the type of power supply powering the device. The options are: - VIN: external power supply adapter. - PoE: Power over Ethernet from RJ45 on RPi (15W). - PoE_HB: Variant of PoE with higher power budget (25-30W).";
+        info->addResponse<Object<MySupplyTypeDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve power supply type");
+    }
+    ADD_CORS(getPowerSupplyType)
+    ENDPOINT("GET", "/core/supply/type", getPowerSupplyType);
+
+    /**
+     * @brief Retrieves the voltage of the 5V power rail.
+     */
+    ENDPOINT_INFO(getVoltage5V) {
+        info->summary = "Get voltage of 5V power rail";
+        info->addTag("Core module");
+        info->description = "Gets voltage of 5V power rail on device in volts.";
+        info->addResponse<Object<MyVoltageDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve voltage");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getVoltage5V)
+    ENDPOINT("GET", "/core/supply/5v", getVoltage5V);
+
+    /**
+     * @brief Retrieves the voltage at the VIN power rail (12V).
+     */
+    ENDPOINT_INFO(getVoltageVIN) {
+        info->summary = "Get Voltage at VIN Power Rail (12V)";
+        info->addTag("Core module");
+        info->description = "Retrieves the voltage at the VIN power rail on the device, which is supplied by an external power supply adapter.";
+        info->addResponse<Object<MyVoltageDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve VIN voltage");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getVoltageVIN)
+    ENDPOINT("GET", "/core/supply/vin", getVoltageVIN);
+
+    /**
+     * @brief Retrieves the voltage of PoE power rail (12V).
+     */
+    ENDPOINT_INFO(getPoEVoltage) {
+    info->summary = "Get Voltage at PoE Power Rail (12V)";
+    info->addTag("Core module");
+    info->description = "Retrieves the voltage of the PoE power rail, supplied by Power over Ethernet (PoE) from RJ45 on RPi.";
+    info->addResponse<Object<MyVoltageDto>>(Status::CODE_200, "application/json");
+    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Internal error or invalid data");
+    }
+    ADD_CORS(getPoEVoltage)
+    ENDPOINT("GET", "/core/supply/poe", getPoEVoltage);
+
+    /**
+     * @brief Retrieves the current consumption of the device.
+     */
+    ENDPOINT_INFO(getCurrentConsumption) {
+    info->summary = "Get Current Consumption of the Device";
+    info->addTag("Core module");
+    info->description = "Retrieves the current consumption of the device, including RPi and all connected modules. The current should be in the range 0-5 A.";
+    info->addResponse<Object<MyCurrentDto>>(Status::CODE_200, "application/json");
+    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Internal error or invalid data");
+    }
+    ADD_CORS(getCurrentConsumption)
+    ENDPOINT("GET", "/core/supply/current", getCurrentConsumption);
+
+    /**
+     * @brief Retrieves the power draw of the device in watts.
+     */
+    ENDPOINT_INFO(getPowerDraw) {
+    info->summary = "Get Power Draw of the Device";
+    info->addTag("Core module");
+    info->description = "Retrieves the power draw of the device, including RPi and all connected modules.";
+    info->addResponse<Object<MyPowerDrawDto>>(Status::CODE_200, "application/json");
+    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Internal error or invalid data");
+    }
+    ADD_CORS(getPowerDraw)
+    ENDPOINT("GET", "/core/supply/power_draw", getPowerDraw);
+
+
+
+
+// ==========================================
+// Control module
+// ==========================================
 
     /**
     * @brief Sets all channels of LED panel to given intensity.
@@ -221,6 +388,454 @@ public:
     ADD_CORS(getLedTemperature)
     ENDPOINT("GET", "/control/led_temperature", getLedTemperature);
 
+    /**
+     * @brief Sets the intensity of heating or cooling.
+     */
+    ENDPOINT_INFO(setHeaterIntensity) {
+        info->summary = "Set heater intensity";
+        info->description = "Sets the intensity of heating or cooling in range -1.0 (cooling) to 1.0 (heating). "
+                            "This value can be overwritten by the regulation algorithm if temperature regulation (target temperature) is set.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyIntensityDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Intensity set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid intensity value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set intensity.");
+    }
+    ADD_CORS(setHeaterIntensity)
+    ENDPOINT("POST", "/control/heater/intensity", setHeaterIntensity, BODY_DTO(Object<MyIntensityDto>, body));
+
+    /**
+     * @brief Retrieves the current intensity of heating or cooling.
+     */
+    ENDPOINT_INFO(getHeaterIntensity) {
+        info->summary = "Get heater intensity";
+        info->addTag("Control module");
+        info->description = "Retrieves current intensity of heating or cooling. Range is -1.0 (cooling) to 1.0 (heating). Intensity can be modified by regulation algorithm if temperature regulation (target temperature) is set.";
+        info->addResponse<Object<MyIntensityDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve heater intensity");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getHeaterIntensity)
+    ENDPOINT("GET", "/control/heater/intensity", getHeaterIntensity);
+
+    /**
+     * @brief Sets the target temperature for the heater.
+     */
+    ENDPOINT_INFO(setHeaterTargetTemperature) {
+        info->summary = "Set heater target temperature";
+        info->description = "Sets the target temperature for the heater (temperature of bottle) in ˚C. "
+                            "The heater will adjust its intensity to reach this temperature.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyTempDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Target temperature set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid target temperature.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set target temperature.");
+    }
+    ADD_CORS(setHeaterTargetTemperature)
+    ENDPOINT("POST", "/control/heater/target_temperature", setHeaterTargetTemperature, BODY_DTO(Object<MyTempDto>, body));
+
+    /**
+     * @brief Retrieves the currently set target temperature for the heater.
+     */
+    ENDPOINT_INFO(getHeaterTargetTemperature) {
+        info->summary = "Get heater target temperature";
+        info->addTag("Control module");
+        info->description = "Retrieves the currently set target temperature for the heater (temperature of bottle) in °C.";
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve heater target temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getHeaterTargetTemperature)
+    ENDPOINT("GET", "/control/heater/target_temperature", getHeaterTargetTemperature);
+
+    /**
+     * @brief Retrieves the current temperature of the heater plate (metal heatspreader).
+     */
+    ENDPOINT_INFO(getHeaterPlateTemperature) {
+        info->summary = "Get heater plate temperature";
+        info->addTag("Control module");
+        info->description = "Retrieves temperature of plate (metal heatspreader) which is controlling temperature of bottle. Sensor is thermistor connected from back side of heater plate.";
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Heater plate not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve heater plate temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getHeaterPlateTemperature)
+    ENDPOINT("GET", "/control/heater/plate_temperature", getHeaterPlateTemperature);
+
+    /**
+     * @brief Turns off the heater.
+     */
+    ENDPOINT_INFO(turnOffHeater) {
+        info->summary = "Turn off heater";
+        info->description = "Turns off the heater by setting intensity to 0.0 and disabling temperature regulation.";
+        info->addTag("Control module");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Heater was turned off.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to turn off heater.");
+    }
+    ADD_CORS(turnOffHeater)
+    ENDPOINT("POST", "/control/heater/turn_off", turnOffHeater);
+
+    /**
+     * @brief Sets the speed of the cuvette pump.
+     */
+    ENDPOINT_INFO(setCuvettePumpSpeed) {
+        info->summary = "Set cuvette pump speed";
+        info->description = "Sets the speed of the cuvette pump in range -1.0 (out) to 1.0 (in).";
+        info->addTag("Control module");
+        info->addConsumes<Object<MySpeedDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Speed set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid speed value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set pump speed.");
+    }
+    ADD_CORS(setCuvettePumpSpeed)
+    ENDPOINT("POST", "/control/cuvette_pump/speed", setCuvettePumpSpeed, BODY_DTO(Object<MySpeedDto>, body));
+
+    /**
+     * @brief Retrieves the current speed of the cuvette pump.
+     */
+    ENDPOINT_INFO(getCuvettePumpSpeed) {
+        info->summary = "Get cuvette pump speed";
+        info->addTag("Control module");
+        info->description = "Retrieves current speed of the cuvette pump. Range is -1.0 (out) to 1.0 (in).";
+        info->addResponse<Object<MySpeedDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve pump speed");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getCuvettePumpSpeed)
+    ENDPOINT("GET", "/control/cuvette_pump/speed", getCuvettePumpSpeed);
+
+    /**
+     * @brief Sets flowrate of the cuvette pump
+     */
+    ENDPOINT_INFO(setCuvettePumpFlowrate) {
+    info->summary = "Set cuvette pump flowrate";
+    info->description = "Sets the flowrate of the cuvette pump in range -1000.0 (pumping liquid out) to 1000.0 (pumping liquid in).";
+    info->addTag("Control module");
+    info->addConsumes<Object<MyFlowrateDto>>("application/json");
+    info->addResponse<String>(Status::CODE_200, "application/json", "Flowrate set successfully.");
+    info->addResponse<String>(Status::CODE_400, "application/json", "Invalid flowrate value.");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set flowrate.");
+    }
+    ADD_CORS(setCuvettePumpFlowrate)
+    ENDPOINT("POST", "/control/cuvette_pump/flowrate", setCuvettePumpFlowrate, BODY_DTO(Object<MyFlowrateDto>, body));
+
+    /**
+     * @brief Retrieves current flowrate of the cuvette pump
+     */
+    ENDPOINT_INFO(getCuvettePumpFlowrate) {
+    info->summary = "Get cuvette pump flowrate";
+    info->description = "Retrieves the current flowrate of the cuvette pump. Positive value means pumping liquid in, negative value means pumping liquid out.";
+    info->addTag("Control module");
+    info->addResponse<Object<MyFlowrateDto>>(Status::CODE_200, "application/json");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve flowrate");
+    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getCuvettePumpFlowrate)
+    ENDPOINT("GET", "/control/cuvette_pump/flowrate", getCuvettePumpFlowrate);
+
+    /**
+     * @brief Moves requested amount of liquid in or out of the cuvette
+     */
+    ENDPOINT_INFO(moveCuvettePump) {
+    info->summary = "Move cuvette pump liquid";
+    info->description = "Moves the requested amount of liquid in or out of the cuvette. Positive volume means pumping liquid in, and negative volume means pumping liquid out. Flowrate is specified in ml/min and must be positive. If set to zero, the maximum flowrate of the pump will be used.";
+    info->addTag("Control module");
+    info->addConsumes<Object<MyMoveDto>>("application/json");
+    info->addResponse<String>(Status::CODE_200, "application/json", "Movement started successfully.");
+    info->addResponse<String>(Status::CODE_400, "application/json", "Invalid volume or flowrate value.");
+    info->addResponse<String>(Status::CODE_500, "application/json", "Failed to start movement.");
+    }
+    ADD_CORS(moveCuvettePump)
+    ENDPOINT("POST", "/control/cuvette_pump/move", moveCuvettePump, BODY_DTO(Object<MyMoveDto>, body));
+
+    /**
+     * @brief Primes the cuvette pump.
+     */
+    ENDPOINT_INFO(primeCuvettePump) {
+        info->summary = "Prime cuvette pump";
+        info->description = "Primes the cuvette pump by pumping liquid into the cuvette. This is used to fill the cuvette with liquid and remove air from the system.";
+        info->addTag("Control module");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Cuvette pump priming was started.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to start cuvette pump priming.");
+    }
+    ADD_CORS(primeCuvettePump)
+    ENDPOINT("POST", "/control/cuvette_pump/prime", primeCuvettePump);
+
+    /**
+     * @brief Purges the cuvette pump.
+     */
+    ENDPOINT_INFO(purgeCuvettePump) {
+        info->summary = "Purge cuvette pump";
+        info->description = "Purges the cuvette pump by pumping liquid out of the cuvette. This is used to remove liquid from the cuvette and clean the system.";
+        info->addTag("Control module");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Cuvette pump purging was started.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to start cuvette pump purging.");
+    }
+    ADD_CORS(purgeCuvettePump)
+    ENDPOINT("POST", "/control/cuvette_pump/purge", purgeCuvettePump);
+
+    /**
+     * @brief Stops the cuvette pump.
+     */
+    ENDPOINT_INFO(stopCuvettePump) {
+        info->summary = "Stop cuvette pump";
+        info->description = "Stops the cuvette pump immediately and disables any planned movements.";
+        info->addTag("Control module");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Cuvette pump was stopped.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to stop cuvette pump.");
+    }
+    ADD_CORS(stopCuvettePump)
+    ENDPOINT("POST", "/control/cuvette_pump/stop", stopCuvettePump);
+
+    /**
+     * @brief Sets the speed of the aerator.
+     */
+    ENDPOINT_INFO(setAeratorSpeed) {
+        info->summary = "Set aerator speed";
+        info->description = "Sets the speed of the aerator in range 0.0 to 1.0.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MySpeedDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Speed set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid speed value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set aerator speed.");
+    }
+    ADD_CORS(setAeratorSpeed)
+    ENDPOINT("POST", "/control/aerator/speed", setAeratorSpeed, BODY_DTO(Object<MySpeedDto>, body));
+
+    /**
+     * @brief Retrieves the current speed of the aerator.
+     */
+    ENDPOINT_INFO(getAeratorSpeed) {
+        info->summary = "Get aerator speed";
+        info->addTag("Control module");
+        info->description = "Retrieves current speed of the aerator. Range is 0.0 to 1.0.";
+        info->addResponse<Object<MySpeedDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve aerator speed");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getAeratorSpeed)
+    ENDPOINT("GET", "/control/aerator/speed", getAeratorSpeed);
+
+    /**
+     * @brief Sets the flowrate of the aerator.
+     */
+    ENDPOINT_INFO(setAeratorFlowrate) {
+        info->summary = "Set aerator flowrate";
+        info->description = "Sets the flowrate of the aerator in range 0.0 to 5000.0 ml/min.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyFlowrateDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Flowrate set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid flowrate value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set aerator flowrate.");
+    }
+    ADD_CORS(setAeratorFlowrate)
+    ENDPOINT("POST", "/control/aerator/flowrate", setAeratorFlowrate, BODY_DTO(Object<MyFlowrateDto>, body));
+
+    /**
+     * @brief Retrieves the current flowrate of the aerator.
+     */
+    ENDPOINT_INFO(getAeratorFlowrate) {
+        info->summary = "Get aerator flowrate";
+        info->addTag("Control module");
+        info->description = "Retrieves current flowrate of the aerator. Range is 0.0 to 5000.0 ml/min.";
+        info->addResponse<Object<MyFlowrateDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve aerator flowrate");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getAeratorFlowrate)
+    ENDPOINT("GET", "/control/aerator/flowrate", getAeratorFlowrate);
+
+    /**
+     * @brief Moves requested amount of air into the bottle using the aerator
+     */
+    ENDPOINT_INFO(moveAerator) {
+        info->summary = "Move aerator air";
+        info->description = "Moves the requested amount of air into the bottle. Volume is in ml. Flowrate is in ml/min, if set to zero, the maximal flowrate of the pump will be used.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyMoveDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Movement started successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid volume or flowrate value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to start movement.");
+    }
+    ADD_CORS(moveAerator)
+    ENDPOINT("POST", "/control/aerator/move", moveAerator, BODY_DTO(Object<MyMoveDto>, body));
+
+    /**
+     * @brief Stops the aerator and disables any planned movements.
+     */
+    ENDPOINT_INFO(stopAerator) {
+        info->summary = "Stop aerator";
+        info->description = "Stops the aerator immediately and disables any planned movements.";
+        info->addTag("Control module");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Aerator was stopped.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to stop aerator.");
+    }
+    ADD_CORS(stopAerator)
+    ENDPOINT("POST", "/control/aerator/stop", stopAerator);
+
+    /**
+     * @brief Sets the speed of the mixer.
+     */
+    ENDPOINT_INFO(setMixerSpeed) {
+        info->summary = "Set mixer speed";
+        info->description = "Sets the speed of the mixer in the range [0.0, 1.0].";
+        info->addTag("Control module");
+        info->addConsumes<Object<MySpeedDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Speed set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid speed value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set mixer speed.");
+    }
+    ADD_CORS(setMixerSpeed)
+    ENDPOINT("POST", "/control/mixer/speed", setMixerSpeed, BODY_DTO(Object<MySpeedDto>, body));
+
+    /**
+     * @brief Retrieves the current speed of the mixer.
+     */
+    ENDPOINT_INFO(getMixerSpeed) {
+        info->summary = "Get mixer speed";
+        info->description = "Retrieves the current speed of the mixer in the range [0.0, 1.0].";
+        info->addTag("Control module");
+        info->addResponse<Object<MySpeedDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve mixer speed");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getMixerSpeed)
+    ENDPOINT("GET", "/control/mixer/speed", getMixerSpeed);
+
+    /**
+     * @brief Sets the target RPM of the mixer.
+     */
+    ENDPOINT_INFO(setMixerRpm) {
+        info->summary = "Set mixer RPM";
+        info->description = "Sets the target RPM of the mixer. Range: 0 to 10000.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyRpmDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Target RPM set successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid RPM value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set mixer RPM.");
+    }
+    ADD_CORS(setMixerRpm)
+    ENDPOINT("POST", "/control/mixer/rpm", setMixerRpm, BODY_DTO(Object<MyRpmDto>, body));
+
+    /**
+     * @brief Retrieves the current RPM of the mixer.
+     */
+    ENDPOINT_INFO(getMixerRpm) {
+        info->summary = "Get mixer RPM";
+        info->description = "Retrieves the current RPM of the mixer. Range: 0 to 10000.";
+        info->addTag("Control module");
+        info->addResponse<Object<MyRpmDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve mixer RPM");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getMixerRpm)
+    ENDPOINT("GET", "/control/mixer/rpm", getMixerRpm);
+
+    /**
+     * @brief Sets the mixer to stir at a specified RPM for a specified time.
+     */
+    ENDPOINT_INFO(stirMixer) {
+        info->summary = "Stir mixer";
+        info->description = "Sets the mixer to stir at a specified RPM for a specified time. RPM is in RPM, time is in seconds.";
+        info->addTag("Control module");
+        info->addConsumes<Object<MyStirDto>>("application/json");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Stirring started successfully.");
+        info->addResponse<String>(Status::CODE_400, "application/json", "Invalid RPM or time value.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to start stirring.");
+    }
+    ADD_CORS(stirMixer)
+    ENDPOINT("POST", "/control/mixer/stir", stirMixer, BODY_DTO(Object<MyStirDto>, body));
+
+    /**
+     * @brief Stops the mixer immediately.
+     */
+    ENDPOINT_INFO(stopMixer) {
+        info->summary = "Stop mixer";
+        info->description = "Stops the mixer immediately and disables any planned movements.";
+        info->addTag("Control module");
+        info->addResponse<String>(Status::CODE_200, "application/json", "Mixer was stopped.");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to stop the mixer.");
+    }
+    ADD_CORS(stopMixer)
+    ENDPOINT("POST", "/control/mixer/stop", stopMixer);
+
+    /**
+     * @brief Retrieves the temperature of the bottle.
+     */
+    ENDPOINT_INFO(getBottleTemperature) {
+        info->summary = "Retrieves temperature of the bottle";
+        info->description = "Retrieves temperature of the bottle in °C.";
+        info->addTag("Sensor module");
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Bottle temperature not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getBottleTemperature)
+    ENDPOINT("GET", "/sensor/bottle/temperature", getBottleTemperature);
+
+    /**
+     * @brief Retrieves the measured temperature from the top sensor of the bottle.
+     */
+    ENDPOINT_INFO(getTopMeasuredTemperature) {
+        info->summary = "Retrieves measured temperature from top sensor";
+        info->description = "Retrieves measured temperature of the top of the bottle in °C.";
+        info->addTag("Sensor module");
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Top temperature not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getTopMeasuredTemperature)
+    ENDPOINT("GET", "/sensor/bottle/top/measured_temperature", getTopMeasuredTemperature);
+
+    /**
+     * @brief Retrieves the measured temperature from the bottom sensor of the bottle.
+     */
+    ENDPOINT_INFO(getBottomMeasuredTemperature) {
+        info->summary = "Retrieves measured temperature from bottom sensor";
+        info->description = "Retrieves measured temperature of the bottom of the bottle in °C.";
+        info->addTag("Sensor module");
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Bottom temperature not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getBottomMeasuredTemperature)
+    ENDPOINT("GET", "/sensor/bottle/bottom/measured_temperature", getBottomMeasuredTemperature);
+
+    /**
+     * @brief Retrieves the temperature of the top sensor case of the bottle.
+     */
+    ENDPOINT_INFO(getTopSensorTemperature) {
+        info->summary = "Retrieves temperature of the top sensor case";
+        info->description = "Retrieves temperature of the sensor on top of the bottle in °C.";
+        info->addTag("Sensor module");
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Top sensor temperature not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getTopSensorTemperature)
+    ENDPOINT("GET", "/sensor/bottle/top/sensor_temperature", getTopSensorTemperature);
+
+    /**
+     * @brief Retrieves the temperature of the bottom sensor case of the bottle.
+     */
+    ENDPOINT_INFO(getBottomSensorTemperature) {
+        info->summary = "Retrieves temperature of the bottom sensor case";
+        info->description = "Retrieves temperature of the sensor on bottom of the bottle in °C.";
+        info->addTag("Sensor module");
+        info->addResponse<Object<MyTempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<String>(Status::CODE_404, "application/json", "Bottom sensor temperature not available");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+    }
+    ADD_CORS(getBottomSensorTemperature)
+    ENDPOINT("GET", "/sensor/bottle/bottom/sensor_temperature", getBottomSensorTemperature);
+
+
 
 
 
@@ -253,6 +868,8 @@ private:
     SystemModule& m_systemModule;
     CommonModule& m_commonModule;
     ControlModule& m_controlModule;
+    CoreModule& m_coreModule;
+    SensorModule& m_sensorModule;
     CanRequestManager& m_canRequestManager;
     std::atomic<uint8_t> m_seqNum{0};  
 };

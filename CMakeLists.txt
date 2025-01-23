@@ -3,9 +3,7 @@ project(client_server_project)
 
 set(CMAKE_CXX_STANDARD 17)
 
-
 # --- GateLibrary (gate) ---
-
 add_library(GateLibrary
   gate/base/CommonModule.cpp
   gate/core/CoreModule.cpp
@@ -19,6 +17,8 @@ add_library(GateLibrary
   gate/can/CanRequestManager.cpp
 )
 
+file(GLOB_RECURSE GATE_HEADERS "gate/*/*.hpp")
+
 target_include_directories(GateLibrary
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/gate>
@@ -30,9 +30,7 @@ target_include_directories(GateLibrary
 )
 
 target_link_libraries(GateLibrary
-  PUBLIC 
-      oatpp::oatpp
-
+  PUBLIC oatpp::oatpp
 )
 
 install(
@@ -45,23 +43,17 @@ install(
 )
 
 install(
-  FILES gate/*.h
+  FILES ${GATE_HEADERS}
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/GateLibrary
 )
 
-install(
-  FILES "${CMAKE_CURRENT_BINARY_DIR}/GateLibraryConfig.cmake"
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GateLibrary
-)
 
 install(
   EXPORT GateLibraryTargets
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GateLibrary
 )
 
-
 # --- ServerLibrary (oatpp-server) ---
-
 find_package(oatpp 1.4.0 REQUIRED)
 find_package(oatpp-swagger 1.4.0 REQUIRED)
 
@@ -85,13 +77,13 @@ target_link_libraries(ServerLibrary
   PUBLIC GateLibrary
 )
 
-add_executable(Server oatpp-server/App.cpp)
+add_executable(api-server oatpp-server/App.cpp)
 
-target_link_libraries(Server ServerLibrary)
+target_link_libraries(api-server ServerLibrary)
 
-add_dependencies(Server ServerLibrary)
+add_dependencies(api-server ServerLibrary)
 
-set_target_properties(ServerLibrary Server PROPERTIES
+set_target_properties(ServerLibrary api-server PROPERTIES
   CXX_STANDARD 17
   CXX_EXTENSIONS OFF
   CXX_STANDARD_REQUIRED ON
@@ -101,3 +93,17 @@ add_definitions(
   -DOATPP_SWAGGER_RES_PATH="/usr/local/include/oatpp-1.4.0/bin/oatpp-swagger/res"
 )
 
+install(TARGETS api-server
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/api-server.service
+  DESTINATION /etc/systemd/system
+)
+
+add_custom_target(install-service
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/api-server.service
+          /etc/systemd/system/api-server.service
+  DEPENDS api-server
+)
