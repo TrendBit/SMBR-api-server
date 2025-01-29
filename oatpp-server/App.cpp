@@ -1,6 +1,8 @@
 #include "./controller/MyController.hpp"
 #include "./AppComponent.hpp"
+#include "can/ICanBus.hpp"
 #include "can/CanBus.hpp"
+#include "can/DummyCanBus.hpp"
 #include "can/CanRequestManager.hpp"
 
 #include "oatpp/network/Server.hpp"
@@ -17,14 +19,21 @@
  * 
  * @param io_context Reference to Boost ASIO io_context for asynchronous operations.
  */
-void run(boost::asio::io_context& io_context) {
+void run(boost::asio::io_context& io_context, bool isDummy) {
 
   AppComponent components;
 
   OATPP_COMPONENT(std::shared_ptr<oatpp::web::server::HttpRouter>, router);
   OATPP_COMPONENT(std::shared_ptr<oatpp::web::mime::ContentMappers>, contentMappers);
 
-  CanBus canBus(io_context);
+  std::shared_ptr <ICanBus> canBus;
+
+  if (isDummy){
+    canBus = std::make_shared <DummyCanBus>(io_context);
+  } else {
+    canBus = std::make_shared <CanBus>(io_context);
+  }
+
   CanRequestManager canRequestManager(io_context, canBus);
 
   SystemModule& systemModule = SystemModule::getInstance(io_context, canRequestManager);
@@ -65,6 +74,11 @@ int main(int argc, const char * argv[]) {
 
   oatpp::Environment::init();
 
+  bool dummy = false;
+  if (argc > 1){
+    dummy = std::string(argv[1]) == std::string("--virtual");
+  }
+
   boost::asio::io_context io_context;
 
   auto work = std::make_unique<boost::asio::io_context::work>(io_context);
@@ -73,7 +87,7 @@ int main(int argc, const char * argv[]) {
     io_context.run();
   });
 
-  run(io_context);
+  run(io_context, dummy);
   
   io_thread.join();
 

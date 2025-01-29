@@ -8,6 +8,7 @@
 #include <vector>
 #include "codes/codes.hpp"
 #include <mutex>
+#include "ICanBus.hpp"
 
 /**
  * @class CanRequestManager
@@ -23,9 +24,9 @@ public:
      * @brief Constructor for CanRequestManager.
      * 
      * @param io_context Reference to Boost ASIO io_context for asynchronous operations.
-     * @param canBus Reference to the CanBus object for handling CAN communications.
+     * @param canBus SharedPtr to the ICanBus interface for handling CAN communications.
      */
-    CanRequestManager(boost::asio::io_context& io_context, CanBus& canBus);
+    CanRequestManager(boost::asio::io_context& io_context, std::shared_ptr<ICanBus> canBus);
 
     /**
      * @brief Add a request to the CAN bus.
@@ -108,7 +109,7 @@ private:
     std::mutex recycledRequestsMutex_;
 
     boost::asio::io_context& io_context_;
-    CanBus& canBus_;
+    std::shared_ptr<ICanBus> canBus_;
     std::unordered_map<uint32_t, std::queue<std::unique_ptr<CanRequest>>> activeRequests_;
     std::vector<std::unique_ptr<CanRequest>> recycledRequests_;
 };

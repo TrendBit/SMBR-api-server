@@ -1,5 +1,5 @@
-#ifndef CANBUS_HPP
-#define CANBUS_HPP
+#ifndef DUMMYCANBUS_HPP
+#define DUMMYCANBUS_HPP
 
 #include <boost/asio.hpp>
 #include <linux/can.h>
@@ -11,13 +11,13 @@
 #include "ICanBus.hpp"
 
 /**
- * @class CanBus
+ * @class DummyCanBus
  * @brief Class responsible for CAN bus communication.
  * 
  * CanBus manages sending and receiving CAN messages asynchronously
  * using Boost Asio for asynchronous I/O operations.
  */
-class CanBus : public ICanBus {
+class DummyCanBus : public ICanBus {
 public:
     /**
      * @brief Constructor for CanBus.
@@ -26,32 +26,17 @@ public:
      * 
      * @param io_context Reference to Boost ASIO io_context for asynchronous operations.
      */
-    CanBus(boost::asio::io_context& io_context);
+    DummyCanBus(boost::asio::io_context& io_context);
 
     /**
      * @brief Destructor for CanBus.
      * 
      * Closes the CAN socket and cleans up resources.
      */
-    virtual ~CanBus();
+    virtual ~DummyCanBus();
 
-    /**
-     * @brief Asynchronously send a CAN message.
-     * 
-     * Sends the specified CAN message and calls the handler once the operation is complete.
-     * 
-     * @param message The CAN message to send.
-     * @param handler Callback function to handle the result of the send operation.
-     */
     void asyncSend(const CanMessage& message, std::function<void(bool)> handler) override;
 
-    /**
-     * @brief Asynchronously receive CAN messages.
-     * 
-     * Continuously listens for incoming CAN messages and calls the handler with each message received.
-     * 
-     * @param handler Callback function to handle the received messages.
-     */
     void asyncReceive(std::function<void(bool, const CanMessage&)> handler) override;
 
 private:
@@ -72,10 +57,7 @@ private:
      */
     void handleRead(const boost::system::error_code& error, std::size_t bytes_transferred, const struct can_frame& frame);
 
-    boost::asio::posix::stream_descriptor socket;
-    int socketFd;
-    struct sockaddr_can addr; 
-    struct ifreq ifr;
+private:
     boost::asio::io_context& ioContext; 
 };
 

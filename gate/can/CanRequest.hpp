@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CanBus.hpp"
+#include "ICanBus.hpp"
 #include <boost/asio.hpp>
 #include <functional>
 #include <memory>
@@ -32,7 +32,7 @@ public:
      * @param timeoutMilliseconds Timeout in milliseconds for the request.
      * @param compareFullId Flag indicating whether to compare the full CAN ID.
      */
-    CanRequest(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId = true);
+    CanRequest(std::shared_ptr<ICanBus> canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId = true);
 
     /**
      * @brief Initialize the CAN request object.
@@ -45,7 +45,7 @@ public:
      * @param timeoutMilliseconds Timeout in milliseconds for the request.
      * @param compareFullId Flag indicating whether to compare the full CAN ID.
      */
-    void initialize(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId = true);
+    void initialize(std::shared_ptr<ICanBus> canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId = true);
 
     /**
      * @brief Initialize the CAN request for send-only mode.
@@ -55,7 +55,7 @@ public:
      * @param requestId CAN ID of the request.
      * @param data Data to send in the request.
      */
-    void initializeForSendOnly(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data);
+    void initializeForSendOnly(std::shared_ptr<ICanBus> canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data);
 
     /**
      * @brief Send the CAN request and wait for a single response.
@@ -116,7 +116,7 @@ private:
      */
     void onTimeout();
 
-    CanBus* canBus_;
+    std::shared_ptr<ICanBus> canBus_;
     CanMessage requestMessage_; 
     uint32_t expectedResponseId_;
     double timeoutSeconds_;

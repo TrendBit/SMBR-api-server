@@ -1,9 +1,9 @@
 #include "CanRequestManager.hpp"
 
-CanRequestManager::CanRequestManager(boost::asio::io_context& io_context, CanBus& canBus)
+CanRequestManager::CanRequestManager(boost::asio::io_context& io_context, std::shared_ptr<ICanBus> canBus)
     : io_context_(io_context), canBus_(canBus) {
 
-    canBus_.asyncReceive([this](bool success, const CanMessage& message) {
+    canBus_->asyncReceive([this](bool success, const CanMessage& message) {
         if (success) {
             handleIncomingMessage(message);
         } 
@@ -12,7 +12,7 @@ CanRequestManager::CanRequestManager(boost::asio::io_context& io_context, CanBus
 }
 
 void CanRequestManager::startReceiving() {
-    canBus_.asyncReceive([this](bool success, const CanMessage& message) {
+    canBus_->asyncReceive([this](bool success, const CanMessage& message) {
 
         if (success) {
             handleIncomingMessage(message);

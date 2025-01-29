@@ -1,13 +1,13 @@
 #include "CanRequest.hpp"
 
 
-CanRequest::CanRequest(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId)
-    : canBus_(&canBus), requestMessage_(requestId, data), expectedResponseId_(responseId), timeoutTimer_(io_context), timeoutSeconds_(timeoutSeconds), compareFullId_(compareFullId), responses_(std::make_shared<std::vector<CanMessage>>()) {
+CanRequest::CanRequest(std::shared_ptr<ICanBus> canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId)
+    : canBus_(canBus), requestMessage_(requestId, data), expectedResponseId_(responseId), timeoutTimer_(io_context), timeoutSeconds_(timeoutSeconds), compareFullId_(compareFullId), responses_(std::make_shared<std::vector<CanMessage>>()) {
 }
 
-void CanRequest::initialize(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId) {
+void CanRequest::initialize(std::shared_ptr<ICanBus> canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId) {
 
-    canBus_ = &canBus;  
+    canBus_ = canBus;  
     requestMessage_ = CanMessage(requestId, data);
     expectedResponseId_ = responseId;
     timeoutSeconds_ = timeoutSeconds * 1000;
@@ -16,8 +16,8 @@ void CanRequest::initialize(CanBus& canBus, boost::asio::io_context& io_context,
     timeoutTimer_ = boost::asio::steady_timer(io_context);
 }
 
-void CanRequest::initializeForSendOnly(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data) {
-    canBus_ = &canBus;  
+void CanRequest::initializeForSendOnly(std::shared_ptr<ICanBus> canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data) {
+    canBus_ = canBus;  
     requestMessage_ = CanMessage(requestId, data);
 }
 

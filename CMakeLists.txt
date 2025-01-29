@@ -12,7 +12,9 @@ add_library(GateLibrary
   gate/system/SystemModule.cpp
   gate/can/CanIdGenerator.cpp
   gate/can/CanMessage.cpp
+  gate/can/ICanBus.cpp
   gate/can/CanBus.cpp
+  gate/can/DummyCanBus.cpp
   gate/can/CanRequest.cpp
   gate/can/CanRequestManager.cpp
 )
