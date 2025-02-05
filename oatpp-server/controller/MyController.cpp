@@ -17,6 +17,7 @@ MyController::MyController(const std::shared_ptr<oatpp::web::mime::ContentMapper
     , m_sensorModule(sensorModule)
     , m_canRequestManager(canRequestManager) {}
 
+
   // ==========================================
   // System Endpoints
   // ==========================================
@@ -73,6 +74,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     return createDtoResponse(Status::CODE_200, result);
 }
+
 
   // ==========================================
   // Common Endpoints
@@ -164,7 +166,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         return createResponse(Status::CODE_500, "Failed to retrieve load");
     }
 }
-
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCoreTemp(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto tempResponseDto = MyTempDto::createShared();
@@ -305,8 +306,6 @@ std::future<bool> MyController::checkModuleAndUidAvailability(
 
     return future;
 }
-
-
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::postRestart(
     const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false>>& module,
@@ -449,6 +448,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
     }
 }
 
+
 // ==========================================
 // Core module
 // ==========================================
@@ -480,7 +480,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getIpAddress() {
     auto ipResponseDto = MyIpDto::createShared();
     auto promise = std::make_shared<std::promise<std::string>>();
@@ -510,8 +509,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     return createDtoResponse(Status::CODE_200, ipResponseDto); 
 }
 
-
-
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHostname() {
     auto hostnameResponseDto = MyHostnameDto::createShared();
     auto promise = std::make_shared<std::promise<std::string>>();
@@ -538,7 +535,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         return createResponse(Status::CODE_500, "Failed to retrieve hostname");
     }
 }
-
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getSerialNumber() {
     auto serialResponseDto = MySerialDto::createShared();
@@ -567,7 +563,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPowerSupplyType() {
     auto supplyTypeResponseDto = MySupplyTypeDto::createShared();
     auto promise = std::make_shared<std::promise<std::tuple<bool, bool, bool, bool>>>();
@@ -594,7 +589,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     supplyTypeResponseDto->poe_hb = poe_hb;
     return createDtoResponse(Status::CODE_200, supplyTypeResponseDto);
 }
-
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getVoltage5V() {
     auto voltageResponseDto = MyVoltageDto::createShared();
@@ -623,7 +617,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getVoltageVIN() {
     auto voltageResponseDto = MyVoltageDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
@@ -650,7 +643,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         return createResponse(Status::CODE_500, "Failed to retrieve VIN voltage");
     }
 }
-
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPoEVoltage() {
     auto voltageResponseDto = MyVoltageDto::createShared();
@@ -679,7 +671,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCurrentConsumption() {
     auto currentResponseDto = MyCurrentDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
@@ -706,7 +697,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         return createResponse(Status::CODE_500, "Failed to retrieve current consumption");
     }
 }
-
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPowerDraw() {
     auto powerDrawResponseDto = MyPowerDrawDto::createShared();
@@ -797,7 +787,6 @@ std::optional<int> MyController::getTargetChannel(const dto::ChannelEnum& channe
     }
 }
 
-
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setIntensity(
     const oatpp::Enum<dto::ChannelEnum>::AsString& channel, 
     const oatpp::Object<MyIntensityDto>& body
@@ -834,43 +823,47 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getIntensity(const oatpp::Enum<dto::ChannelEnum>::AsString& channel) {
     auto intensityResponseDto = MyIntensityDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleIntensityResult = [&promise](float intensity) {
-        promise.set_value(intensity);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleIntensityResult = [promise, promiseSet](float intensity) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(intensity);
+        }
     };
 
-    auto targetChannelOpt = getTargetChannel(channel);  
+    auto targetChannelOpt = getTargetChannel(channel);
     if (!targetChannelOpt.has_value()) {
         return createResponse(Status::CODE_404, "Channel not found");
     }
     int targetChannel = targetChannelOpt.value();
 
-   
     m_controlModule.getIntensity(m_canRequestManager, Codes::Module::Control_module, targetChannel, handleIntensityResult);
-    
 
     future.wait();
     float intensity = future.get();
 
     if (intensity != -2 && intensity != -1) {
         intensityResponseDto->intensity = intensity;
-        return createDtoResponse(Status::CODE_200, intensityResponseDto); 
+        return createDtoResponse(Status::CODE_200, intensityResponseDto);
     } else if (intensity == -2) {
-        return createResponse(Status::CODE_504, "Request timed out"); 
+        return createResponse(Status::CODE_504, "Request timed out");
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve intensity");  
+        return createResponse(Status::CODE_500, "Failed to retrieve intensity");
     }
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getLedTemperature() {
     auto tempResponseDto = MyTempDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleTempResult = [&promise](float temperature) {
-        promise.set_value(temperature);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleTempResult = [promise, promiseSet](float temperature) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(temperature);
+        }
     };
 
     m_controlModule.getLedTemperature(m_canRequestManager, Codes::Module::Control_module, handleTempResult);
@@ -889,7 +882,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         return createResponse(Status::CODE_500, "Failed to retrieve LED temperature"); 
     }
 }
-
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setHeaterIntensity(const oatpp::Object<MyIntensityDto>& body) {
     if (!body || body->intensity < -1.0f || body->intensity > 1.0f) {
@@ -917,11 +909,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHeaterIntensity() {
     auto intensityResponseDto = MyIntensityDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleIntensityResult = [&promise](float intensity) {
-        promise.set_value(intensity);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleIntensityResult = [promise, promiseSet](float intensity) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(intensity);
+        }
     };
 
     m_controlModule.getHeaterIntensity(m_canRequestManager, Codes::Module::Control_module, handleIntensityResult);
@@ -929,11 +924,11 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     future.wait();
     float intensity = future.get();
 
-    if (intensity >= -1.0f && intensity <= 1.0f) {
+    if (intensity == -2.0f) {
+        return createResponse(Status::CODE_504, "Request timed out"); 
+    } else if (intensity >= -1.0f && intensity <= 1.0f) {
         intensityResponseDto->intensity = intensity;
         return createDtoResponse(Status::CODE_200, intensityResponseDto);  
-    } else if (intensity == -2) {
-        return createResponse(Status::CODE_504, "Request timed out"); 
     } else {
         return createResponse(Status::CODE_500, "Failed to retrieve heater intensity");  
     }
@@ -965,11 +960,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHeaterTargetTemperature() {
     auto tempResponseDto = MyTempDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleTempResult = [&promise](float temperature) {
-        promise.set_value(temperature);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleTempResult = [promise, promiseSet](float temperature) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(temperature);
+        }
     };
 
     m_controlModule.getHeaterTargetTemperature(m_canRequestManager, Codes::Module::Control_module, handleTempResult);
@@ -977,11 +975,11 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     future.wait();
     float temperature = future.get();
 
-    if (temperature == -30) {
+    if (temperature == -30.0f) {
         return createResponse(Status::CODE_504, "Request timed out");
-    } else if (temperature == -100) {
+    } else if (temperature == -100.0f) {
         return createResponse(Status::CODE_503, "Module not available");
-    } else if (temperature >= -30) {
+    } else if (temperature >= -30.0f) {
         tempResponseDto->temperature = temperature;
         return createDtoResponse(Status::CODE_200, tempResponseDto);
     } else {
@@ -991,11 +989,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHeaterPlateTemperature() {
     auto plateTempResponseDto = MyTempDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handlePlateTempResult = [&promise](float plateTemperature) {
-        promise.set_value(plateTemperature);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handlePlateTempResult = [promise, promiseSet](float plateTemperature) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(plateTemperature);
+        }
     };
 
     m_controlModule.getHeaterPlateTemperature(m_canRequestManager, Codes::Module::Control_module, handlePlateTempResult);
@@ -1003,18 +1004,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     future.wait();
     float plateTemperature = future.get();
 
-    if (plateTemperature == -30) {
+    if (plateTemperature == -30.0f) {
         return createResponse(Status::CODE_504, "Request timed out");
-    } else if (plateTemperature == -100) {
+    } else if (plateTemperature == -100.0f) {
         return createResponse(Status::CODE_503, "Module not available");
-    } else if (plateTemperature >= -30) {
+    } else if (plateTemperature >= -30.0f) {
         plateTempResponseDto->temperature = plateTemperature;
         return createDtoResponse(Status::CODE_200, plateTempResponseDto);
     } else {
         return createResponse(Status::CODE_500, "Failed to retrieve heater plate temperature");
     }
 }
-
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::turnOffHeater() {
     std::promise<bool> promise;
@@ -1062,11 +1062,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCuvettePumpSpeed() {
     auto speedResponseDto = MySpeedDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleSpeedResult = [&promise](float speed) {
-        promise.set_value(speed);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleSpeedResult = [promise, promiseSet](float speed) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(speed);
+        }
     };
 
     m_controlModule.getCuvettePumpSpeed(m_canRequestManager, Codes::Module::Control_module, handleSpeedResult);
@@ -1077,7 +1080,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     if (speed >= -1.0f && speed <= 1.0f) {
         speedResponseDto->speed = speed;
         return createDtoResponse(Status::CODE_200, speedResponseDto);  
-    } else if (speed == -2) {
+    } else if (speed == -2.0f) {
         return createResponse(Status::CODE_504, "Request timed out"); 
     } else {
         return createResponse(Status::CODE_500, "Failed to retrieve pump speed");  
@@ -1110,11 +1113,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCuvettePumpFlowrate() {
     auto flowrateResponseDto = MyFlowrateDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleFlowrateResult = [&promise](float flowrate) {
-        promise.set_value(flowrate);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleFlowrateResult = [promise, promiseSet](float flowrate) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(flowrate);
+        }
     };
 
     m_controlModule.getCuvettePumpFlowrate(m_canRequestManager, Codes::Module::Control_module, handleFlowrateResult);
@@ -1122,7 +1128,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     future.wait();
     float flowrate = future.get();
 
-    if (flowrate == -2000) {
+    if (flowrate == -2000.0f) {
         return createResponse(Status::CODE_504, "Request timed out"); 
     } else if (flowrate >= -1000.0f && flowrate <= 1000.0f) {
         flowrateResponseDto->flowrate = flowrate;
@@ -1241,11 +1247,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getAeratorSpeed() {
     auto speedResponseDto = MySpeedDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleSpeedResult = [&promise](float speed) {
-        promise.set_value(speed);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleSpeedResult = [promise, promiseSet](float speed) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(speed);
+        }
     };
 
     m_controlModule.getAeratorSpeed(m_canRequestManager, Codes::Module::Control_module, handleSpeedResult);
@@ -1256,7 +1265,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     if (speed >= 0.0f && speed <= 1.0f) {
         speedResponseDto->speed = speed;
         return createDtoResponse(Status::CODE_200, speedResponseDto);  
-    } else if (speed == -2) {
+    } else if (speed == -2.0f) {
         return createResponse(Status::CODE_504, "Request timed out"); 
     } else {
         return createResponse(Status::CODE_500, "Failed to retrieve aerator speed");  
@@ -1289,11 +1298,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getAeratorFlowrate() {
     auto flowrateResponseDto = MyFlowrateDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleFlowrateResult = [&promise](float flowrate) {
-        promise.set_value(flowrate);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleFlowrateResult = [promise, promiseSet](float flowrate) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(flowrate);
+        }
     };
 
     m_controlModule.getAeratorFlowrate(m_canRequestManager, Codes::Module::Control_module, handleFlowrateResult);
@@ -1304,7 +1316,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     if (flowrate >= 0.0f && flowrate <= 5000.0f) {
         flowrateResponseDto->flowrate = flowrate;
         return createDtoResponse(Status::CODE_200, flowrateResponseDto);  
-    } else if (flowrate == -2) {
+    } else if (flowrate == -2.0f) {
         return createResponse(Status::CODE_504, "Request timed out"); 
     } else {
         return createResponse(Status::CODE_500, "Failed to retrieve aerator flowrate");  
@@ -1380,11 +1392,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getMixerSpeed() {
     auto speedResponseDto = MySpeedDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleSpeedResult = [&promise](float speed) {
-        promise.set_value(speed);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleSpeedResult = [promise, promiseSet](float speed) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(speed);
+        }
     };
 
     m_controlModule.getMixerSpeed(m_canRequestManager, Codes::Module::Control_module, handleSpeedResult);
@@ -1395,7 +1410,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     if (speed >= 0.0f && speed <= 1.0f) {
         speedResponseDto->speed = speed;
         return createDtoResponse(Status::CODE_200, speedResponseDto);
-    } else if (speed == -2) {
+    } else if (speed == -2.0f) {
         return createResponse(Status::CODE_504, "Request timed out");
     } else {
         return createResponse(Status::CODE_500, "Failed to retrieve mixer speed");
@@ -1428,11 +1443,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getMixerRpm() {
     auto rpmResponseDto = MyRpmDto::createShared();
-    std::promise<int> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<int>>();
+    auto future = promise->get_future();
 
-    auto handleRpmResult = [&promise](int rpm) {
-        promise.set_value(rpm);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleRpmResult = [promise, promiseSet](int rpm) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(rpm);
+        }
     };
 
     m_controlModule.getMixerRpm(m_canRequestManager, Codes::Module::Control_module, handleRpmResult);
@@ -1442,11 +1460,11 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     if (rpm >= 0 && rpm <= 10000) {
         rpmResponseDto->rpm = static_cast<float>(rpm);
-        return createDtoResponse(Status::CODE_200, rpmResponseDto);  
+        return createDtoResponse(Status::CODE_200, rpmResponseDto);
     } else if (rpm == -2) {
-        return createResponse(Status::CODE_504, "Request timed out"); 
+        return createResponse(Status::CODE_504, "Request timed out");
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve mixer RPM");  
+        return createResponse(Status::CODE_500, "Failed to retrieve mixer RPM");
     }
 }
 
@@ -1493,6 +1511,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
         return createResponse(Status::CODE_500, "Failed to stop the mixer.");
     }
 }
+
 
 // ==========================================
 // Sensor module
