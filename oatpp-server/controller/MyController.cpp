@@ -18,6 +18,38 @@ MyController::MyController(const std::shared_ptr<oatpp::web::mime::ContentMapper
     , m_canRequestManager(canRequestManager) {}
 
 
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getTemperatureResponse(
+    const std::function<void(std::function<void(float)>)>& temperatureGetter,
+    const std::string& errorMessage, const std::string& notAvailableMessage) {
+
+    auto tempResponseDto = MyTempDto::createShared();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
+
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleTemperatureResult = [promise, promiseSet](float temperature) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(temperature);
+        }
+    };
+
+    temperatureGetter(handleTemperatureResult);
+
+    future.wait();
+    float temperature = future.get();
+
+    if (temperature > -30) {
+        tempResponseDto->temperature = temperature;
+        return createDtoResponse(Status::CODE_200, tempResponseDto);
+    } else if (temperature == -100) {
+        return createResponse(Status::CODE_404, notAvailableMessage);
+    } else if (temperature == -30) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    } else {
+        return createResponse(Status::CODE_500, errorMessage);
+    }
+}
+
   // ==========================================
   // System Endpoints
   // ==========================================
@@ -855,32 +887,13 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getLedTemperature() {
-    auto tempResponseDto = MyTempDto::createShared();
-    auto promise = std::make_shared<std::promise<float>>();
-    auto future = promise->get_future();
-
-    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
-    auto handleTempResult = [promise, promiseSet](float temperature) {
-        if (!promiseSet->exchange(true)) {
-            promise->set_value(temperature);
-        }
-    };
-
-    m_controlModule.getLedTemperature(m_canRequestManager, Codes::Module::Control_module, handleTempResult);
-
-    future.wait();
-    float temperature = future.get();
-
-    if (temperature == -30) {
-        return createResponse(Status::CODE_504, "Request timed out");
-    } else if (temperature == -100) {
-        return createResponse(Status::CODE_503, "Module not available"); 
-    } else if (temperature >= -30) {
-        tempResponseDto->temperature = temperature;
-        return createDtoResponse(Status::CODE_200, tempResponseDto); 
-    } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve LED temperature"); 
-    }
+    return getTemperatureResponse(
+        [this](std::function<void(float)> callback) {
+            m_controlModule.getLedTemperature(m_canRequestManager, Codes::Module::Control_module, callback);
+        },
+        "Failed to retrieve LED temperature",
+        "LED module not available"
+    );
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setHeaterIntensity(const oatpp::Object<MyIntensityDto>& body) {
@@ -959,61 +972,23 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHeaterTargetTemperature() {
-    auto tempResponseDto = MyTempDto::createShared();
-    auto promise = std::make_shared<std::promise<float>>();
-    auto future = promise->get_future();
-
-    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
-    auto handleTempResult = [promise, promiseSet](float temperature) {
-        if (!promiseSet->exchange(true)) {
-            promise->set_value(temperature);
-        }
-    };
-
-    m_controlModule.getHeaterTargetTemperature(m_canRequestManager, Codes::Module::Control_module, handleTempResult);
-
-    future.wait();
-    float temperature = future.get();
-
-    if (temperature == -30.0f) {
-        return createResponse(Status::CODE_504, "Request timed out");
-    } else if (temperature == -100.0f) {
-        return createResponse(Status::CODE_503, "Module not available");
-    } else if (temperature >= -30.0f) {
-        tempResponseDto->temperature = temperature;
-        return createDtoResponse(Status::CODE_200, tempResponseDto);
-    } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve heater target temperature");
-    }
+    return getTemperatureResponse(
+        [this](std::function<void(float)> callback) {
+            m_controlModule.getHeaterTargetTemperature(m_canRequestManager, Codes::Module::Control_module, callback);
+        },
+        "Failed to retrieve heater target temperature",
+        "Heater module not available"
+    );
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHeaterPlateTemperature() {
-    auto plateTempResponseDto = MyTempDto::createShared();
-    auto promise = std::make_shared<std::promise<float>>();
-    auto future = promise->get_future();
-
-    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
-    auto handlePlateTempResult = [promise, promiseSet](float plateTemperature) {
-        if (!promiseSet->exchange(true)) {
-            promise->set_value(plateTemperature);
-        }
-    };
-
-    m_controlModule.getHeaterPlateTemperature(m_canRequestManager, Codes::Module::Control_module, handlePlateTempResult);
-
-    future.wait();
-    float plateTemperature = future.get();
-
-    if (plateTemperature == -30.0f) {
-        return createResponse(Status::CODE_504, "Request timed out");
-    } else if (plateTemperature == -100.0f) {
-        return createResponse(Status::CODE_503, "Module not available");
-    } else if (plateTemperature >= -30.0f) {
-        plateTempResponseDto->temperature = plateTemperature;
-        return createDtoResponse(Status::CODE_200, plateTempResponseDto);
-    } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve heater plate temperature");
-    }
+    return getTemperatureResponse(
+        [this](std::function<void(float)> callback) {
+            m_controlModule.getHeaterPlateTemperature(m_canRequestManager, Codes::Module::Control_module, callback);
+        },
+        "Failed to retrieve heater plate temperature",
+        "Heater plate module not available"
+    );
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::turnOffHeater() {
@@ -1518,150 +1493,55 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
 // ==========================================
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBottleTemperature() {
-    auto tempResponseDto = MyTempDto::createShared();
-    auto promise = std::make_shared<std::promise<float>>();
-    auto future = promise->get_future();
-
-    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
-    auto handleTemperatureResult = [promise, promiseSet](float temperature) {
-        if (!promiseSet->exchange(true)) {
-            promise->set_value(temperature);
-        }
-    };
-
-    m_sensorModule.getBottleTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
-
-    future.wait();
-    float temperature = future.get();
-
-    if (temperature > -30) {
-        tempResponseDto->temperature = temperature;
-        return createDtoResponse(Status::CODE_200, tempResponseDto);
-    } else if (temperature == -100) {
-        return createResponse(Status::CODE_404, "Bottle temperature not available");
-    } else if (temperature == -30) {
-        return createResponse(Status::CODE_504, "Request timed out");
-    } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve temperature");
-    }
+    return getTemperatureResponse(
+        [this](auto&& callback) {
+            m_sensorModule.getBottleTemperature(m_canRequestManager, Codes::Module::Sensor_module, callback);
+        },
+        "Failed to retrieve bottle temperature",
+        "Bottle temperature not available"
+    );
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getTopMeasuredTemperature() {
-    auto tempResponseDto = MyTempDto::createShared();
-    auto promise = std::make_shared<std::promise<float>>();
-    auto future = promise->get_future();
-
-    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
-    auto handleTemperatureResult = [promise, promiseSet](float temperature) {
-        if (!promiseSet->exchange(true)) {
-            promise->set_value(temperature);
-        }
-    };
-
-    m_sensorModule.getTopMeasuredTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
-
-    future.wait();
-    float temperature = future.get();
-
-    if (temperature > -30) {
-        tempResponseDto->temperature = temperature;
-        return createDtoResponse(Status::CODE_200, tempResponseDto);
-    } else if (temperature == -100) {
-        return createResponse(Status::CODE_404, "Top temperature not available");
-    } else if (temperature == -30) {
-        return createResponse(Status::CODE_504, "Request timed out");
-    } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve temperature");
-    }
+    return getTemperatureResponse(
+        [this](auto&& callback) {
+            m_sensorModule.getTopMeasuredTemperature(m_canRequestManager, Codes::Module::Sensor_module, callback);
+        },
+        "Failed to retrieve top measured temperature",
+        "Top temperature not available"
+    );
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBottomMeasuredTemperature() {
-    auto tempResponseDto = MyTempDto::createShared();
-    auto promise = std::make_shared<std::promise<float>>();
-    auto future = promise->get_future();
-
-    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
-    auto handleTemperatureResult = [promise, promiseSet](float temperature) {
-        if (!promiseSet->exchange(true)) {
-            promise->set_value(temperature);
-        }
-    };
-
-    m_sensorModule.getBottomMeasuredTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
-
-    future.wait();
-    float temperature = future.get();
-
-    if (temperature > -30) {
-        tempResponseDto->temperature = temperature;
-        return createDtoResponse(Status::CODE_200, tempResponseDto);
-    } else if (temperature == -100) {
-        return createResponse(Status::CODE_404, "Bottom temperature not available");
-    } else if (temperature == -30) {
-        return createResponse(Status::CODE_504, "Request timed out");
-    } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve temperature");
-    }
+    return getTemperatureResponse(
+        [this](auto&& callback) {
+            m_sensorModule.getBottomMeasuredTemperature(m_canRequestManager, Codes::Module::Sensor_module, callback);
+        },
+        "Failed to retrieve bottom measured temperature",
+        "Bottom temperature not available"
+    );
 }
 
-
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getTopSensorTemperature() {
-    auto tempResponseDto = MyTempDto::createShared();
-    auto promise = std::make_shared<std::promise<float>>();
-    auto future = promise->get_future();
-
-    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
-    auto handleTemperatureResult = [promise, promiseSet](float temperature) {
-        if (!promiseSet->exchange(true)) {
-            promise->set_value(temperature);
-        }
-    };
-
-    m_sensorModule.getTopSensorTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
-
-    future.wait();
-    float temperature = future.get();
-
-    if (temperature > -30) {
-        tempResponseDto->temperature = temperature;
-        return createDtoResponse(Status::CODE_200, tempResponseDto);
-    } else if (temperature == -100) {
-        return createResponse(Status::CODE_404, "Top sensor temperature not available");
-    } else if (temperature == -30) {
-        return createResponse(Status::CODE_504, "Request timed out");
-    } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve temperature");
-    }
+    return getTemperatureResponse(
+        [this](auto&& callback) {
+            m_sensorModule.getTopSensorTemperature(m_canRequestManager, Codes::Module::Sensor_module, callback);
+        },
+        "Failed to retrieve top sensor temperature",
+        "Top sensor temperature not available"
+    );
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBottomSensorTemperature() {
-    auto tempResponseDto = MyTempDto::createShared();
-    auto promise = std::make_shared<std::promise<float>>();
-    auto future = promise->get_future();
-
-    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
-    auto handleTemperatureResult = [promise, promiseSet](float temperature) {
-        if (!promiseSet->exchange(true)) {
-            promise->set_value(temperature);
-        }
-    };
-
-    m_sensorModule.getBottomSensorTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
-
-    future.wait();
-    float temperature = future.get();
-
-    if (temperature > -30) {
-        tempResponseDto->temperature = temperature;
-        return createDtoResponse(Status::CODE_200, tempResponseDto);
-    } else if (temperature == -100) {
-        return createResponse(Status::CODE_404, "Bottom sensor temperature not available");
-    } else if (temperature == -30) {
-        return createResponse(Status::CODE_504, "Request timed out");
-    } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve temperature");
-    }
+    return getTemperatureResponse(
+        [this](auto&& callback) {
+            m_sensorModule.getBottomSensorTemperature(m_canRequestManager, Codes::Module::Sensor_module, callback);
+        },
+        "Failed to retrieve bottom sensor temperature",
+        "Bottom sensor temperature not available"
+    );
 }
+
 
 
 /*

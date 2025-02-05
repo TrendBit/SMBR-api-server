@@ -879,6 +879,11 @@ private:
         const std::string& uid);
     std::optional<Codes::Module> getTargetModule(const oatpp::Enum<dto::ModuleEnum>::AsString& module);
     std::optional<int> getTargetChannel(const dto::ChannelEnum& channel);
+    std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> getTemperatureResponse(
+        const std::function<void(std::function<void(float)>)>& temperatureGetter,
+        const std::string& errorMessage,
+        const std::string& notAvailableMessage
+    );
 
     boost::asio::io_context& m_ioContext;
     SystemModule& m_systemModule;
