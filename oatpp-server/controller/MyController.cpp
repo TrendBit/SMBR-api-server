@@ -99,14 +99,14 @@ std::optional<Codes::Module> MyController::getTargetModule(const oatpp::Enum<dto
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ping(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto pingResponseDto = MyPingResponseDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    std::atomic<bool> promiseSet = false;
-    auto handlePingResult = [&promise, &promiseSet](float responseTime) {
-        if (!promiseSet.exchange(true)) {
-            promise.set_value(responseTime);
-        } 
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handlePingResult = [promise, promiseSet](float responseTime) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(responseTime);
+        }
     };
 
     auto targetModuleOpt = getTargetModule(module);  
@@ -134,16 +134,19 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCoreLoad(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto loadResponseDto = MyLoadResponseDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleLoadResult = [&promise](float load) {
-        promise.set_value(load);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleLoadResult = [promise, promiseSet](float load) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(load);
+        }
     };
 
-    auto targetModuleOpt = getTargetModule(module);  
+    auto targetModuleOpt = getTargetModule(module);
     if (!targetModuleOpt.has_value()) {
-        return createResponse(Status::CODE_404, "Module not found");  
+        return createResponse(Status::CODE_404, "Module not found");
     }
     Codes::Module targetModule = targetModuleOpt.value();
 
@@ -162,13 +165,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCoreTemp(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto tempResponseDto = MyTempDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleTempResult = [&promise](float temperature) {
-        promise.set_value(temperature);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleTempResult = [promise, promiseSet](float temperature) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(temperature);
+        }
     };
 
     auto targetModuleOpt = getTargetModule(module);  
@@ -196,11 +203,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBoardTemp(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     auto tempResponseDto = MyTempDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleTempResult = [&promise](float temperature) {
-        promise.set_value(temperature);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleTempResult = [promise, promiseSet](float temperature) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(temperature);
+        }
     };
 
     auto targetModuleOpt = getTargetModule(module);  
