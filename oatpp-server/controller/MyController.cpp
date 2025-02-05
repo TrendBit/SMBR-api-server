@@ -455,11 +455,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getShortID() {
     auto sidResponseDto = MySIDDto::createShared();
-    std::promise<std::string> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<std::string>>();
+    auto future = promise->get_future();
 
-    auto handleSIDResult = [&promise](std::string sid) {
-        promise.set_value(sid);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleSIDResult = [promise, promiseSet](const std::string& sid) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(sid);
+        }
     };
 
     m_coreModule.getShortID(m_canRequestManager, Codes::Module::Core_module, handleSIDResult);
@@ -477,13 +480,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getIpAddress() {
     auto ipResponseDto = MyIpDto::createShared();
-    std::promise<std::string> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<std::string>>();
+    auto future = promise->get_future();
 
-    auto handleIpAddressResult = [&promise](std::string ipAddress) {
-        promise.set_value(ipAddress);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleIpAddressResult = [promise, promiseSet](const std::string& ipAddress) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(ipAddress);
+        }
     };
 
     m_coreModule.getIpAddress(m_canRequestManager, Codes::Module::Core_module, handleIpAddressResult);
@@ -504,13 +511,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 }
 
 
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHostname() {
     auto hostnameResponseDto = MyHostnameDto::createShared();
-    std::promise<std::string> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<std::string>>();
+    auto future = promise->get_future();
 
-    auto handleHostnameResult = [&promise](std::string hostname) {
-        promise.set_value(hostname);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleHostnameResult = [promise, promiseSet](const std::string& hostname) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(hostname);
+        }
     };
 
     m_coreModule.getHostname(m_canRequestManager, Codes::Module::Core_module, handleHostnameResult);
@@ -528,13 +539,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getSerialNumber() {
     auto serialResponseDto = MySerialDto::createShared();
-    std::promise<int64_t> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<int64_t>>();
+    auto future = promise->get_future();
 
-    auto handleSerialResult = [&promise](int64_t serial) {
-        promise.set_value(serial);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleSerialResult = [promise, promiseSet](int64_t serial) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(serial);
+        }
     };
 
     m_coreModule.getSerialNumber(m_canRequestManager, Codes::Module::Core_module, handleSerialResult);
@@ -552,13 +567,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPowerSupplyType() {
     auto supplyTypeResponseDto = MySupplyTypeDto::createShared();
-    std::promise<std::tuple<bool, bool, bool, bool>> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<std::tuple<bool, bool, bool, bool>>>();
+    auto future = promise->get_future();
 
-    auto handleSupplyTypeResult = [&promise](bool success, bool vin, bool poe, bool poe_hb) {
-        promise.set_value(std::make_tuple(success, vin, poe, poe_hb));
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleSupplyTypeResult = [promise, promiseSet](bool success, bool vin, bool poe, bool poe_hb) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(std::make_tuple(success, vin, poe, poe_hb));
+        }
     };
 
     m_coreModule.getPowerSupplyType(m_canRequestManager, Codes::Module::Core_module, handleSupplyTypeResult);
@@ -576,13 +595,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     return createDtoResponse(Status::CODE_200, supplyTypeResponseDto);
 }
 
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getVoltage5V() {
     auto voltageResponseDto = MyVoltageDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleVoltageResult = [&promise](float voltage) {
-        promise.set_value(voltage);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleVoltageResult = [promise, promiseSet](float voltage) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(voltage);
+        }
     };
 
     m_coreModule.getVoltage5V(m_canRequestManager, Codes::Module::Core_module, handleVoltageResult);
@@ -600,13 +623,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getVoltageVIN() {
     auto voltageResponseDto = MyVoltageDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleVoltageResult = [&promise](float voltage) {
-        promise.set_value(voltage);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleVoltageResult = [promise, promiseSet](float voltage) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(voltage);
+        }
     };
 
     m_coreModule.getVoltageVIN(m_canRequestManager, Codes::Module::Core_module, handleVoltageResult);
@@ -624,13 +651,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPoEVoltage() {
     auto voltageResponseDto = MyVoltageDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handlePoEResult = [&promise](float voltage) {
-        promise.set_value(voltage);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handlePoEResult = [promise, promiseSet](float voltage) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(voltage);
+        }
     };
 
     m_coreModule.getVoltagePoE(m_canRequestManager, Codes::Module::Core_module, handlePoEResult);
@@ -648,13 +679,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCurrentConsumption() {
     auto currentResponseDto = MyCurrentDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleCurrentResult = [&promise](float current) {
-        promise.set_value(current);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleCurrentResult = [promise, promiseSet](float current) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(current);
+        }
     };
 
     m_coreModule.getCurrentConsumption(m_canRequestManager, Codes::Module::Core_module, handleCurrentResult);
@@ -672,13 +707,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPowerDraw() {
     auto powerDrawResponseDto = MyPowerDrawDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handlePowerDrawResult = [&promise](float powerDraw) {
-        promise.set_value(powerDraw);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handlePowerDrawResult = [promise, promiseSet](float powerDraw) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(powerDraw);
+        }
     };
 
     m_coreModule.getPowerDraw(m_canRequestManager, Codes::Module::Core_module, handlePowerDrawResult);
@@ -695,6 +734,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         return createResponse(Status::CODE_500, "Failed to retrieve power draw");
     }
 }
+
 
 // ==========================================
 // Control module
