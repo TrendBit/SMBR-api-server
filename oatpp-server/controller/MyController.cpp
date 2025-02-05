@@ -1519,11 +1519,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBottleTemperature() {
     auto tempResponseDto = MyTempDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleTemperatureResult = [&promise](float temperature) {
-        promise.set_value(temperature);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleTemperatureResult = [promise, promiseSet](float temperature) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(temperature);
+        }
     };
 
     m_sensorModule.getBottleTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
@@ -1545,11 +1548,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getTopMeasuredTemperature() {
     auto tempResponseDto = MyTempDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleTemperatureResult = [&promise](float temperature) {
-        promise.set_value(temperature);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleTemperatureResult = [promise, promiseSet](float temperature) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(temperature);
+        }
     };
 
     m_sensorModule.getTopMeasuredTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
@@ -1571,11 +1577,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBottomMeasuredTemperature() {
     auto tempResponseDto = MyTempDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleTemperatureResult = [&promise](float temperature) {
-        promise.set_value(temperature);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleTemperatureResult = [promise, promiseSet](float temperature) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(temperature);
+        }
     };
 
     m_sensorModule.getBottomMeasuredTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
@@ -1595,13 +1604,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getTopSensorTemperature() {
     auto tempResponseDto = MyTempDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleTemperatureResult = [&promise](float temperature) {
-        promise.set_value(temperature);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleTemperatureResult = [promise, promiseSet](float temperature) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(temperature);
+        }
     };
 
     m_sensorModule.getTopSensorTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
@@ -1623,11 +1636,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBottomSensorTemperature() {
     auto tempResponseDto = MyTempDto::createShared();
-    std::promise<float> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<float>>();
+    auto future = promise->get_future();
 
-    auto handleTemperatureResult = [&promise](float temperature) {
-        promise.set_value(temperature);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleTemperatureResult = [promise, promiseSet](float temperature) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(temperature);
+        }
     };
 
     m_sensorModule.getBottomSensorTemperature(m_canRequestManager, Codes::Module::Sensor_module, handleTemperatureResult);
@@ -1646,8 +1662,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
         return createResponse(Status::CODE_500, "Failed to retrieve temperature");
     }
 }
-
-
 
 
 /*
