@@ -364,11 +364,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
     }
     Codes::Module targetModule = targetModuleOpt.value();
 
-    std::promise<bool> restartPromise;
-    auto restartFuture = restartPromise.get_future();
+    auto restartPromise = std::make_shared<std::promise<bool>>();
+    auto restartFuture = restartPromise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handlepostRestartResult = [&restartPromise](bool success) {
-        restartPromise.set_value(success);
+    auto handlepostRestartResult = [restartPromise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            restartPromise->set_value(success);
+        }
     };
 
     m_commonModule.sendDeviceReset(m_canRequestManager, targetModule, handlepostRestartResult);
@@ -411,11 +414,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
     }
     Codes::Module targetModule = targetModuleOpt.value();
 
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handlepostUsbBootloader = [&promise](bool success) {
-        promise.set_value(success);
+    auto handlepostUsbBootloader = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_commonModule.sendDeviceUsbBootloader(m_canRequestManager, targetModule, handlepostUsbBootloader);
@@ -458,11 +464,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
     }
     Codes::Module targetModule = targetModuleOpt.value();
 
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handlepostCanBootloader = [&promise](bool success) {
-        promise.set_value(success);
+    auto handlepostCanBootloader = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_commonModule.sendDeviceCanBootloader(m_canRequestManager, targetModule, handlepostCanBootloader);
