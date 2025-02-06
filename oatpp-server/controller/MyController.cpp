@@ -761,6 +761,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 // ==========================================
 // Control module
 // ==========================================
+
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setIntensities(const oatpp::Object<MyIntensitiesDto>& body) {
     if (!body || !body->intensity || body->intensity->size() != 4) {
         return createResponse(Status::CODE_400, "Invalid intensity array. Must contain exactly 4 values.");
@@ -775,11 +776,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
     bool success = true;
     for (size_t channel = 0; channel < body->intensity->size(); ++channel) {
-        std::promise<bool> promise;
-        auto future = promise.get_future();
+        auto promise = std::make_shared<std::promise<bool>>();
+        auto future = promise->get_future();
+        auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-        auto handleSetIntensityResult = [&promise](bool result) {
-            promise.set_value(result);
+        auto handleSetIntensityResult = [promise, promiseSet](bool result) {
+            if (!promiseSet->exchange(true)) {
+                promise->set_value(result);
+            }
         };
 
         m_controlModule.setIntensity(
@@ -834,11 +838,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
     int targetChannel = targetChannelOpt.value();
 
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
 
-    auto handleSetIntensityResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleSetIntensityResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.setIntensity(Codes::Module::Control_module, body->intensity, targetChannel, handleSetIntensityResult);
@@ -901,11 +908,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
         return createResponse(Status::CODE_400, "Invalid intensity value. Must be between -1.0 and 1.0.");
     }
 
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handleSetIntensityResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handleSetIntensityResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.setHeaterIntensity(Codes::Module::Control_module, body->intensity, handleSetIntensityResult);
@@ -952,11 +962,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
         return createResponse(Status::CODE_400, "Invalid target temperature. Must be a positive value.");
     }
 
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handleSetTargetTempResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handleSetTargetTempResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.setHeaterTargetTemperature(Codes::Module::Control_module, body->temperature, handleSetTargetTempResult);
@@ -992,11 +1005,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::turnOffHeater() {
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handleTurnOffResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handleTurnOffResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.turnOffHeater(Codes::Module::Control_module, handleTurnOffResult);
@@ -1016,11 +1032,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
         return createResponse(Status::CODE_400, "Invalid speed value. Must be between -1.0 and 1.0.");
     }
 
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handleSetSpeedResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handleSetSpeedResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.setCuvettePumpSpeed(Codes::Module::Control_module, body->speed, handleSetSpeedResult);
@@ -1067,11 +1086,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
         return createResponse(Status::CODE_400, "Invalid flowrate value. Must be between -1000.0 and 1000.0.");
     }
 
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handleSetFlowrateResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handleSetFlowrateResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.setCuvettePumpFlowrate(Codes::Module::Control_module, body->flowrate, handleSetFlowrateResult);
@@ -1114,12 +1136,19 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::moveCuvettePump(const oatpp::Object<MyMoveDto>& body) {
-    auto moveResponseDto = MyMoveDto::createShared();
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    if (!body) {
+        return createResponse(Status::CODE_400, "Invalid request body.");
+    }
 
-    auto handleMoveResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto moveResponseDto = MyMoveDto::createShared();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+
+    auto handleMoveResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.moveCuvettePump(Codes::Module::Control_module, body->volume, body->flowrate, handleMoveResult);
@@ -1137,11 +1166,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::mo
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::primeCuvettePump() {
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handlePrimeResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handlePrimeResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.primeCuvettePump(Codes::Module::Control_module, handlePrimeResult);
@@ -1157,11 +1189,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pr
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::purgeCuvettePump() {
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handlePurgeResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handlePurgeResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.purgeCuvettePump(Codes::Module::Control_module, handlePurgeResult);
@@ -1177,11 +1212,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pu
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::stopCuvettePump() {
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handleStopResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handleStopResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.stopCuvettePump(Codes::Module::Control_module, handleStopResult);
@@ -1201,11 +1239,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
         return createResponse(Status::CODE_400, "Invalid speed value. Must be between 0.0 and 1.0.");
     }
 
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handleSetSpeedResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handleSetSpeedResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.setAeratorSpeed(Codes::Module::Control_module, body->speed, handleSetSpeedResult);
@@ -1248,15 +1289,18 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setAeratorFlowrate(const oatpp::Object<MyFlowrateDto>& body) {
-    if (!body || body->flowrate < 0.0f || body->flowrate > 5000.0f) {
+    if (!body || body->flowrate < 10.0f || body->flowrate > 5000.0f) {
         return createResponse(Status::CODE_400, "Invalid flowrate value. Must be between 10.0 and 5000.0 ml/min.");
     }
 
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handleSetFlowrateResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handleSetFlowrateResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.setAeratorFlowrate(Codes::Module::Control_module, body->flowrate, handleSetFlowrateResult);
@@ -1300,11 +1344,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::moveAerator(const oatpp::Object<MyMoveDto>& body) {
     auto moveResponseDto = MyMoveDto::createShared();
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handleMoveResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handleMoveResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.moveAerator(Codes::Module::Control_module, body->volume, body->flowrate, handleMoveResult);
@@ -1315,18 +1362,21 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::mo
     if (success) {
         moveResponseDto->volume = body->volume;
         moveResponseDto->flowrate = body->flowrate;
-        return createDtoResponse(Status::CODE_200, moveResponseDto);  
+        return createDtoResponse(Status::CODE_200, moveResponseDto);
     } else {
         return createResponse(Status::CODE_500, "Failed to start moving air");
     }
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::stopAerator() {
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handleStopResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handleStopResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.stopAerator(Codes::Module::Control_module, handleStopResult);
@@ -1346,11 +1396,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
         return createResponse(Status::CODE_400, "Invalid speed value. Must be between 0.0 and 1.0.");
     }
 
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handleSetSpeedResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handleSetSpeedResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.setMixerSpeed(Codes::Module::Control_module, body->speed, handleSetSpeedResult);
@@ -1397,11 +1450,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
         return createResponse(Status::CODE_400, "Invalid RPM value. Must be between 0 and 10000.");
     }
 
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handleSetRpmResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handleSetRpmResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.setMixerRpm(Codes::Module::Control_module, body->rpm, handleSetRpmResult);
@@ -1448,11 +1504,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
         return createResponse(Status::CODE_400, "Invalid RPM or time value. RPM must be between 0 and 10000, and time must be between 0 and 3600 seconds.");
     }
 
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handleStirResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handleStirResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.stirMixer(Codes::Module::Control_module, body->rpm, body->time, handleStirResult);
@@ -1468,11 +1527,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::stopMixer() {
-    std::promise<bool> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<bool>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
 
-    auto handleStopResult = [&promise](bool success) {
-        promise.set_value(success);
+    auto handleStopResult = [promise, promiseSet](bool success) {
+        if (!promiseSet->exchange(true)) {
+            promise->set_value(success);
+        }
     };
 
     m_controlModule.stopMixer(Codes::Module::Control_module, handleStopResult);
