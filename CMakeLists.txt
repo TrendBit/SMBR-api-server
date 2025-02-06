@@ -3,8 +3,12 @@ project(client_server_project)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# --- GateLibrary (gate) ---
-add_library(GateLibrary
+find_package(oatpp 1.4.0 REQUIRED)
+find_package(oatpp-swagger 1.4.0 REQUIRED)
+
+add_executable(api-server
+  oatpp-server/App.cpp
+  oatpp-server/controller/MyController.cpp
   gate/base/CommonModule.cpp
   gate/core/CoreModule.cpp
   gate/control/ControlModule.cpp
@@ -17,73 +21,22 @@ add_library(GateLibrary
   gate/can/CanRequestManager.cpp
 )
 
-file(GLOB_RECURSE GATE_HEADERS "gate/*/*.hpp")
-
-target_include_directories(GateLibrary
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/gate>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/oatpp-server/dto>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-    /usr/local/include/oatpp-1.4.0
+target_include_directories(api-server
   PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/gate/codes/messages
-)
-
-target_link_libraries(GateLibrary
-  PUBLIC oatpp::oatpp
-)
-
-install(
-  TARGETS GateLibrary
-  EXPORT GateLibraryTargets
-  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-  INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/GateLibrary"
-)
-
-install(
-  FILES ${GATE_HEADERS}
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/GateLibrary
-)
-
-
-install(
-  EXPORT GateLibraryTargets
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/GateLibrary
-)
-
-# --- ServerLibrary (oatpp-server) ---
-find_package(oatpp 1.4.0 REQUIRED)
-find_package(oatpp-swagger 1.4.0 REQUIRED)
-
-add_library(ServerLibrary
-  oatpp-server/controller/MyController.cpp
-  oatpp-server/AppComponent.hpp
-)
-
-target_include_directories(ServerLibrary
-  PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/oatpp-server
     ${CMAKE_CURRENT_SOURCE_DIR}/oatpp-server/dto
     ${CMAKE_CURRENT_SOURCE_DIR}/gate
     /usr/local/include/oatpp-1.4.0
     ${CMAKE_CURRENT_SOURCE_DIR}/gate/codes/messages
+    ${CMAKE_CURRENT_SOURCE_DIR}/gate/can
 )
 
-target_link_libraries(ServerLibrary
-  PUBLIC oatpp::oatpp
-  PUBLIC oatpp::oatpp-swagger
-  PUBLIC GateLibrary
+target_link_libraries(api-server
+  PRIVATE oatpp::oatpp
+  PRIVATE oatpp::oatpp-swagger
 )
 
-add_executable(api-server oatpp-server/App.cpp)
-
-target_link_libraries(api-server ServerLibrary)
-
-add_dependencies(api-server ServerLibrary)
-
-set_target_properties(ServerLibrary api-server PROPERTIES
+set_target_properties(api-server PROPERTIES
   CXX_STANDARD 17
   CXX_EXTENSIONS OFF
   CXX_STANDARD_REQUIRED ON
