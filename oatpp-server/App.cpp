@@ -10,6 +10,10 @@
 #include <boost/asio.hpp>
 #include <thread>
 
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <filesystem>
+
 /**
  * @brief Run the server and manage the CanBus and CanRequestManager.
  * 
@@ -53,6 +57,16 @@ void run(boost::asio::io_context& io_context) {
   server.run();
 }
 
+void initialize_logger() {
+    std::filesystem::create_directory("logs");
+    auto logger = spdlog::basic_logger_mt("basic_logger", "logs/logfile.log");  
+    spdlog::set_default_logger(logger);
+    spdlog::set_level(spdlog::level::debug);
+    spdlog::flush_every(std::chrono::seconds(1));
+    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S] [%l] %v");
+    spdlog::warn("Logger initialized");
+}
+
 
 /**
  * @brief Main entry point of the application.
@@ -62,6 +76,8 @@ void run(boost::asio::io_context& io_context) {
  * @return int Exit code.
  */
 int main(int argc, const char * argv[]) {
+  
+  initialize_logger();
 
   oatpp::Environment::init();
 

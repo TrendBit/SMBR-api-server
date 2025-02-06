@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 find_package(oatpp 1.4.0 REQUIRED)
 find_package(oatpp-swagger 1.4.0 REQUIRED)
+find_package(spdlog REQUIRED)
 
 add_executable(api-server
   oatpp-server/App.cpp
@@ -34,6 +35,7 @@ target_include_directories(api-server
 target_link_libraries(api-server
   PRIVATE oatpp::oatpp
   PRIVATE oatpp::oatpp-swagger
+  PRIVATE spdlog::spdlog
 )
 
 set_target_properties(api-server PROPERTIES
