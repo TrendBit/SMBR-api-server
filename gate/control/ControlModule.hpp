@@ -51,6 +51,10 @@
 #include "codes/messages/mixer/stir.hpp"
 #include "codes/messages/mixer/stop.hpp"
 
+#include "backward.hpp"
+
+extern backward::SignalHandling sh;
+
 
 
 /**

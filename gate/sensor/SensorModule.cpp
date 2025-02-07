@@ -1,5 +1,7 @@
 #include "SensorModule.hpp"
 
+extern backward::SignalHandling sh;
+
 SensorModule::SensorModule(boost::asio::io_context& io_context, CanRequestManager& canRequestManager)
     : m_ioContext(io_context), m_canRequestManager(canRequestManager) {}
 

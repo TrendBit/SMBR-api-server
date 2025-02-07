@@ -3,7 +3,7 @@
 #include <iomanip> 
 #include <chrono>
 
-
+extern backward::SignalHandling sh;
 
 CommonModule::CommonModule(boost::asio::io_context& io_context, CanRequestManager& canRequestManager)
     : m_ioContext(io_context), m_canRequestManager(canRequestManager) {}
@@ -31,7 +31,6 @@ void CommonModule::ping(CanRequestManager& manager, Codes::Module module, uint8_
             callback((status == CanRequestStatus::Timeout) ? -2 : -1); 
         }
     }, timeoutSeconds);
-
 }
 
 

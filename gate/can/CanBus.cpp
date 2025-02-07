@@ -8,6 +8,8 @@
 #include <memory>
 #include <spdlog/spdlog.h> 
 
+extern backward::SignalHandling sh;
+
 CanBus::CanBus(boost::asio::io_context& io_context)
     : socket(io_context), ioContext(io_context) {
 

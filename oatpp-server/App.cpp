@@ -14,6 +14,10 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <filesystem>
 
+#include "backward.hpp"
+
+backward::SignalHandling sh;
+
 /**
  * @brief Run the server and manage the CanBus and CanRequestManager.
  * 

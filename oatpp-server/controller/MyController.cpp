@@ -1,5 +1,7 @@
 #include "MyController.hpp"
 
+extern backward::SignalHandling sh;
+
 MyController::MyController(const std::shared_ptr<oatpp::web::mime::ContentMappers>& apiContentMappers,
                            boost::asio::io_context& ioContext,
                            SystemModule& systemModule,

@@ -1,5 +1,7 @@
 #include "CoreModule.hpp"
 
+extern backward::SignalHandling sh;
+
 CoreModule::CoreModule(boost::asio::io_context& io_context, CanRequestManager& canRequestManager)
     : m_ioContext(io_context), m_canRequestManager(canRequestManager) {}
 

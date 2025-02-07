@@ -45,6 +45,10 @@
 
 #include <iostream>
 
+#include "backward.hpp"
+
+extern backward::SignalHandling sh;
+
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
 /**

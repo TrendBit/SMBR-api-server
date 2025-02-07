@@ -18,6 +18,10 @@
 #include "codes/messages/bottle_temperature/bottom_sensor_temperature_request.hpp"
 #include "codes/messages/bottle_temperature/bottom_sensor_temperature_response.hpp"
 
+#include "backward.hpp"
+
+extern backward::SignalHandling sh;
+
 /**
  * @class SensorModule
  */

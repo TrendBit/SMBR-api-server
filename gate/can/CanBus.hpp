@@ -9,6 +9,10 @@
 #include <memory>
 #include "CanMessage.hpp"
 
+#include "backward.hpp"
+
+extern backward::SignalHandling sh;
+
 /**
  * @class CanBus
  * @brief Class responsible for CAN bus communication.

@@ -28,6 +28,9 @@
 #include "codes/messages/core/supply_power_draw_request.hpp"
 #include "codes/messages/core/supply_power_draw_response.hpp"
 
+#include "backward.hpp"
+
+extern backward::SignalHandling sh;
 
 /**
  * @class CoreModule

@@ -10,6 +10,11 @@
 
 #include "codes/messages/common/probe_modules_request.hpp"
 #include "codes/messages/common/probe_modules_response.hpp"
+
+#include "backward.hpp"
+
+extern backward::SignalHandling sh;
+
 /**
  * @class SystemModule
  * @brief Class responsible for managing system-level CAN bus communications.

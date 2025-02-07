@@ -20,6 +20,7 @@ add_executable(api-server
   gate/can/CanBus.cpp
   gate/can/CanRequest.cpp
   gate/can/CanRequestManager.cpp
+  backward/backward.cpp
 )
 
 target_include_directories(api-server
@@ -30,6 +31,7 @@ target_include_directories(api-server
     /usr/local/include/oatpp-1.4.0
     ${CMAKE_CURRENT_SOURCE_DIR}/gate/codes/messages
     ${CMAKE_CURRENT_SOURCE_DIR}/gate/can
+    ${CMAKE_CURRENT_SOURCE_DIR}/backward
 )
 
 target_link_libraries(api-server

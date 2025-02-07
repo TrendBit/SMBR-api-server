@@ -1,6 +1,8 @@
 #include "CanRequestManager.hpp"
 #include <spdlog/spdlog.h>
 
+extern backward::SignalHandling sh;
+
 CanRequestManager::CanRequestManager(boost::asio::io_context& io_context, CanBus& canBus)
     : io_context_(io_context), canBus_(canBus) {
     spdlog::info("[CanRequestManager] CanRequestManager initialized");

@@ -1,6 +1,8 @@
 #include "CanRequest.hpp"
 #include <spdlog/spdlog.h>
 
+extern backward::SignalHandling sh;
+
 CanRequest::CanRequest(CanBus& canBus, boost::asio::io_context& io_context, uint32_t requestId, const std::vector<uint8_t>& data, uint32_t responseId, double timeoutSeconds, bool compareFullId)
     : canBus_(&canBus), requestMessage_(requestId, data), expectedResponseId_(responseId), timeoutTimer_(io_context), timeoutSeconds_(timeoutSeconds), compareFullId_(compareFullId), responses_(std::make_shared<std::vector<CanMessage>>()) {
         spdlog::info("[CanRequest] CanRequest created with requestId: 0x{:X}, responseId: 0x{:X}", requestId, responseId);

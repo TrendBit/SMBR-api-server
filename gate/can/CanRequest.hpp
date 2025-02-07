@@ -6,6 +6,10 @@
 #include <memory>
 #include <vector>
 
+#include "backward.hpp"
+
+extern backward::SignalHandling sh;
+
 /**
  * @enum CanRequestStatus
  * @brief Enum representing the status of a CAN request.

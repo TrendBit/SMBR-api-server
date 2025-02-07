@@ -18,6 +18,9 @@
 #include "codes/messages/common/board_temp_request.hpp"
 #include "codes/messages/common/board_temp_response.hpp"
 
+#include "backward.hpp"
+
+extern backward::SignalHandling sh;
 
 /**
  * @class CommonModule

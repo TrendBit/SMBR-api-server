@@ -1,5 +1,7 @@
 #include "SystemModule.hpp"
 
+extern backward::SignalHandling sh;
+
 SystemModule& SystemModule::getInstance(boost::asio::io_context& io_context, CanRequestManager& canRequestManager) {
     static SystemModule instance(io_context, canRequestManager);
     return instance;

@@ -9,6 +9,10 @@
 #include "codes/codes.hpp"
 #include <mutex>
 
+#include "backward.hpp"
+
+extern backward::SignalHandling sh;
+
 /**
  * @class CanRequestManager
  * @brief Class responsible for managing CAN bus requests.
