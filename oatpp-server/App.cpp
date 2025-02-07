@@ -1,4 +1,4 @@
-#include "./controller/MyController.hpp"
+#include "./controller/Controller.hpp"
 #include "./AppComponent.hpp"
 #include "can/CanBus.hpp"
 #include "can/CanRequestManager.hpp"

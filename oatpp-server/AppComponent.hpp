@@ -8,7 +8,7 @@
 #include "oatpp-swagger/Model.hpp"
 #include "oatpp-swagger/Resources.hpp"
 #include <boost/asio.hpp>
-#include "interceptors/MyResponseInterceptor.hpp"
+#include "interceptors/ResponseInterceptor.hpp"
 
 /**
  * @class AppComponent

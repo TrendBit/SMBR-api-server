@@ -9,7 +9,7 @@ find_package(spdlog REQUIRED)
 
 add_executable(api-server
   oatpp-server/App.cpp
-  oatpp-server/controller/MyController.cpp
+  oatpp-server/controller/Controller.cpp
   gate/base/CommonModule.cpp
   gate/core/CoreModule.cpp
   gate/control/ControlModule.cpp
