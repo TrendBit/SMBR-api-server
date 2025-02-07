@@ -357,7 +357,7 @@ public:
         info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set intensity.");
     }
     ADD_CORS(setIntensities)
-    ENDPOINT("POST", "/control/led_intensity", setIntensities, BODY_DTO(Object<MyIntensitiesDto>, body));      
+    ENDPOINT("POST", "/control/led_panel/intensity", setIntensities, BODY_DTO(Object<MyIntensitiesDto>, body));      
 
     /**
     * @brief Sets the intensity and the channel of the LED lighting.
@@ -376,7 +376,7 @@ public:
         info->addResponse<String>(Status::CODE_500, "application/json", "Failed to set intensity.");
     }
     ADD_CORS(setIntensity)
-    ENDPOINT("POST", "/control/led_intensity/{channel}", setIntensity, PATH(oatpp::Enum<dto::ChannelEnum>::AsString, channel), BODY_DTO(Object<MyIntensityDto>, body));
+    ENDPOINT("POST", "/control/led_panel/intensity/{channel}", setIntensity, PATH(oatpp::Enum<dto::ChannelEnum>::AsString, channel), BODY_DTO(Object<MyIntensityDto>, body));
 
     /**
     * @brief Retrieves the current intensity of the selected LED channel.
@@ -391,7 +391,7 @@ public:
         info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
     }
     ADD_CORS(getIntensity)
-    ENDPOINT("GET", "/control/led_intensity/{channel}", getIntensity, PATH(oatpp::Enum<dto::ChannelEnum>, channel));
+    ENDPOINT("GET", "/control/led_panel/intensity/{channel}", getIntensity, PATH(oatpp::Enum<dto::ChannelEnum>, channel));
 
     /**
     * @brief Retrieves the temperature of the LED panel.
@@ -406,7 +406,7 @@ public:
         info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
     }
     ADD_CORS(getLedTemperature)
-    ENDPOINT("GET", "/control/led_temperature", getLedTemperature);
+    ENDPOINT("GET", "/control/led_panel/temperature", getLedTemperature);
 
     /**
      * @brief Sets the intensity of heating or cooling.
