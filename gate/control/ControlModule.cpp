@@ -59,17 +59,17 @@ void ControlModule::getLedTemperature(CanRequestManager& manager, Codes::Module 
             if (temperatureResponse.Interpret_data(dataCopy)) {
                 float temperature = temperatureResponse.temperature;
                 if (temperature < -30) {
-                    callback(-100); // Module not available
+                    callback(-100);
                 } else {
                     callback(temperature); 
                 }
             } else {
-                callback(-1); // Invalid data
+                callback(-101); 
             }
         } else if (status == CanRequestStatus::Timeout) {
-            callback(-30); // Timeout 
+            callback(-30);  
         } else {
-            callback(-1); // General error
+            callback(-101); 
         }
     }, timeoutSeconds);
 }
@@ -142,12 +142,12 @@ void ControlModule::getHeaterTargetTemperature(CanRequestManager& manager, Codes
                     callback(temperature); 
                 }
             } else {
-                callback(-1);
+                callback(-101);
             }
         } else if (status == CanRequestStatus::Timeout) {
             callback(-30); 
         } else {
-            callback(-1); 
+            callback(-101); 
         }
     }, timeoutSeconds);
 }
@@ -173,12 +173,12 @@ void ControlModule::getHeaterPlateTemperature(CanRequestManager& manager, Codes:
                     callback(temperature);
                 }
             } else {
-                callback(-1); 
+                callback(-101); 
             }
         } else if (status == CanRequestStatus::Timeout) {
             callback(-30);
         } else {
-            callback(-1); 
+            callback(-101); 
         }
     }, timeoutSeconds);
 }

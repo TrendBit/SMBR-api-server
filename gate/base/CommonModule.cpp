@@ -82,12 +82,12 @@ void CommonModule::getCoreTemp(CanRequestManager& manager, Codes::Module module,
                     callback(temperature); 
                 }
             } else {
-                callback(-1); 
+                callback(-101); 
             }
         } else if (status == CanRequestStatus::Timeout) {
             callback(-30); 
         } else {
-            callback(-1); 
+            callback(-101); 
         }
     }, timeoutSeconds);
 }
@@ -113,12 +113,12 @@ void CommonModule::getBoardTemp(CanRequestManager& manager, Codes::Module module
                     callback(temperature); 
                 }
             } else {
-                callback(-1); 
+                callback(-101); 
             }
         } else if (status == CanRequestStatus::Timeout) {
             callback(-30); 
         } else {
-            callback(-1); 
+            callback(-101); 
         }
     }, timeoutSeconds);
 }

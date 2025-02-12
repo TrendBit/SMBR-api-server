@@ -27,12 +27,12 @@ void SensorModule::getBottleTemperature(CanRequestManager& manager, Codes::Modul
                     callback(temperature); 
                 }
             } else {
-                callback(-1); 
+                callback(-101); 
             }
         } else if (status == CanRequestStatus::Timeout) {
             callback(-30); 
         } else {
-            callback(-1);
+            callback(-101);
         }
     }, timeoutSeconds);
 }
@@ -58,12 +58,12 @@ void SensorModule::getTopMeasuredTemperature(CanRequestManager& manager, Codes::
                     callback(temperature); 
                 }
             } else {
-                callback(-1); 
+                callback(-101); 
             }
         } else if (status == CanRequestStatus::Timeout) {
             callback(-30); 
         } else {
-            callback(-1); 
+            callback(-101); 
         }
     }, timeoutSeconds);
 }
@@ -89,12 +89,12 @@ void SensorModule::getBottomMeasuredTemperature(CanRequestManager& manager, Code
                     callback(temperature); 
                 }
             } else {
-                callback(-1); 
+                callback(-101); 
             }
         } else if (status == CanRequestStatus::Timeout) {
             callback(-30); 
         } else {
-            callback(-1); 
+            callback(-101); 
         }
     }, timeoutSeconds);
 }
@@ -120,12 +120,12 @@ void SensorModule::getTopSensorTemperature(CanRequestManager& manager, Codes::Mo
                     callback(temperature); 
                 }
             } else {
-                callback(-1); 
+                callback(-101); 
             }
         } else if (status == CanRequestStatus::Timeout) {
             callback(-30); 
         } else {
-            callback(-1); 
+            callback(-101); 
         }
     }, timeoutSeconds);
 }
@@ -151,12 +151,12 @@ void SensorModule::getBottomSensorTemperature(CanRequestManager& manager, Codes:
                     callback(temperature); 
                 }
             } else {
-                callback(-1); 
+                callback(-101); 
             }
         } else if (status == CanRequestStatus::Timeout) {
             callback(-30);
         } else {
-            callback(-1); 
+            callback(-101); 
         }
     }, timeoutSeconds);
 }
