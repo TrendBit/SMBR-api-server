@@ -47,6 +47,8 @@
 
 #include "backward.hpp"
 
+constexpr std::chrono::seconds REQUEST_TIMEOUT_DURATION(3);
+
 extern backward::SignalHandling sh;
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
@@ -92,8 +94,8 @@ public:
         info->addTag("Common");
         info->description = "Sends ping request to target module and waits for response.";
         info->addResponse<Object<MyPingResponseDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_500, "application/json");
-        info->addResponse<String>(Status::CODE_404, "application/json");
+        info->addResponse<String>(Status::CODE_500, "application/json", "Ping failed");
+        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
     }
     ADD_CORS(ping)
     ENDPOINT("GET", "/{module}/ping", ping, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
@@ -857,8 +859,6 @@ public:
 
 
 
-
-
     /**
     * @brief Measures API response time without communication with RPI/CAN bus.
     */
@@ -897,6 +897,7 @@ private:
     SensorModule& m_sensorModule;
     CanRequestManager& m_canRequestManager;
     std::atomic<uint8_t> m_seqNum{0};  
+
 };
 
 #include OATPP_CODEGEN_END(ApiController)

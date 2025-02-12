@@ -1,5 +1,6 @@
 #include "Controller.hpp"
 
+
 extern backward::SignalHandling sh;
 
 MyController::MyController(const std::shared_ptr<oatpp::web::mime::ContentMappers>& apiContentMappers,
@@ -37,7 +38,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     temperatureGetter(handleTemperatureResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float temperature = future.get();
 
     if (temperature > -30) {
@@ -99,7 +102,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     });
 
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     auto result = future.get();
 
     if (result->empty()) {
@@ -155,7 +160,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
 
     m_commonModule.ping(m_canRequestManager, targetModule, seq_num, handlePingResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float responseTime = future.get();
 
     if (responseTime >= 0) {
@@ -188,7 +195,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_commonModule.getCoreLoad(m_canRequestManager, targetModule, handleLoadResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float load = future.get();
 
     if (load >= 0 && load <= 100) {
@@ -221,7 +230,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_commonModule.getCoreTemp(m_canRequestManager, targetModule, handleTempResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float temperature = future.get();
 
     if (temperature == -30) {
@@ -256,7 +267,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_commonModule.getBoardTemp(m_canRequestManager, targetModule, handleTempResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float temperature = future.get();
 
     if (temperature == -30) {
@@ -510,7 +523,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_coreModule.getShortID(m_canRequestManager, Codes::Module::Core_module, handleSIDResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     std::string sid = future.get();
 
     if (sid == "timeout") {
@@ -537,7 +552,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_coreModule.getIpAddress(m_canRequestManager, Codes::Module::Core_module, handleIpAddressResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     std::string ipAddress = future.get();
 
     if (ipAddress == "timeout") {
@@ -566,7 +583,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_coreModule.getHostname(m_canRequestManager, Codes::Module::Core_module, handleHostnameResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     std::string hostname = future.get();
 
     if (hostname == "timeout") {
@@ -593,7 +612,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_coreModule.getSerialNumber(m_canRequestManager, Codes::Module::Core_module, handleSerialResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     int64_t serial = future.get();
 
     if (serial == -2) {
@@ -620,7 +641,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_coreModule.getPowerSupplyType(m_canRequestManager, Codes::Module::Core_module, handleSupplyTypeResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     auto [success, vin, poe, poe_hb] = future.get();
 
     if (!success) {
@@ -647,7 +670,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_coreModule.getVoltage5V(m_canRequestManager, Codes::Module::Core_module, handleVoltageResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float voltage = future.get();
 
     if (voltage == -2.0f) {
@@ -674,7 +699,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_coreModule.getVoltageVIN(m_canRequestManager, Codes::Module::Core_module, handleVoltageResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float voltage = future.get();
 
     if (voltage == -2.0f) {
@@ -701,7 +728,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_coreModule.getVoltagePoE(m_canRequestManager, Codes::Module::Core_module, handlePoEResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float voltage = future.get();
 
     if (voltage == -2.0f) {
@@ -728,7 +757,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_coreModule.getCurrentConsumption(m_canRequestManager, Codes::Module::Core_module, handleCurrentResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float current = future.get();
 
     if (current == -2.0f) {
@@ -755,7 +786,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_coreModule.getPowerDraw(m_canRequestManager, Codes::Module::Core_module, handlePowerDrawResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float powerDraw = future.get();
 
     if (powerDraw == -2.0f) {
@@ -804,7 +837,11 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
             handleSetIntensityResult
         );
 
-        future.wait();
+        if (future.wait_for(std::chrono::seconds(2)) == std::future_status::timeout) {
+            success = false;
+            break;
+        }
+
         if (!future.get()) {
             success = false;
             break;
@@ -861,7 +898,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
     m_controlModule.setIntensity(Codes::Module::Control_module, body->intensity, targetChannel, handleSetIntensityResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -891,7 +930,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_controlModule.getIntensity(m_canRequestManager, Codes::Module::Control_module, targetChannel, handleIntensityResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float intensity = future.get();
 
     if (intensity != -2 && intensity != -1) {
@@ -931,7 +972,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
     m_controlModule.setHeaterIntensity(Codes::Module::Control_module, body->intensity, handleSetIntensityResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -955,7 +998,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_controlModule.getHeaterIntensity(m_canRequestManager, Codes::Module::Control_module, handleIntensityResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float intensity = future.get();
 
     if (intensity == -2.0f) {
@@ -985,7 +1030,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
     m_controlModule.setHeaterTargetTemperature(Codes::Module::Control_module, body->temperature, handleSetTargetTempResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1028,7 +1075,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::tu
 
     m_controlModule.turnOffHeater(Codes::Module::Control_module, handleTurnOffResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1055,7 +1104,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
     m_controlModule.setCuvettePumpSpeed(Codes::Module::Control_module, body->speed, handleSetSpeedResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1079,7 +1130,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_controlModule.getCuvettePumpSpeed(m_canRequestManager, Codes::Module::Control_module, handleSpeedResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float speed = future.get();
 
     if (speed >= -1.0f && speed <= 1.0f) {
@@ -1109,7 +1162,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
     m_controlModule.setCuvettePumpFlowrate(Codes::Module::Control_module, body->flowrate, handleSetFlowrateResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1133,7 +1188,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_controlModule.getCuvettePumpFlowrate(m_canRequestManager, Codes::Module::Control_module, handleFlowrateResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float flowrate = future.get();
 
     if (flowrate == -2000.0f) {
@@ -1164,7 +1221,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::mo
 
     m_controlModule.moveCuvettePump(Codes::Module::Control_module, body->volume, body->flowrate, handleMoveResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1189,7 +1248,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pr
 
     m_controlModule.primeCuvettePump(Codes::Module::Control_module, handlePrimeResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1212,7 +1273,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pu
 
     m_controlModule.purgeCuvettePump(Codes::Module::Control_module, handlePurgeResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1235,7 +1298,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
 
     m_controlModule.stopCuvettePump(Codes::Module::Control_module, handleStopResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1262,7 +1327,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
     m_controlModule.setAeratorSpeed(Codes::Module::Control_module, body->speed, handleSetSpeedResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1286,7 +1353,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_controlModule.getAeratorSpeed(m_canRequestManager, Codes::Module::Control_module, handleSpeedResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float speed = future.get();
 
     if (speed >= 0.0f && speed <= 1.0f) {
@@ -1316,7 +1385,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
     m_controlModule.setAeratorFlowrate(Codes::Module::Control_module, body->flowrate, handleSetFlowrateResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1340,7 +1411,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_controlModule.getAeratorFlowrate(m_canRequestManager, Codes::Module::Control_module, handleFlowrateResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float flowrate = future.get();
 
     if (flowrate >= 0.0f && flowrate <= 5000.0f) {
@@ -1367,7 +1440,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::mo
 
     m_controlModule.moveAerator(Codes::Module::Control_module, body->volume, body->flowrate, handleMoveResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1392,7 +1467,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
 
     m_controlModule.stopAerator(Codes::Module::Control_module, handleStopResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1419,7 +1496,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
     m_controlModule.setMixerSpeed(Codes::Module::Control_module, body->speed, handleSetSpeedResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1443,7 +1522,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_controlModule.getMixerSpeed(m_canRequestManager, Codes::Module::Control_module, handleSpeedResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     float speed = future.get();
 
     if (speed >= 0.0f && speed <= 1.0f) {
@@ -1473,7 +1554,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
 
     m_controlModule.setMixerRpm(Codes::Module::Control_module, body->rpm, handleSetRpmResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1497,7 +1580,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
     m_controlModule.getMixerRpm(m_canRequestManager, Codes::Module::Control_module, handleRpmResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     int rpm = future.get();
 
     if (rpm >= 0 && rpm <= 10000) {
@@ -1527,7 +1612,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
 
     m_controlModule.stirMixer(Codes::Module::Control_module, body->rpm, body->time, handleStirResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
@@ -1550,7 +1637,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
 
     m_controlModule.stopMixer(Codes::Module::Control_module, handleStopResult);
 
-    future.wait();
+    if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
+        return createResponse(Status::CODE_504, "Request timed out");
+    }
     bool success = future.get();
 
     if (success) {
