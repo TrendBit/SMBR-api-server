@@ -152,7 +152,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
 
     auto targetModuleOpt = getTargetModule(module);  
     if (!targetModuleOpt.has_value()) {
-        return createResponse(Status::CODE_404, "Module not found");  
+        auto errorDto = ErrorResponseDto::createShared();
+        errorDto->message = "Module not found";
+        return createDtoResponse(Status::CODE_404, errorDto);
     }
     Codes::Module targetModule = targetModuleOpt.value();
 
@@ -161,7 +163,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
     m_commonModule.ping(m_canRequestManager, targetModule, seq_num, handlePingResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        auto errorDto = ErrorResponseDto::createShared();
+        errorDto->message = "Request timed out";
+        return createDtoResponse(Status::CODE_504, errorDto);
     }
     float responseTime = future.get();
 
@@ -169,9 +173,13 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
         pingResponseDto->time_ms = responseTime;
         return createDtoResponse(Status::CODE_200, pingResponseDto);  
     } else if (responseTime == -2) {
-        return createResponse(Status::CODE_504, "Ping timed out"); 
+        auto errorDto = ErrorResponseDto::createShared();
+        errorDto->message = "Ping timed out";
+        return createDtoResponse(Status::CODE_504, errorDto);
     } else {
-        return createResponse(Status::CODE_500, "Ping failed"); 
+        auto errorDto = ErrorResponseDto::createShared();
+        errorDto->message = "Ping failed";
+        return createDtoResponse(Status::CODE_500, errorDto);
     }
 }
 

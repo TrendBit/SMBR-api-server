@@ -24,6 +24,7 @@
 #include "dto/VoltageDto.hpp"
 #include "dto/CurrentDto.hpp"
 #include "dto/PowerDrawDto.hpp"
+#include "dto/ErrorResponseDto.hpp"
 #include "can/CanRequestManager.hpp"
 #include "system/SystemModule.hpp"
 #include "base/CommonModule.hpp"
@@ -93,10 +94,14 @@ public:
         info->summary = "Send ping to target module";
         info->addTag("Common");
         info->description = "Sends ping request to target module and waits for response.";
-        info->addResponse<Object<MyPingResponseDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Ping failed");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
-    }
+        info->addResponse<Object<MyPingResponseDto>>(Status::CODE_200, "application/json", "Ping received from module");
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Module not found")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Module not found"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Ping failed")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Ping failed"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Ping timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Ping timed out"}}));
+        }
     ADD_CORS(ping)
     ENDPOINT("GET", "/{module}/ping", ping, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
 
