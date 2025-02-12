@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing mixer RPM data.
  */
-class MyRpmDto : public oatpp::DTO {
-    DTO_INIT(MyRpmDto, DTO)
+class RpmDto : public oatpp::DTO {
+    DTO_INIT(RpmDto, DTO)
 
     /**
      * @brief The RPM value, expected to be between 0 and 10000.

@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing temperature data.
  */
-class MyTempDto : public oatpp::DTO {
-    DTO_INIT(MyTempDto, DTO)
+class TempDto : public oatpp::DTO {
+    DTO_INIT(TempDto, DTO)
 
     /**
      * @brief The temperature value in degrees Celsius.

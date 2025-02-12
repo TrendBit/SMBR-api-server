@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing flowrate data.
  */
-class MyFlowrateDto : public oatpp::DTO {
-    DTO_INIT(MyFlowrateDto, DTO)
+class FlowrateDto : public oatpp::DTO {
+    DTO_INIT(FlowrateDto, DTO)
 
     /**
      * @brief The flowrate value in ml/min.

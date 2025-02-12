@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing mixer stir parameters.
  */
-class MyStirDto : public oatpp::DTO {
-    DTO_INIT(MyStirDto, DTO)
+class StirDto : public oatpp::DTO {
+    DTO_INIT(StirDto, DTO)
 
     /**
      * @brief The RPM value for stirring, expected to be between 0 and 10000.

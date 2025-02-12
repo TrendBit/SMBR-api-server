@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing volume and flowrate data.
  */
-class MyMoveDto : public oatpp::DTO {
-    DTO_INIT(MyMoveDto, DTO)
+class MoveDto : public oatpp::DTO {
+    DTO_INIT(MoveDto, DTO)
 
     DTO_FIELD(Float32, volume, "volume"); 
     DTO_FIELD(Float32, flowrate, "flowrate"); 

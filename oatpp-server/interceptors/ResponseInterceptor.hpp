@@ -2,10 +2,10 @@
 #include "oatpp/web/server/interceptor/ResponseInterceptor.hpp"
 
 /**
- * @class MyResponseInterceptor
+ * @class ResponseInterceptor
  * @brief A custom response interceptor that adds a CORS header to outgoing responses.
  */
-class MyResponseInterceptor : public oatpp::web::server::interceptor::ResponseInterceptor {
+class ResponseInterceptor : public oatpp::web::server::interceptor::ResponseInterceptor {
 public:
 
     /**

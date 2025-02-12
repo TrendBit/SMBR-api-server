@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing intensity data.
  */
-class MyIntensityDto : public oatpp::DTO {
-    DTO_INIT(MyIntensityDto, DTO)
+class IntensityDto : public oatpp::DTO {
+    DTO_INIT(IntensityDto, DTO)
 
     /**
      * @brief The intensity value between 0 and 1.

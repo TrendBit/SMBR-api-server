@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing the serial number of the device.
  */
-class MySerialDto : public oatpp::DTO {
-    DTO_INIT(MySerialDto, DTO)
+class SerialDto : public oatpp::DTO {
+    DTO_INIT(SerialDto, DTO)
 
     /**
      * @brief The serial number of the device.

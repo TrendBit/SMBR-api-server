@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing the supply type response.
  */
-class MySupplyTypeResponseDto : public oatpp::DTO {
-    DTO_INIT(MySupplyTypeResponseDto, DTO)
+class SupplyTypeResponseDto : public oatpp::DTO {
+    DTO_INIT(SupplyTypeResponseDto, DTO)
 
     /**
      * @brief Indicates if the supply type is an adapter.

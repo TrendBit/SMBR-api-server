@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing the current consumption of the device.
  */
-class MyCurrentDto : public oatpp::DTO {
-    DTO_INIT(MyCurrentDto, DTO)
+class CurrentDto : public oatpp::DTO {
+    DTO_INIT(CurrentDto, DTO)
 
     /**
      * @brief The current consumption of the device.

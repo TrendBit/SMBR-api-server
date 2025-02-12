@@ -8,9 +8,9 @@
 /**
  * @brief Data Transfer Object containing module information.
  */
-class MyModuleInfoDto : public oatpp::DTO {
+class ModuleInfoDto : public oatpp::DTO {
 
-  DTO_INIT(MyModuleInfoDto, DTO)
+  DTO_INIT(ModuleInfoDto, DTO)
 
   /**
    * @brief The type of the module.

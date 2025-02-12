@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing the power draw of the device.
  */
-class MyPowerDrawDto : public oatpp::DTO {
-    DTO_INIT(MyPowerDrawDto, DTO)
+class PowerDrawDto : public oatpp::DTO {
+    DTO_INIT(PowerDrawDto, DTO)
 
     /**
      * @brief The power draw of the device.

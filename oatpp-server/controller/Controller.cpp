@@ -3,7 +3,7 @@
 
 extern backward::SignalHandling sh;
 
-MyController::MyController(const std::shared_ptr<oatpp::web::mime::ContentMappers>& apiContentMappers,
+Controller::Controller(const std::shared_ptr<oatpp::web::mime::ContentMappers>& apiContentMappers,
                            boost::asio::io_context& ioContext,
                            SystemModule& systemModule,
                            CommonModule& commonModule,
@@ -21,11 +21,11 @@ MyController::MyController(const std::shared_ptr<oatpp::web::mime::ContentMapper
     , m_canRequestManager(canRequestManager) {}
 
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getTemperatureResponse(
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getTemperatureResponse(
     const std::function<void(std::function<void(float)>)>& temperatureGetter,
     const std::string& errorMessage, const std::string& notAvailableMessage) {
 
-    auto tempResponseDto = MyTempDto::createShared();
+    auto tempResponseDto = TempDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -59,9 +59,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
   // System Endpoints
   // ==========================================
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getSystemModules() {
-    auto dtoList = oatpp::List<oatpp::Object<MyModuleInfoDto>>::createShared();
-    std::promise<oatpp::List<oatpp::Object<MyModuleInfoDto>>> promise;
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getSystemModules() {
+    auto dtoList = oatpp::List<oatpp::Object<ModuleInfoDto>>::createShared();
+    std::promise<oatpp::List<oatpp::Object<ModuleInfoDto>>> promise;
     auto future = promise.get_future();
 
     m_systemModule.getAvailableModules([&promise, dtoList](const std::vector<CanMessage>& responses) {
@@ -70,7 +70,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
         auto dataCopy = response.getData();
         if (moduleResponse.Interpret_data(dataCopy)) {
-            auto moduleInfoDto = MyModuleInfoDto::createShared();
+            auto moduleInfoDto = ModuleInfoDto::createShared();
 
             std::stringstream uidHex;
             uidHex << "0x";
@@ -119,7 +119,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
   // Common Endpoints
   // ==========================================
 
-uint8_t MyController::getNextSeqNumber() {
+uint8_t Controller::getNextSeqNumber() {
     uint8_t currentSeq = m_seqNum.fetch_add(1);
     if (currentSeq == 255) {
         m_seqNum = 0;  
@@ -127,7 +127,7 @@ uint8_t MyController::getNextSeqNumber() {
     return currentSeq;
 }
 
-std::optional<Codes::Module> MyController::getTargetModule(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
+std::optional<Codes::Module> Controller::getTargetModule(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
     if (module == dto::ModuleEnum::control) {
         return Codes::Module::Control_module;
     } else if (module == dto::ModuleEnum::sensor) {
@@ -138,8 +138,8 @@ std::optional<Codes::Module> MyController::getTargetModule(const oatpp::Enum<dto
     return std::nullopt;
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ping(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
-    auto pingResponseDto = MyPingResponseDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::ping(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
+    auto pingResponseDto = PingResponseDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -183,8 +183,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pi
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCoreLoad(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
-    auto loadResponseDto = MyLoadResponseDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getCoreLoad(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
+    auto loadResponseDto = LoadResponseDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -218,8 +218,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCoreTemp(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
-    auto tempResponseDto = MyTempDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getCoreTemp(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
+    auto tempResponseDto = TempDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -255,8 +255,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBoardTemp(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
-    auto tempResponseDto = MyTempDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getBoardTemp(const oatpp::Enum<dto::ModuleEnum>::AsString& module) {
+    auto tempResponseDto = TempDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -292,7 +292,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::future<bool> MyController::checkModuleAndUidAvailability(
+std::future<bool> Controller::checkModuleAndUidAvailability(
     const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false>>& module,
     const std::string& uid) {
 
@@ -362,9 +362,9 @@ std::future<bool> MyController::checkModuleAndUidAvailability(
     return future;
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::postRestart(
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::postRestart(
     const oatpp::data::type::EnumObjectWrapper<dto::ModuleEnum, oatpp::data::type::EnumInterpreterAsString<dto::ModuleEnum, false>>& module,
-    const oatpp::Object<MyModuleActionRequestDto>& body) {
+    const oatpp::Object<ModuleActionRequestDto>& body) {
 
     if (!body || !body->uid) {
         return createResponse(Status::CODE_400, "UID is required");
@@ -412,9 +412,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::postUsbBootloader(
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::postUsbBootloader(
     const oatpp::Enum<dto::ModuleEnum>::AsString& module,
-    const oatpp::Object<MyModuleActionRequestDto>& body) {
+    const oatpp::Object<ModuleActionRequestDto>& body) {
 
     if (!body || !body->uid) {
         return createResponse(Status::CODE_400, "UID is required");
@@ -462,9 +462,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::postCanBootloader(
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::postCanBootloader(
     const oatpp::Enum<dto::ModuleEnum>::AsString& module,
-    const oatpp::Object<MyModuleActionRequestDto>& body) {
+    const oatpp::Object<ModuleActionRequestDto>& body) {
 
     if (!body || !body->uid) {
         return createResponse(Status::CODE_400, "UID is required");
@@ -517,8 +517,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::po
 // Core module
 // ==========================================
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getShortID() {
-    auto sidResponseDto = MySIDDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getShortID() {
+    auto sidResponseDto = SIDDto::createShared();
     auto promise = std::make_shared<std::promise<std::string>>();
     auto future = promise->get_future();
 
@@ -546,8 +546,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getIpAddress() {
-    auto ipResponseDto = MyIpDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getIpAddress() {
+    auto ipResponseDto = IpDto::createShared();
     auto promise = std::make_shared<std::promise<std::string>>();
     auto future = promise->get_future();
 
@@ -577,8 +577,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     return createDtoResponse(Status::CODE_200, ipResponseDto); 
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHostname() {
-    auto hostnameResponseDto = MyHostnameDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getHostname() {
+    auto hostnameResponseDto = HostnameDto::createShared();
     auto promise = std::make_shared<std::promise<std::string>>();
     auto future = promise->get_future();
 
@@ -606,8 +606,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getSerialNumber() {
-    auto serialResponseDto = MySerialDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getSerialNumber() {
+    auto serialResponseDto = SerialDto::createShared();
     auto promise = std::make_shared<std::promise<int64_t>>();
     auto future = promise->get_future();
 
@@ -635,8 +635,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPowerSupplyType() {
-    auto supplyTypeResponseDto = MySupplyTypeDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getPowerSupplyType() {
+    auto supplyTypeResponseDto = SupplyTypeDto::createShared();
     auto promise = std::make_shared<std::promise<std::tuple<bool, bool, bool, bool>>>();
     auto future = promise->get_future();
 
@@ -664,8 +664,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     return createDtoResponse(Status::CODE_200, supplyTypeResponseDto);
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getVoltage5V() {
-    auto voltageResponseDto = MyVoltageDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getVoltage5V() {
+    auto voltageResponseDto = VoltageDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -693,8 +693,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getVoltageVIN() {
-    auto voltageResponseDto = MyVoltageDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getVoltageVIN() {
+    auto voltageResponseDto = VoltageDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -722,8 +722,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPoEVoltage() {
-    auto voltageResponseDto = MyVoltageDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getPoEVoltage() {
+    auto voltageResponseDto = VoltageDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -751,8 +751,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCurrentConsumption() {
-    auto currentResponseDto = MyCurrentDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getCurrentConsumption() {
+    auto currentResponseDto = CurrentDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -780,8 +780,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getPowerDraw() {
-    auto powerDrawResponseDto = MyPowerDrawDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getPowerDraw() {
+    auto powerDrawResponseDto = PowerDrawDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -814,7 +814,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 // Control module
 // ==========================================
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setIntensities(const oatpp::Object<MyIntensitiesDto>& body) {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setIntensities(const oatpp::Object<IntensitiesDto>& body) {
     if (!body || !body->intensity || body->intensity->size() != 4) {
         return createResponse(Status::CODE_400, "Invalid intensity array. Must contain exactly 4 values.");
     }
@@ -864,7 +864,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
-std::optional<int> MyController::getTargetChannel(const dto::ChannelEnum& channel) {
+std::optional<int> Controller::getTargetChannel(const dto::ChannelEnum& channel) {
     switch (channel) {
         case dto::ChannelEnum::channel0:
             return 0;
@@ -879,9 +879,9 @@ std::optional<int> MyController::getTargetChannel(const dto::ChannelEnum& channe
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setIntensity(
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setIntensity(
     const oatpp::Enum<dto::ChannelEnum>::AsString& channel, 
-    const oatpp::Object<MyIntensityDto>& body
+    const oatpp::Object<IntensityDto>& body
 ) {
     if (body->intensity < 0 || body->intensity > 1) {
         return createResponse(Status::CODE_400, "Invalid intensity. Must be between 0 and 1.");
@@ -918,8 +918,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getIntensity(const oatpp::Enum<dto::ChannelEnum>::AsString& channel) {
-    auto intensityResponseDto = MyIntensityDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getIntensity(const oatpp::Enum<dto::ChannelEnum>::AsString& channel) {
+    auto intensityResponseDto = IntensityDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -953,7 +953,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getLedTemperature() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getLedTemperature() {
     return getTemperatureResponse(
         [this](std::function<void(float)> callback) {
             m_controlModule.getLedTemperature(m_canRequestManager, Codes::Module::Control_module, callback);
@@ -963,7 +963,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     );
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setHeaterIntensity(const oatpp::Object<MyIntensityDto>& body) {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setHeaterIntensity(const oatpp::Object<IntensityDto>& body) {
     if (!body || body->intensity < -1.0f || body->intensity > 1.0f) {
         return createResponse(Status::CODE_400, "Invalid intensity value. Must be between -1.0 and 1.0.");
     }
@@ -992,8 +992,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHeaterIntensity() {
-    auto intensityResponseDto = MyIntensityDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getHeaterIntensity() {
+    auto intensityResponseDto = IntensityDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -1021,7 +1021,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setHeaterTargetTemperature(const oatpp::Object<MyTempDto>& body) {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setHeaterTargetTemperature(const oatpp::Object<TempDto>& body) {
     if (!body || body->temperature < 0.0f) {
         return createResponse(Status::CODE_400, "Invalid target temperature. Must be a positive value.");
     }
@@ -1050,7 +1050,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHeaterTargetTemperature() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getHeaterTargetTemperature() {
     return getTemperatureResponse(
         [this](std::function<void(float)> callback) {
             m_controlModule.getHeaterTargetTemperature(m_canRequestManager, Codes::Module::Control_module, callback);
@@ -1060,7 +1060,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     );
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getHeaterPlateTemperature() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getHeaterPlateTemperature() {
     return getTemperatureResponse(
         [this](std::function<void(float)> callback) {
             m_controlModule.getHeaterPlateTemperature(m_canRequestManager, Codes::Module::Control_module, callback);
@@ -1070,7 +1070,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     );
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::turnOffHeater() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::turnOffHeater() {
     auto promise = std::make_shared<std::promise<bool>>();
     auto future = promise->get_future();
     auto promiseSet = std::make_shared<std::atomic<bool>>(false);
@@ -1095,7 +1095,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::tu
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setCuvettePumpSpeed(const oatpp::Object<MySpeedDto>& body) {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setCuvettePumpSpeed(const oatpp::Object<SpeedDto>& body) {
     if (!body || body->speed < -1.0f || body->speed > 1.0f) {
         return createResponse(Status::CODE_400, "Invalid speed value. Must be between -1.0 and 1.0.");
     }
@@ -1124,8 +1124,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCuvettePumpSpeed() {
-    auto speedResponseDto = MySpeedDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getCuvettePumpSpeed() {
+    auto speedResponseDto = SpeedDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -1153,7 +1153,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setCuvettePumpFlowrate(const oatpp::Object<MyFlowrateDto>& body) {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setCuvettePumpFlowrate(const oatpp::Object<FlowrateDto>& body) {
     if (!body || body->flowrate < -1000.0f || body->flowrate > 1000.0f) {
         return createResponse(Status::CODE_400, "Invalid flowrate value. Must be between -1000.0 and 1000.0.");
     }
@@ -1182,8 +1182,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getCuvettePumpFlowrate() {
-    auto flowrateResponseDto = MyFlowrateDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getCuvettePumpFlowrate() {
+    auto flowrateResponseDto = FlowrateDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -1211,12 +1211,12 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::moveCuvettePump(const oatpp::Object<MyMoveDto>& body) {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::moveCuvettePump(const oatpp::Object<MoveDto>& body) {
     if (!body) {
         return createResponse(Status::CODE_400, "Invalid request body.");
     }
 
-    auto moveResponseDto = MyMoveDto::createShared();
+    auto moveResponseDto = MoveDto::createShared();
     auto promise = std::make_shared<std::promise<bool>>();
     auto future = promise->get_future();
     auto promiseSet = std::make_shared<std::atomic<bool>>(false);
@@ -1243,7 +1243,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::mo
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::primeCuvettePump() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::primeCuvettePump() {
     auto promise = std::make_shared<std::promise<bool>>();
     auto future = promise->get_future();
     auto promiseSet = std::make_shared<std::atomic<bool>>(false);
@@ -1268,7 +1268,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pr
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::purgeCuvettePump() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::purgeCuvettePump() {
     auto promise = std::make_shared<std::promise<bool>>();
     auto future = promise->get_future();
     auto promiseSet = std::make_shared<std::atomic<bool>>(false);
@@ -1293,7 +1293,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pu
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::stopCuvettePump() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::stopCuvettePump() {
     auto promise = std::make_shared<std::promise<bool>>();
     auto future = promise->get_future();
     auto promiseSet = std::make_shared<std::atomic<bool>>(false);
@@ -1318,7 +1318,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setAeratorSpeed(const oatpp::Object<MySpeedDto>& body) {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setAeratorSpeed(const oatpp::Object<SpeedDto>& body) {
     if (!body || body->speed < 0.0f || body->speed > 1.0f) {
         return createResponse(Status::CODE_400, "Invalid speed value. Must be between 0.0 and 1.0.");
     }
@@ -1347,8 +1347,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getAeratorSpeed() {
-    auto speedResponseDto = MySpeedDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getAeratorSpeed() {
+    auto speedResponseDto = SpeedDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -1376,7 +1376,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setAeratorFlowrate(const oatpp::Object<MyFlowrateDto>& body) {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setAeratorFlowrate(const oatpp::Object<FlowrateDto>& body) {
     if (!body || body->flowrate < 10.0f || body->flowrate > 5000.0f) {
         return createResponse(Status::CODE_400, "Invalid flowrate value. Must be between 10.0 and 5000.0 ml/min.");
     }
@@ -1405,8 +1405,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getAeratorFlowrate() {
-    auto flowrateResponseDto = MyFlowrateDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getAeratorFlowrate() {
+    auto flowrateResponseDto = FlowrateDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -1434,8 +1434,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::moveAerator(const oatpp::Object<MyMoveDto>& body) {
-    auto moveResponseDto = MyMoveDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::moveAerator(const oatpp::Object<MoveDto>& body) {
+    auto moveResponseDto = MoveDto::createShared();
     auto promise = std::make_shared<std::promise<bool>>();
     auto future = promise->get_future();
     auto promiseSet = std::make_shared<std::atomic<bool>>(false);
@@ -1462,7 +1462,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::mo
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::stopAerator() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::stopAerator() {
     auto promise = std::make_shared<std::promise<bool>>();
     auto future = promise->get_future();
     auto promiseSet = std::make_shared<std::atomic<bool>>(false);
@@ -1487,7 +1487,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setMixerSpeed(const oatpp::Object<MySpeedDto>& body) {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setMixerSpeed(const oatpp::Object<SpeedDto>& body) {
     if (!body || body->speed < 0.0f || body->speed > 1.0f) {
         return createResponse(Status::CODE_400, "Invalid speed value. Must be between 0.0 and 1.0.");
     }
@@ -1516,8 +1516,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getMixerSpeed() {
-    auto speedResponseDto = MySpeedDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getMixerSpeed() {
+    auto speedResponseDto = SpeedDto::createShared();
     auto promise = std::make_shared<std::promise<float>>();
     auto future = promise->get_future();
 
@@ -1545,7 +1545,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::setMixerRpm(const oatpp::Object<MyRpmDto>& body) {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setMixerRpm(const oatpp::Object<RpmDto>& body) {
     if (!body || body->rpm < 0.0f || body->rpm > 10000.0f) {
         return createResponse(Status::CODE_400, "Invalid RPM value. Must be between 0 and 10000.");
     }
@@ -1574,8 +1574,8 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::se
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getMixerRpm() {
-    auto rpmResponseDto = MyRpmDto::createShared();
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getMixerRpm() {
+    auto rpmResponseDto = RpmDto::createShared();
     auto promise = std::make_shared<std::promise<int>>();
     auto future = promise->get_future();
 
@@ -1603,7 +1603,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::stirMixer(const oatpp::Object<MyStirDto>& body) {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::stirMixer(const oatpp::Object<StirDto>& body) {
     if (!body || body->rpm < 0.0f || body->rpm > 10000.0f || body->time < 0.0f || body->time > 3600.0f) {
         return createResponse(Status::CODE_400, "Invalid RPM or time value. RPM must be between 0 and 10000, and time must be between 0 and 3600 seconds.");
     }
@@ -1632,7 +1632,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
     }
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::stopMixer() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::stopMixer() {
     auto promise = std::make_shared<std::promise<bool>>();
     auto future = promise->get_future();
     auto promiseSet = std::make_shared<std::atomic<bool>>(false);
@@ -1662,7 +1662,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::st
 // Sensor module
 // ==========================================
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBottleTemperature() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getBottleTemperature() {
     return getTemperatureResponse(
         [this](auto&& callback) {
             m_sensorModule.getBottleTemperature(m_canRequestManager, Codes::Module::Sensor_module, callback);
@@ -1672,7 +1672,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     );
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getTopMeasuredTemperature() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getTopMeasuredTemperature() {
     return getTemperatureResponse(
         [this](auto&& callback) {
             m_sensorModule.getTopMeasuredTemperature(m_canRequestManager, Codes::Module::Sensor_module, callback);
@@ -1682,7 +1682,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     );
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBottomMeasuredTemperature() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getBottomMeasuredTemperature() {
     return getTemperatureResponse(
         [this](auto&& callback) {
             m_sensorModule.getBottomMeasuredTemperature(m_canRequestManager, Codes::Module::Sensor_module, callback);
@@ -1692,7 +1692,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     );
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getTopSensorTemperature() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getTopSensorTemperature() {
     return getTemperatureResponse(
         [this](auto&& callback) {
             m_sensorModule.getTopSensorTemperature(m_canRequestManager, Codes::Module::Sensor_module, callback);
@@ -1702,7 +1702,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
     );
 }
 
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::getBottomSensorTemperature() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getBottomSensorTemperature() {
     return getTemperatureResponse(
         [this](auto&& callback) {
             m_sensorModule.getBottomSensorTemperature(m_canRequestManager, Codes::Module::Sensor_module, callback);
@@ -1715,7 +1715,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::ge
 
 
 /*
-std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> MyController::pingDirect() {
+std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::pingDirect() {
     oatpp::String response = "{\"message\": \"Ping direct response successful\"}";
 
     return createResponse(Status::CODE_200, response);

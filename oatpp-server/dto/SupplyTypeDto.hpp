@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing the power supply type.
  */
-class MySupplyTypeDto : public oatpp::DTO {
-    DTO_INIT(MySupplyTypeDto, DTO)
+class SupplyTypeDto : public oatpp::DTO {
+    DTO_INIT(SupplyTypeDto, DTO)
 
     /**
      * @brief Whether the device is powered by external power supply (VIN).

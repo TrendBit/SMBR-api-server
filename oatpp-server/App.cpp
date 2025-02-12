@@ -42,7 +42,7 @@ void run(boost::asio::io_context& io_context) {
   CoreModule coreModule(io_context, canRequestManager); 
   SensorModule sensorModule(io_context, canRequestManager); 
 
-  auto myController = std::make_shared<MyController>(
+  auto myController = std::make_shared<Controller>(
       contentMappers, io_context, systemModule, commonModule, controlModule, coreModule, sensorModule, canRequestManager
   );  
   router->addController(myController);
@@ -56,7 +56,7 @@ void run(boost::asio::io_context& io_context) {
 
   oatpp::network::Server server(connectionProvider, connectionHandler);
 
-  OATPP_LOGi("MyApp", "Server running on port {}", connectionProvider->getProperty("port").toString()->c_str());
+  OATPP_LOGi("App", "Server running on port {}", connectionProvider->getProperty("port").toString()->c_str());
 
   server.run();
 }

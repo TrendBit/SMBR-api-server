@@ -8,9 +8,9 @@
 /**
  * @brief Data Transfer Object representing a ping response.
  */
-class MyPingResponseDto : public oatpp::DTO {
+class PingResponseDto : public oatpp::DTO {
   
-  DTO_INIT(MyPingResponseDto, DTO)
+  DTO_INIT(PingResponseDto, DTO)
   
   /**
    * @brief Time taken for the ping response in milliseconds.

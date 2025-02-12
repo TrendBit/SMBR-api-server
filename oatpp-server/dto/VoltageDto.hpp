@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing the voltage of the 5V power rail.
  */
-class MyVoltageDto : public oatpp::DTO {
-    DTO_INIT(MyVoltageDto, DTO)
+class VoltageDto : public oatpp::DTO {
+    DTO_INIT(VoltageDto, DTO)
 
     /**
      * @brief The voltage of the 5V power rail.

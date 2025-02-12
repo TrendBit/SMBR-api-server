@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing the hostname of the device.
  */
-class MyHostnameDto : public oatpp::DTO {
-    DTO_INIT(MyHostnameDto, DTO)
+class HostnameDto : public oatpp::DTO {
+    DTO_INIT(HostnameDto, DTO)
 
     /**
      * @brief The hostname of the device, truncated to 8 characters.

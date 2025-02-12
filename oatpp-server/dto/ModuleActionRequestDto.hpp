@@ -8,9 +8,9 @@
 /**
  * @brief Data Transfer Object representing a module action request.
  */
-class MyModuleActionRequestDto : public oatpp::DTO {
+class ModuleActionRequestDto : public oatpp::DTO {
 
-  DTO_INIT(MyModuleActionRequestDto, DTO)
+  DTO_INIT(ModuleActionRequestDto, DTO)
 
   /**
    * @brief Unique identifier for the action request.

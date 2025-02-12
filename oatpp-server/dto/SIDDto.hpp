@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing the Short ID (SID).
  */
-class MySIDDto : public oatpp::DTO {
-    DTO_INIT(MySIDDto, DTO)
+class SIDDto : public oatpp::DTO {
+    DTO_INIT(SIDDto, DTO)
 
     /**
      * @brief The Short ID (SID) of the device.

@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing pump speed data.
  */
-class MySpeedDto : public oatpp::DTO {
-    DTO_INIT(MySpeedDto, DTO)
+class SpeedDto : public oatpp::DTO {
+    DTO_INIT(SpeedDto, DTO)
 
     /**
      * @brief The speed value between -1.0 and 1.0.

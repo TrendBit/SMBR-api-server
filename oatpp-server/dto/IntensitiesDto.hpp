@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing intensity data for all channels.
  */
-class MyIntensitiesDto : public oatpp::DTO {
-    DTO_INIT(MyIntensitiesDto, DTO)
+class IntensitiesDto : public oatpp::DTO {
+    DTO_INIT(IntensitiesDto, DTO)
 
     /**
      * @brief The intensities for all channels (0-3).

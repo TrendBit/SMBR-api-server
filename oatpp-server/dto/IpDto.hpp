@@ -8,8 +8,8 @@
 /**
  * @brief Data Transfer Object representing the IP address.
  */
-class MyIpDto : public oatpp::DTO {
-    DTO_INIT(MyIpDto, DTO)
+class IpDto : public oatpp::DTO {
+    DTO_INIT(IpDto, DTO)
 
     /**
      * @brief The IP address of the device.

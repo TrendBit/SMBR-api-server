@@ -8,9 +8,9 @@
 /**
  * @brief Data Transfer Object representing load and core count response.
  */
-class MyLoadResponseDto : public oatpp::DTO {
+class LoadResponseDto : public oatpp::DTO {
   
-  DTO_INIT(MyLoadResponseDto, DTO)
+  DTO_INIT(LoadResponseDto, DTO)
 
   /**
    * @brief The current load as a percentage.
