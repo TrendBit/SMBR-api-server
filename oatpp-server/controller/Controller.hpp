@@ -588,7 +588,7 @@ public:
         info->addResponse<String>(Status::CODE_500, "application/json", "Failed to turn off heater.");
     }
     ADD_CORS(turnOffHeater)
-    ENDPOINT("POST", "/control/heater/turn_off", turnOffHeater);
+    ENDPOINT("GET", "/control/heater/turn_off", turnOffHeater);
 
     /**
      * @brief Sets the speed of the cuvette pump.
@@ -700,7 +700,7 @@ public:
         info->addResponse<String>(Status::CODE_500, "application/json", "Failed to stop cuvette pump.");
     }
     ADD_CORS(stopCuvettePump)
-    ENDPOINT("POST", "/control/cuvette_pump/stop", stopCuvettePump);
+    ENDPOINT("GET", "/control/cuvette_pump/stop", stopCuvettePump);
 
     /**
      * @brief Sets the speed of the aerator.
@@ -786,7 +786,7 @@ public:
         info->addResponse<String>(Status::CODE_500, "application/json", "Failed to stop aerator.");
     }
     ADD_CORS(stopAerator)
-    ENDPOINT("POST", "/control/aerator/stop", stopAerator);
+    ENDPOINT("GET", "/control/aerator/stop", stopAerator);
 
     /**
      * @brief Sets the speed of the mixer.
@@ -872,7 +872,7 @@ public:
         info->addResponse<String>(Status::CODE_500, "application/json", "Failed to stop the mixer.");
     }
     ADD_CORS(stopMixer)
-    ENDPOINT("POST", "/control/mixer/stop", stopMixer);
+    ENDPOINT("GET", "/control/mixer/stop", stopMixer);
 
     /**
      * @brief Retrieves the temperature of the bottle.
