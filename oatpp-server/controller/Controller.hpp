@@ -84,8 +84,15 @@ public:
         info->summary = "Retrieves available modules and their respective unique CAN IDs";
         info->addTag("System");
         info->description = "Returns a list of all modules that have responded to the identification message.";
-        info->addResponse<List<Object<ModuleInfoDto>>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_504, "application/json");
+        auto example = List<Object<ModuleInfoDto>>::createShared();
+        auto module = ModuleInfoDto::createShared();
+        module->module_type = "sensor";
+        module->uid = "0x0123456789ab";
+        example->push_back(module);
+        info->addResponse<List<Object<ModuleInfoDto>>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+                .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getSystemModules)
     ENDPOINT("GET", "/system/modules", getSystemModules);
@@ -111,19 +118,21 @@ public:
     /**
     * @brief Retrieves the CPU/MCU load of the specified module.
     */
-    ENDPOINT_INFO(getCoreLoad) {
+   ENDPOINT_INFO(getCoreLoad) {
         info->summary = "Get module CPU/MCU load";
         info->addTag("Common");
         info->description = "Gets the current workload values of the computing unit. The average utilization of all available cores.";
         info->addResponse<Object<LoadResponseDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve load");
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Ping timed out");
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Module not found")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Module not found"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve load")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve load"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getCoreLoad)
     ENDPOINT("GET", "/{module}/load", getCoreLoad, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
     
-
     /**
      * @brief Retrieves the CPU/MCU temperature of the specified module.
      */
@@ -132,9 +141,12 @@ public:
         info->addTag("Common");
         info->description = "Gets the current temperature of CPU/MCU core values of the computing unit.";
         info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Module not found")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Module not found"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve temperature")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve temperature"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getCoreTemp)
     ENDPOINT("GET", "/{module}/core_temp", getCoreTemp, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
@@ -143,17 +155,19 @@ public:
      * @brief Retrieves the board temperature of the specified module.
      */
     ENDPOINT_INFO(getBoardTemp) {
-    info->summary = "Get module board temperature";
-    info->addTag("Common");
-    info->description = "Gets the current temperature of the module board, typically measured around temperature-intensive components or equipment.";
-    info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json");
-    info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
-    info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
-    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+        info->summary = "Get module board temperature";
+        info->addTag("Common");
+        info->description = "Gets the current temperature of the module board, typically measured around temperature-intensive components or equipment.";
+        info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json");
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Module not found")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Module not found"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve temperature")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve temperature"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getBoardTemp)
     ENDPOINT("GET", "/{module}/board_temp", getBoardTemp, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
-
 
     /**
     * @brief Restarts the specified module into application mode.
@@ -162,9 +176,14 @@ public:
         info->summary = "Restart module into application mode";
         info->addTag("Common");
         info->description = "This will reset the module, starting the main application firmware. Requires module UID for confirmation.";
-        info->addConsumes<Object<ModuleActionRequestDto>>("application/json");
-        info->addResponse<String>(Status::CODE_200, "application/json", "Successfully restarted module");
-        info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
+        auto example = ModuleActionRequestDto::createShared();
+        example->uid = "0x0123456789ab";
+        info->addConsumes<Object<ModuleActionRequestDto>>("application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Successfully restarted module")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Successfully restarted module"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Module not found")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Module not found"}}));
     }
     ADD_CORS(postRestart)
     ENDPOINT("POST", "/{module}/restart", postRestart, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module), BODY_DTO(Object<ModuleActionRequestDto>, body));
@@ -178,14 +197,19 @@ public:
         info->description = 
             "This will reset the module and put it into USB bootloader mode so new firmware can be flashed via USB-C connector on board. "
             "UID of the module is required in order to confirm that correct module is selected by request.";
-        info->addConsumes<Object<ModuleActionRequestDto>>("application/json");
-        info->addResponse<String>(Status::CODE_200, "application/json", "Successfully restarted module in usb bootloader mode");
-        info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
+        auto example = ModuleActionRequestDto::createShared();
+        example->uid = "0x0123456789ab";
+        info->addConsumes<Object<ModuleActionRequestDto>>("application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Successfully restarted module in USB bootloader mode")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Successfully restarted module in USB bootloader mode"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Module not found")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Module not found"}}));
     }
     ADD_CORS(postUsbBootloader)
     ENDPOINT("POST", "/{module}/usb_bootloader", postUsbBootloader, 
-         PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module), 
-         BODY_DTO(Object<ModuleActionRequestDto>, body));  
+        PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module), 
+        BODY_DTO(Object<ModuleActionRequestDto>, body));
 
     /**
     * @brief Reboots the specified module in CAN bootloader mode.
@@ -196,14 +220,19 @@ public:
         info->description =
             "This will reset the module and put it into CAN bootloader mode so new firmware can be flashed over CAN bus from RPi. "
             "UID of the module is required in order to confirm that correct module is selected by request.";
-        info->addConsumes<Object<ModuleActionRequestDto>>("application/json");
-        info->addResponse<String>(Status::CODE_200, "application/json", "Successfully restarted module in CAN bootloader mode");
-        info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
+        auto example = ModuleActionRequestDto::createShared();
+        example->uid = "0x0123456789ab";
+        info->addConsumes<Object<ModuleActionRequestDto>>("application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Successfully restarted module in CAN bootloader mode")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Successfully restarted module in CAN bootloader mode"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Module not found")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Module not found"}}));
     }
     ADD_CORS(postCanBootloader)
     ENDPOINT("POST", "/{module}/can_bootloader", postCanBootloader,
-         PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
-         BODY_DTO(Object<ModuleActionRequestDto>, body));
+        PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module),
+        BODY_DTO(Object<ModuleActionRequestDto>, body));
 
 // ==========================================
 // Core module
