@@ -187,6 +187,8 @@ public:
             .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Successfully restarted module"}}));
         info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Module not found")
             .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Module not found"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Timeout while checking availability")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to restart module"}}));
     }
     ADD_CORS(postRestart)
     ENDPOINT("POST", "/{module}/restart", postRestart, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module), BODY_DTO(Object<ModuleActionRequestDto>, body));
@@ -208,6 +210,8 @@ public:
             .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Successfully restarted module in USB bootloader mode"}}));
         info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Module not found")
             .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Module not found"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Timeout while checking availability")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to restart module"}}));
     }
     ADD_CORS(postUsbBootloader)
     ENDPOINT("POST", "/{module}/usb_bootloader", postUsbBootloader, 
@@ -231,6 +235,8 @@ public:
             .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Successfully restarted module in CAN bootloader mode"}}));
         info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Module not found")
             .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Module not found"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Timeout while checking availability")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to restart module"}}));
     }
     ADD_CORS(postCanBootloader)
     ENDPOINT("POST", "/{module}/can_bootloader", postCanBootloader,
@@ -453,12 +459,12 @@ public:
   
         info->addConsumes<Object<IntensitiesDto>>("application/json")
             .addExample("application/json", example);  
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Intensity set successfully.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Intensity set successfully."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid intensity value.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid intensity value."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set intensity.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set intensity."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Intensity set successfully")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Intensity set successfully"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid intensity value")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid intensity value"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set intensity")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set intensity"}}));
     }
     ADD_CORS(setIntensities)
     ENDPOINT("POST", "/control/led_panel/intensity", setIntensities, BODY_DTO(Object<IntensitiesDto>, body));      
@@ -478,12 +484,12 @@ public:
         example->intensity = 0.5;
         info->addConsumes<Object<IntensityDto>>("application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Intensity set successfully.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Intensity set successfully."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid intensity value or channel value.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid intensity value or channel value."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set intensity.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set intensity."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Intensity set successfully")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Intensity set successfully"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid intensity value or channel value")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid intensity value or channel value"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set intensity")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set intensity"}}));
     }
     ADD_CORS(setIntensity)
     ENDPOINT("POST", "/control/led_panel/intensity/{channel}", setIntensity, PATH(oatpp::Enum<dto::ChannelEnum>::AsString, channel), BODY_DTO(Object<IntensityDto>, body));
@@ -543,12 +549,12 @@ public:
         example->intensity = -0.33; 
         info->addConsumes<Object<IntensityDto>>("application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Intensity set successfully.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Intensity set successfully."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid intensity value.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid intensity value."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set intensity.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set intensity."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Intensity set successfully")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Intensity set successfully"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid intensity value")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid intensity value"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set intensity")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set intensity"}}));
     }
     ADD_CORS(setHeaterIntensity)
     ENDPOINT("POST", "/control/heater/intensity", setHeaterIntensity, BODY_DTO(Object<IntensityDto>, body));
@@ -565,10 +571,10 @@ public:
         example->intensity = -0.33;
         info->addResponse<Object<IntensityDto>>(Status::CODE_200, "application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve heater intensity.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve heater intensity."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve heater intensity")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve heater intensity"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getHeaterIntensity)
     ENDPOINT("GET", "/control/heater/intensity", getHeaterIntensity);
@@ -585,12 +591,12 @@ public:
         example->temperature = 30.5; 
         info->addConsumes<Object<TempDto>>("application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Target temperature set successfully.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Target temperature set successfully."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid target temperature.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid target temperature."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set target temperature.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set target temperature."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Target temperature set successfully")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Target temperature set successfully"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid target temperature")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid target temperature"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set target temperature")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set target temperature"}}));
     }
     ADD_CORS(setHeaterTargetTemperature)
     ENDPOINT("POST", "/control/heater/target_temperature", setHeaterTargetTemperature, BODY_DTO(Object<TempDto>, body));
@@ -606,10 +612,10 @@ public:
         example->temperature = 30.5; 
         info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve heater target temperature.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve heater target temperature."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve heater target temperature")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve heater target temperature"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getHeaterTargetTemperature)
     ENDPOINT("GET", "/control/heater/target_temperature", getHeaterTargetTemperature);
@@ -626,12 +632,12 @@ public:
         example->temperature = 30.5; 
         info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Heater plate not available.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Heater plate not available."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve heater plate temperature.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve heater plate temperature."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Heater plate not available")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Heater plate not available"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve heater plate temperature")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve heater plate temperature"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getHeaterPlateTemperature)
     ENDPOINT("GET", "/control/heater/plate_temperature", getHeaterPlateTemperature);
@@ -643,10 +649,10 @@ public:
         info->summary = "Turn off heater";
         info->description = "Turns off the heater by setting intensity to 0.0 and disabling temperature regulation.";
         info->addTag("Control module");
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Heater was turned off.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Heater was turned off."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to turn off heater.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to turn off heater."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Heater was turned off")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Heater was turned off"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to turn off heater")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to turn off heater"}}));
     }
     ADD_CORS(turnOffHeater)
     ENDPOINT("GET", "/control/heater/turn_off", turnOffHeater);
@@ -662,12 +668,12 @@ public:
         example->speed = -0.33;
         info->addConsumes<Object<SpeedDto>>("application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Speed set successfully.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Speed set successfully."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid speed value.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid speed value."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set pump speed.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set pump speed."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Speed set successfully")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Speed set successfully"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid speed value")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid speed value"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set pump speed")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set pump speed"}}));
     }
     ADD_CORS(setCuvettePumpSpeed)
     ENDPOINT("POST", "/control/cuvette_pump/speed", setCuvettePumpSpeed, BODY_DTO(Object<SpeedDto>, body));
@@ -683,10 +689,10 @@ public:
         example->speed = -0.33;
         info->addResponse<Object<SpeedDto>>(Status::CODE_200, "application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve pump speed.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve pump speed."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve pump speed")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve pump speed"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getCuvettePumpSpeed)
     ENDPOINT("GET", "/control/cuvette_pump/speed", getCuvettePumpSpeed);
@@ -702,12 +708,12 @@ public:
         example->flowrate = 10; 
         info->addConsumes<Object<FlowrateDto>>("application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Flowrate set successfully.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Flowrate set successfully."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid flowrate value.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid flowrate value."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set flowrate.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set flowrate."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Flowrate set successfully")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Flowrate set successfully"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid flowrate value")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid flowrate value"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set flowrate")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set flowrate"}}));
     }
     ADD_CORS(setCuvettePumpFlowrate)
     ENDPOINT("POST", "/control/cuvette_pump/flowrate", setCuvettePumpFlowrate, BODY_DTO(Object<FlowrateDto>, body));
@@ -723,10 +729,10 @@ public:
         example->flowrate = 10;
         info->addResponse<Object<FlowrateDto>>(Status::CODE_200, "application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve flowrate.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve flowrate."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve flowrate")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve flowrate"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getCuvettePumpFlowrate)
     ENDPOINT("GET", "/control/cuvette_pump/flowrate", getCuvettePumpFlowrate);
@@ -744,12 +750,12 @@ public:
         example->flowrate = 2; 
         info->addConsumes<Object<MoveDto>>("application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Movement started successfully.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Movement started successfully."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid volume or flowrate value.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid volume or flowrate value."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to start movement.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to start movement."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Movement started successfully")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Movement started successfully"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid volume or flowrate value")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid volume or flowrate value"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to start movement")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to start movement"}}));
     }
     ADD_CORS(moveCuvettePump)
     ENDPOINT("POST", "/control/cuvette_pump/move", moveCuvettePump, BODY_DTO(Object<MoveDto>, body));
@@ -761,10 +767,10 @@ public:
         info->summary = "Prime cuvette pump";
         info->description = "Primes the cuvette pump by pumping liquid into the cuvette. This is used to fill the cuvette with liquid and remove air from the system.";
         info->addTag("Control module");
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Cuvette pump priming was started.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Cuvette pump priming was started."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to start cuvette pump priming.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to start cuvette pump priming."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Cuvette pump priming was started")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Cuvette pump priming was started"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to start cuvette pump priming")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to start cuvette pump priming"}}));
     }
     ADD_CORS(primeCuvettePump)
     ENDPOINT("POST", "/control/cuvette_pump/prime", primeCuvettePump);
@@ -776,10 +782,10 @@ public:
         info->summary = "Purge cuvette pump";
         info->description = "Purges the cuvette pump by pumping liquid out of the cuvette. This is used to remove liquid from the cuvette and clean the system.";
         info->addTag("Control module");
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Cuvette pump purging was started.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Cuvette pump purging was started."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to start cuvette pump purging.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to start cuvette pump purging."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Cuvette pump purging was started")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Cuvette pump purging was started"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to start cuvette pump purging")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to start cuvette pump purging"}}));
     }
     ADD_CORS(purgeCuvettePump)
     ENDPOINT("POST", "/control/cuvette_pump/purge", purgeCuvettePump);
@@ -791,10 +797,10 @@ public:
         info->summary = "Stop cuvette pump";
         info->description = "Stops the cuvette pump immediately and disables any planned movements.";
         info->addTag("Control module");
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Cuvette pump was stopped.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Cuvette pump was stopped."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to stop cuvette pump.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to stop cuvette pump."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Cuvette pump was stopped")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Cuvette pump was stopped"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to stop cuvette pump")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to stop cuvette pump"}}));
     }
     ADD_CORS(stopCuvettePump)
     ENDPOINT("GET", "/control/cuvette_pump/stop", stopCuvettePump);
@@ -810,12 +816,12 @@ public:
         example->speed = 0.5;
         info->addConsumes<Object<SpeedDto>>("application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Speed set successfully.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Speed set successfully."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid speed value.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid speed value."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set aerator speed.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set aerator speed."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Speed set successfully")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Speed set successfully"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid speed value")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid speed value"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set aerator speed")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set aerator speed"}}));
     }
     ADD_CORS(setAeratorSpeed)
     ENDPOINT("POST", "/control/aerator/speed", setAeratorSpeed, BODY_DTO(Object<SpeedDto>, body));
@@ -850,12 +856,12 @@ public:
         example->flowrate = 100;
         info->addConsumes<Object<FlowrateDto>>("application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Flowrate set successfully.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Flowrate set successfully."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid flowrate value.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid flowrate value."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set aerator flowrate.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set aerator flowrate."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Flowrate set successfully")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Flowrate set successfully"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid flowrate value")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid flowrate value"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set aerator flowrate")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set aerator flowrate"}}));
     }
     ADD_CORS(setAeratorFlowrate)
     ENDPOINT("POST", "/control/aerator/flowrate", setAeratorFlowrate, BODY_DTO(Object<FlowrateDto>, body));
@@ -891,12 +897,12 @@ public:
         example->flowrate = 100;
         info->addConsumes<Object<MoveDto>>("application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Movement started successfully.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Movement started successfully."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid volume or flowrate value.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid volume or flowrate value."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to start movement.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to start movement."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Movement started successfully")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Movement started successfully"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid volume or flowrate value")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid volume or flowrate value"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to start movement")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to start movement"}}));
     }
     ADD_CORS(moveAerator)
     ENDPOINT("POST", "/control/aerator/move", moveAerator, BODY_DTO(Object<MoveDto>, body));
@@ -908,10 +914,10 @@ public:
         info->summary = "Stop aerator";
         info->description = "Stops the aerator immediately and disables any planned movements.";
         info->addTag("Control module");
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Aerator was stopped.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Aerator was stopped."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to stop aerator.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to stop aerator."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Aerator was stopped")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Aerator was stopped"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to stop aerator")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to stop aerator"}}));
     }
     ADD_CORS(stopAerator)
     ENDPOINT("GET", "/control/aerator/stop", stopAerator);
@@ -927,12 +933,12 @@ public:
         example->speed = 0.5; 
         info->addConsumes<Object<SpeedDto>>("application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Speed set successfully.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Speed set successfully."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid speed value.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid speed value."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set mixer speed.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set mixer speed."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Speed set successfully")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Speed set successfully"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid speed value")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid speed value"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set mixer speed")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set mixer speed"}}));
     }
     ADD_CORS(setMixerSpeed)
     ENDPOINT("POST", "/control/mixer/speed", setMixerSpeed, BODY_DTO(Object<SpeedDto>, body));
@@ -948,10 +954,10 @@ public:
         example->speed = 0.5; 
         info->addResponse<Object<SpeedDto>>(Status::CODE_200, "application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve mixer speed.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve mixer speed."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve mixer speed")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve mixer speed"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getMixerSpeed)
     ENDPOINT("GET", "/control/mixer/speed", getMixerSpeed);
@@ -967,12 +973,12 @@ public:
         example->rpm = 3000; 
         info->addConsumes<Object<RpmDto>>("application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Target RPM set successfully.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Target RPM set successfully."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid RPM value.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid RPM value."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set mixer RPM.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set mixer RPM."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Target RPM set successfully")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Target RPM set successfully"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid RPM value")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid RPM value"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to set mixer RPM")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to set mixer RPM"}}));
     }
     ADD_CORS(setMixerRpm)
     ENDPOINT("POST", "/control/mixer/rpm", setMixerRpm, BODY_DTO(Object<RpmDto>, body));
@@ -988,10 +994,10 @@ public:
         example->rpm = 500;
         info->addResponse<Object<RpmDto>>(Status::CODE_200, "application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve mixer RPM.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve mixer RPM."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve mixer RPM")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve mixer RPM"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getMixerRpm)
     ENDPOINT("GET", "/control/mixer/rpm", getMixerRpm);
@@ -1008,12 +1014,12 @@ public:
         example->time = 60; 
         info->addConsumes<Object<StirDto>>("application/json")
             .addExample("application/json", example);
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Stirring started successfully.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Stirring started successfully."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid RPM or time value.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid RPM or time value."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to start stirring.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to start stirring."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Stirring started successfully")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Stirring started successfully"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_400, "application/json", "Invalid RPM or time value")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Invalid RPM or time value"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to start stirring")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to start stirring"}}));
     }
     ADD_CORS(stirMixer)
     ENDPOINT("POST", "/control/mixer/stir", stirMixer, BODY_DTO(Object<StirDto>, body));
@@ -1025,10 +1031,10 @@ public:
         info->summary = "Stop mixer";
         info->description = "Stops the mixer immediately and disables any planned movements.";
         info->addTag("Control module");
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Mixer was stopped.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Mixer was stopped."}}));
-        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to stop the mixer.")
-            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to stop the mixer."}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_200, "application/json", "Mixer was stopped")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Mixer was stopped"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to stop the mixer")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to stop the mixer"}}));
     }
     ADD_CORS(stopMixer)
     ENDPOINT("GET", "/control/mixer/stop", stopMixer);
@@ -1042,12 +1048,18 @@ public:
      */
     ENDPOINT_INFO(getBottleTemperature) {
         info->summary = "Retrieves temperature of the bottle";
-        info->description = "Retrieves temperature of the bottle in °C.";
+        info->description = "Retrieves the temperature of the bottle in °C.";
         info->addTag("Sensor module");
-        info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_404, "application/json", "Bottle temperature not available");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+        auto example = TempDto::createShared();
+        example->temperature = 30.2; 
+        info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Bottle temperature not available")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Bottle temperature not available"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve temperature")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve temperature"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getBottleTemperature)
     ENDPOINT("GET", "/sensor/bottle/temperature", getBottleTemperature);
@@ -1057,12 +1069,18 @@ public:
      */
     ENDPOINT_INFO(getTopMeasuredTemperature) {
         info->summary = "Retrieves measured temperature from top sensor";
-        info->description = "Retrieves measured temperature of the top of the bottle in °C.";
+        info->description = "Retrieves the measured temperature from the top sensor of the bottle in °C.";
         info->addTag("Sensor module");
-        info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_404, "application/json", "Top temperature not available");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+        auto example = TempDto::createShared();
+        example->temperature = 30.2; 
+        info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Top temperature not available")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Top temperature not available"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve temperature")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve temperature"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getTopMeasuredTemperature)
     ENDPOINT("GET", "/sensor/bottle/top/measured_temperature", getTopMeasuredTemperature);
@@ -1072,12 +1090,18 @@ public:
      */
     ENDPOINT_INFO(getBottomMeasuredTemperature) {
         info->summary = "Retrieves measured temperature from bottom sensor";
-        info->description = "Retrieves measured temperature of the bottom of the bottle in °C.";
-        info->addTag("Sensor module");
-        info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_404, "application/json", "Bottom temperature not available");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+        info->description = "Retrieves the measured temperature from the bottom sensor of the bottle in °C.";
+        info->addTag("Sensor module"); 
+        auto example = TempDto::createShared();
+        example->temperature = 30.2; 
+        info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Bottom temperature not available")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Bottom temperature not available"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve temperature")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve temperature"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getBottomMeasuredTemperature)
     ENDPOINT("GET", "/sensor/bottle/bottom/measured_temperature", getBottomMeasuredTemperature);
@@ -1087,12 +1111,18 @@ public:
      */
     ENDPOINT_INFO(getTopSensorTemperature) {
         info->summary = "Retrieves temperature of the top sensor case";
-        info->description = "Retrieves temperature of the sensor on top of the bottle in °C.";
+        info->description = "Retrieves the temperature of the sensor case on top of the bottle in °C.";
         info->addTag("Sensor module");
-        info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_404, "application/json", "Top sensor temperature not available");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+        auto example = TempDto::createShared();
+        example->temperature = 30.2; 
+        info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Top sensor temperature not available")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Top sensor temperature not available"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve temperature")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve temperature"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getTopSensorTemperature)
     ENDPOINT("GET", "/sensor/bottle/top/sensor_temperature", getTopSensorTemperature);
@@ -1102,12 +1132,18 @@ public:
      */
     ENDPOINT_INFO(getBottomSensorTemperature) {
         info->summary = "Retrieves temperature of the bottom sensor case";
-        info->description = "Retrieves temperature of the sensor on bottom of the bottle in °C.";
+        info->description = "Retrieves the temperature of the sensor case on the bottom of the bottle in °C.";
         info->addTag("Sensor module");
-        info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_404, "application/json", "Bottom sensor temperature not available");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve temperature");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+        auto example = TempDto::createShared();
+        example->temperature = 30.2; 
+        info->addResponse<Object<TempDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_404, "application/json", "Bottom sensor temperature not available")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Bottom sensor temperature not available"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve temperature")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve temperature"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getBottomSensorTemperature)
     ENDPOINT("GET", "/sensor/bottle/bottom/sensor_temperature", getBottomSensorTemperature);

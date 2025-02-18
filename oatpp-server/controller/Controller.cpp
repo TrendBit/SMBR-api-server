@@ -231,7 +231,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getC
     if (temperature == -30) {
         return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else if (temperature == -100) {
-        return createDtoResponse(Status::CODE_503, createErrorDto("Module not available")); 
+        return createDtoResponse(Status::CODE_404, createErrorDto("Module not found")); 
     } else if (temperature >= -30) {
         tempResponseDto->temperature = temperature;
         return createDtoResponse(Status::CODE_200, tempResponseDto); 
@@ -268,7 +268,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getB
     if (temperature == -30) {
         return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else if (temperature == -100) {
-        return createDtoResponse(Status::CODE_503, createErrorDto("Module not available")); 
+        return createDtoResponse(Status::CODE_404, createErrorDto("Module not found")); 
     } else if (temperature >= -30) {
         tempResponseDto->temperature = temperature;
         return createDtoResponse(Status::CODE_200, tempResponseDto); 
@@ -393,7 +393,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::post
     if (success) {
         return createDtoResponse(Status::CODE_200, createErrorDto("Successfully restarted module"));
     } else {
-        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to restart module."));
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to restart module"));
     }
 }
 
