@@ -31,10 +31,8 @@
 #include "control/ControlModule.hpp"
 #include "core/CoreModule.hpp"
 #include "sensor/SensorModule.hpp"
+#include "utils/CodesUtils.hpp"
 #include "oatpp/data/mapping/ObjectMapper.hpp"
-
-
-
 
 #include <future>
 #include <iomanip>
@@ -88,11 +86,12 @@ public:
         auto module = ModuleInfoDto::createShared();
         module->module_type = "sensor";
         module->uid = "0x0123456789ab";
+        module->instance = "Exclusive"; 
         example->push_back(module);
         info->addResponse<List<Object<ModuleInfoDto>>>(Status::CODE_200, "application/json")
             .addExample("application/json", example);
         info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
-                .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getSystemModules)
     ENDPOINT("GET", "/system/modules", getSystemModules);

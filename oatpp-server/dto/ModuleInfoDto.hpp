@@ -20,8 +20,12 @@ class ModuleInfoDto : public oatpp::DTO {
   /**
    * @brief Unique identifier for the module.
    */
-  DTO_FIELD(String, uid);          
+  DTO_FIELD(String, uid);      
 
+  /**
+   * @brief Instance of the module.
+   */
+  DTO_FIELD(String, instance);    
 };
 
 #include OATPP_CODEGEN_END(DTO)

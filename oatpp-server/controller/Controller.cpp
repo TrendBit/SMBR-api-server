@@ -66,55 +66,43 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getT
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getSystemModules() {
     auto dtoList = oatpp::List<oatpp::Object<ModuleInfoDto>>::createShared();
-    std::promise<oatpp::List<oatpp::Object<ModuleInfoDto>>> promise;
-    auto future = promise.get_future();
+    auto promise = std::make_shared<std::promise<oatpp::List<oatpp::Object<ModuleInfoDto>>>>();
+    auto future = promise->get_future();
+    auto promiseSet = std::make_shared<std::atomic<bool>>(false);
+    auto handleResponse = [promise, promiseSet, dtoList](const std::vector<CanMessage>& responses) {
+        if (!promiseSet->exchange(true)) {
+            for (const auto& response : responses) {
+                App_messages::Common::Probe_modules_response moduleResponse;
 
-    m_systemModule.getAvailableModules([&promise, dtoList](const std::vector<CanMessage>& responses) {
-    for (const auto& response : responses) {
-        App_messages::Common::Probe_modules_response moduleResponse;
+                auto dataCopy = response.getData();
+                if (moduleResponse.Interpret_data(dataCopy)) {
+                    auto moduleInfoDto = ModuleInfoDto::createShared();
 
-        auto dataCopy = response.getData();
-        if (moduleResponse.Interpret_data(dataCopy)) {
-            auto moduleInfoDto = ModuleInfoDto::createShared();
+                    std::stringstream uidHex;
+                    uidHex << "0x";
+                    for (const auto& byte : moduleResponse.uid) {
+                        uidHex << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(byte);
+                    }
+                    moduleInfoDto->uid = uidHex.str();
 
-            std::stringstream uidHex;
-            uidHex << "0x";
-            for (const auto& byte : moduleResponse.uid) {
-                uidHex << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(byte);
+                    uint32_t modulePart = (response.getId() >> 4) & 0xFF;
+                    moduleInfoDto->module_type = getModuleString(static_cast<Codes::Module>(modulePart));
+
+                    uint32_t instancePart = response.getId() & 0xF;
+                    moduleInfoDto->instance = getInstanceString(static_cast<Codes::Instance>(instancePart));
+
+                    dtoList->push_back(moduleInfoDto);
+                }
             }
-            moduleInfoDto->uid = uidHex.str();
-
-            uint32_t modulePart = (response.getId() >> 4) & 0xFF;
-            switch (static_cast<Codes::Module>(modulePart)) {
-                case Codes::Module::Core_module:
-                    moduleInfoDto->module_type = "core";
-                    break;
-                case Codes::Module::Control_module:
-                    moduleInfoDto->module_type = "control";
-                    break;
-                case Codes::Module::Sensor_module:
-                    moduleInfoDto->module_type = "sensor";
-                    break;
-                default:
-                    moduleInfoDto->module_type = "unknown";
-                    break;
-            }
-
-            dtoList->push_back(moduleInfoDto);
+            promise->set_value(dtoList); 
         }
-    }
-        promise.set_value(dtoList);
-    });
-
+    };
+    m_systemModule.getAvailableModules(handleResponse);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
         return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     auto result = future.get();
-
-    if (result->empty()) {
-        return createDtoResponse(Status::CODE_504, createErrorDto("No module responses received (timeout)"));
-    }
 
     return createDtoResponse(Status::CODE_200, result);
 }
