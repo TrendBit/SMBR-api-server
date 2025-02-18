@@ -4,13 +4,13 @@
 extern backward::SignalHandling sh;
 
 Controller::Controller(const std::shared_ptr<oatpp::web::mime::ContentMappers>& apiContentMappers,
-                           boost::asio::io_context& ioContext,
-                           SystemModule& systemModule,
-                           CommonModule& commonModule,
-                           ControlModule& controlModule,
-                           CoreModule& coreModule,
-                           SensorModule& sensorModule,
-                           CanRequestManager& canRequestManager)
+                       boost::asio::io_context& ioContext,
+                       SystemModule& systemModule,
+                       CommonModule& commonModule,
+                       ControlModule& controlModule,
+                       CoreModule& coreModule,
+                       SensorModule& sensorModule,
+                       CanRequestManager& canRequestManager)
     : oatpp::web::server::api::ApiController(apiContentMappers)
     , m_ioContext(ioContext)
     , m_systemModule(systemModule)
@@ -20,6 +20,11 @@ Controller::Controller(const std::shared_ptr<oatpp::web::mime::ContentMappers>& 
     , m_sensorModule(sensorModule)
     , m_canRequestManager(canRequestManager) {}
 
+oatpp::Object<ErrorResponseDto> Controller::createErrorDto(const std::string& message) {
+    auto errorDto = ErrorResponseDto::createShared();
+    errorDto->message = message;
+    return errorDto;
+}
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getTemperatureResponse(
     const std::function<void(std::function<void(float)>)>& temperatureGetter,
@@ -39,7 +44,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getT
     temperatureGetter(handleTemperatureResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float temperature = future.get();
 
@@ -47,11 +52,11 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getT
         tempResponseDto->temperature = temperature;
         return createDtoResponse(Status::CODE_200, tempResponseDto);
     } else if (temperature == -100) {
-        return createResponse(Status::CODE_404, notAvailableMessage);
+        return createDtoResponse(Status::CODE_404, createErrorDto(notAvailableMessage));
     } else if (temperature == -30) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else {
-        return createResponse(Status::CODE_500, errorMessage);
+        return createDtoResponse(Status::CODE_500, createErrorDto(errorMessage));
     }
 }
 
@@ -103,12 +108,12 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getS
 
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     auto result = future.get();
 
     if (result->empty()) {
-        return createResponse(Status::CODE_504, "No module responses received (timeout)");
+        return createDtoResponse(Status::CODE_504, createErrorDto("No module responses received (timeout)"));
     }
 
     return createDtoResponse(Status::CODE_200, result);
@@ -152,9 +157,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::ping
 
     auto targetModuleOpt = getTargetModule(module);  
     if (!targetModuleOpt.has_value()) {
-        auto errorDto = ErrorResponseDto::createShared();
-        errorDto->message = "Module not found";
-        return createDtoResponse(Status::CODE_404, errorDto);
+        return createDtoResponse(Status::CODE_404, createErrorDto("Module not found"));
     }
     Codes::Module targetModule = targetModuleOpt.value();
 
@@ -163,9 +166,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::ping
     m_commonModule.ping(m_canRequestManager, targetModule, seq_num, handlePingResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        auto errorDto = ErrorResponseDto::createShared();
-        errorDto->message = "Request timed out";
-        return createDtoResponse(Status::CODE_504, errorDto);
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float responseTime = future.get();
 
@@ -173,13 +174,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::ping
         pingResponseDto->time_ms = responseTime;
         return createDtoResponse(Status::CODE_200, pingResponseDto);  
     } else if (responseTime == -2) {
-        auto errorDto = ErrorResponseDto::createShared();
-        errorDto->message = "Ping timed out";
-        return createDtoResponse(Status::CODE_504, errorDto);
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else {
-        auto errorDto = ErrorResponseDto::createShared();
-        errorDto->message = "Ping failed";
-        return createDtoResponse(Status::CODE_500, errorDto);
+        return createDtoResponse(Status::CODE_500, createErrorDto("Ping failed"));
     }
 }
 
@@ -197,14 +194,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getC
 
     auto targetModuleOpt = getTargetModule(module);
     if (!targetModuleOpt.has_value()) {
-        return createResponse(Status::CODE_404, "Module not found");
+        return createDtoResponse(Status::CODE_404, createErrorDto("Module not found"));
     }
     Codes::Module targetModule = targetModuleOpt.value();
 
     m_commonModule.getCoreLoad(m_canRequestManager, targetModule, handleLoadResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float load = future.get();
 
@@ -212,9 +209,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getC
         loadResponseDto->load = load;
         return createDtoResponse(Status::CODE_200, loadResponseDto);
     } else if (load == -2) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve load");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve load"));
     }
 }
 
@@ -232,26 +229,26 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getC
 
     auto targetModuleOpt = getTargetModule(module);  
     if (!targetModuleOpt.has_value()) {
-        return createResponse(Status::CODE_404, "Module not found");  
+        return createDtoResponse(Status::CODE_404, createErrorDto("Module not found"));  
     }
     Codes::Module targetModule = targetModuleOpt.value();
 
     m_commonModule.getCoreTemp(m_canRequestManager, targetModule, handleTempResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float temperature = future.get();
 
     if (temperature == -30) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else if (temperature == -100) {
-        return createResponse(Status::CODE_503, "Module not available"); 
+        return createDtoResponse(Status::CODE_503, createErrorDto("Module not available")); 
     } else if (temperature >= -30) {
         tempResponseDto->temperature = temperature;
         return createDtoResponse(Status::CODE_200, tempResponseDto); 
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve temperature"); 
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve temperature")); 
     }
 }
 
@@ -269,26 +266,26 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getB
 
     auto targetModuleOpt = getTargetModule(module);  
     if (!targetModuleOpt.has_value()) {
-        return createResponse(Status::CODE_404, "Module not found");  
+        return createDtoResponse(Status::CODE_404, createErrorDto("Module not found"));  
     }
     Codes::Module targetModule = targetModuleOpt.value();
 
     m_commonModule.getBoardTemp(m_canRequestManager, targetModule, handleTempResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float temperature = future.get();
 
     if (temperature == -30) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else if (temperature == -100) {
-        return createResponse(Status::CODE_503, "Module not available"); 
+        return createDtoResponse(Status::CODE_503, createErrorDto("Module not available")); 
     } else if (temperature >= -30) {
         tempResponseDto->temperature = temperature;
         return createDtoResponse(Status::CODE_200, tempResponseDto); 
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve temperature"); 
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve temperature")); 
     }
 }
 
@@ -367,23 +364,23 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::post
     const oatpp::Object<ModuleActionRequestDto>& body) {
 
     if (!body || !body->uid) {
-        return createResponse(Status::CODE_400, "UID is required");
+        return createDtoResponse(Status::CODE_400, createErrorDto("UID is required"));
     }
 
     std::string inputUid = body->uid->c_str();
     
     auto availabilityFuture = checkModuleAndUidAvailability(module, inputUid);
     if (availabilityFuture.wait_for(std::chrono::seconds(2)) == std::future_status::timeout) {
-        return createResponse(Status::CODE_500, "Timeout while checking availability");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Timeout while checking availability"));
     }
 
     if (!availabilityFuture.get()) {
-        return createResponse(Status::CODE_404, "Module with this UID is not available");
+        return createDtoResponse(Status::CODE_404, createErrorDto("Module with this UID is not available"));
     }
 
     auto targetModuleOpt = getTargetModule(module);  
     if (!targetModuleOpt.has_value()) {
-        return createResponse(Status::CODE_404, "Module not found");  
+        return createDtoResponse(Status::CODE_404, createErrorDto("Module not found"));  
     }
     Codes::Module targetModule = targetModuleOpt.value();
 
@@ -400,15 +397,15 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::post
     m_commonModule.sendDeviceReset(m_canRequestManager, targetModule, handlepostRestartResult);
 
     if (restartFuture.wait_for(std::chrono::seconds(2)) == std::future_status::timeout) {
-        return createResponse(Status::CODE_500, "Timeout while restarting module");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Timeout while restarting module"));
     }
 
     bool success = restartFuture.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Successfully restarted module.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Successfully restarted module"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to restart module.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to restart module."));
     }
 }
 
@@ -417,23 +414,23 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::post
     const oatpp::Object<ModuleActionRequestDto>& body) {
 
     if (!body || !body->uid) {
-        return createResponse(Status::CODE_400, "UID is required");
+        return createDtoResponse(Status::CODE_400, createErrorDto("UID is required"));
     }
 
     std::string inputUid = body->uid->c_str();
 
     auto availabilityFuture = checkModuleAndUidAvailability(module, inputUid);
     if (availabilityFuture.wait_for(std::chrono::seconds(2)) == std::future_status::timeout) {
-        return createResponse(Status::CODE_500, "Timeout while checking availability");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Timeout while checking availability"));
     }
 
     if (!availabilityFuture.get()) {
-        return createResponse(Status::CODE_404, "Module with this UID is not available");
+        return createDtoResponse(Status::CODE_404, createErrorDto("Module with this UID is not available"));
     }
 
     auto targetModuleOpt = getTargetModule(module);
     if (!targetModuleOpt.has_value()) {
-        return createResponse(Status::CODE_404, "Module not found");
+        return createDtoResponse(Status::CODE_404, createErrorDto("Module not found"));
     }
     Codes::Module targetModule = targetModuleOpt.value();
 
@@ -450,15 +447,15 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::post
     m_commonModule.sendDeviceUsbBootloader(m_canRequestManager, targetModule, handlepostUsbBootloader);
 
     if (future.wait_for(std::chrono::seconds(2)) == std::future_status::timeout) {
-        return createResponse(Status::CODE_500, "Timeout while starting USB bootloader");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Timeout while starting USB bootloader"));
     }
 
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Successfully restarted module in USB bootloader mode.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Successfully restarted module in USB bootloader mode"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to restart module.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to restart module"));
     }
 }
 
@@ -467,23 +464,23 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::post
     const oatpp::Object<ModuleActionRequestDto>& body) {
 
     if (!body || !body->uid) {
-        return createResponse(Status::CODE_400, "UID is required");
+        return createDtoResponse(Status::CODE_400, createErrorDto("UID is required"));
     }
 
     std::string inputUid = body->uid->c_str();
 
     auto availabilityFuture = checkModuleAndUidAvailability(module, inputUid);
     if (availabilityFuture.wait_for(std::chrono::seconds(2)) == std::future_status::timeout) {
-        return createResponse(Status::CODE_500, "Timeout while checking availability");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Timeout while checking availability"));
     }
 
     if (!availabilityFuture.get()) {
-        return createResponse(Status::CODE_404, "Module with this UID is not available");
+        return createDtoResponse(Status::CODE_404, createErrorDto("Module with this UID is not available"));
     }
 
     auto targetModuleOpt = getTargetModule(module);
     if (!targetModuleOpt.has_value()) {
-        return createResponse(Status::CODE_404, "Module not found");
+        return createDtoResponse(Status::CODE_404, createErrorDto("Module not found"));
     }
     Codes::Module targetModule = targetModuleOpt.value();
 
@@ -500,15 +497,15 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::post
     m_commonModule.sendDeviceCanBootloader(m_canRequestManager, targetModule, handlepostCanBootloader);
 
     if (future.wait_for(std::chrono::seconds(2)) == std::future_status::timeout) {
-        return createResponse(Status::CODE_500, "Timeout while starting CAN bootloader");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Timeout while starting CAN bootloader"));
     }
 
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Successfully restarted module in CAN bootloader mode.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Successfully restarted module in CAN bootloader mode"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to restart module.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to restart module"));
     }
 }
 
@@ -532,17 +529,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getS
     m_coreModule.getShortID(m_canRequestManager, Codes::Module::Core_module, handleSIDResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     std::string sid = future.get();
 
     if (sid == "timeout") {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else if (!sid.empty()) {
         sidResponseDto->sid = sid;
         return createDtoResponse(Status::CODE_200, sidResponseDto);
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve SID");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve SID"));
     }
 }
 
@@ -561,16 +558,16 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getI
     m_coreModule.getIpAddress(m_canRequestManager, Codes::Module::Core_module, handleIpAddressResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     std::string ipAddress = future.get();
 
     if (ipAddress == "timeout") {
-        return createResponse(Status::CODE_504, "Request timed out");  
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));  
     }
 
     if (ipAddress.empty()) {
-        return createResponse(Status::CODE_500, "Failed to retrieve IP address");  
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve IP address"));  
     }
 
     ipResponseDto->ipAddress = ipAddress;
@@ -592,17 +589,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getH
     m_coreModule.getHostname(m_canRequestManager, Codes::Module::Core_module, handleHostnameResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     std::string hostname = future.get();
 
     if (hostname == "timeout") {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else if (!hostname.empty()) {
         hostnameResponseDto->hostname = hostname;
         return createDtoResponse(Status::CODE_200, hostnameResponseDto);
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve hostname");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve hostname"));
     }
 }
 
@@ -621,17 +618,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getS
     m_coreModule.getSerialNumber(m_canRequestManager, Codes::Module::Core_module, handleSerialResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     int64_t serial = future.get();
 
     if (serial == -2) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else if (serial >= 0) {
         serialResponseDto->serial = serial;
         return createDtoResponse(Status::CODE_200, serialResponseDto);
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve serial number");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve serial number"));
     }
 }
 
@@ -650,12 +647,12 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getP
     m_coreModule.getPowerSupplyType(m_canRequestManager, Codes::Module::Core_module, handleSupplyTypeResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     auto [success, vin, poe, poe_hb] = future.get();
 
     if (!success) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
 
     supplyTypeResponseDto->vin = vin;
@@ -679,17 +676,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getV
     m_coreModule.getVoltage5V(m_canRequestManager, Codes::Module::Core_module, handleVoltageResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float voltage = future.get();
 
     if (voltage == -2.0f) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else if (voltage >= 0.0f) {
         voltageResponseDto->voltage = voltage;
         return createDtoResponse(Status::CODE_200, voltageResponseDto);
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve voltage");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve voltage"));
     }
 }
 
@@ -708,17 +705,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getV
     m_coreModule.getVoltageVIN(m_canRequestManager, Codes::Module::Core_module, handleVoltageResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float voltage = future.get();
 
     if (voltage == -2.0f) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else if (voltage > -1.0f) {
         voltageResponseDto->voltage = voltage;
         return createDtoResponse(Status::CODE_200, voltageResponseDto);
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve VIN voltage");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve VIN voltage"));
     }
 }
 
@@ -737,17 +734,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getP
     m_coreModule.getVoltagePoE(m_canRequestManager, Codes::Module::Core_module, handlePoEResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float voltage = future.get();
 
     if (voltage == -2.0f) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else if (voltage > -1.0f) {
         voltageResponseDto->voltage = voltage;
         return createDtoResponse(Status::CODE_200, voltageResponseDto);
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve POE voltage");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve POE voltage"));
     }
 }
 
@@ -766,17 +763,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getC
     m_coreModule.getCurrentConsumption(m_canRequestManager, Codes::Module::Core_module, handleCurrentResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float current = future.get();
 
     if (current == -2.0f) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else if (current > -1.0f && current <= 10.0f) {
         currentResponseDto->current = current;
         return createDtoResponse(Status::CODE_200, currentResponseDto);
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve current consumption");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve current consumption"));
     }
 }
 
@@ -795,17 +792,17 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getP
     m_coreModule.getPowerDraw(m_canRequestManager, Codes::Module::Core_module, handlePowerDrawResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float powerDraw = future.get();
 
     if (powerDraw == -2.0f) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else if (powerDraw >= 0.0f && powerDraw <= 100.0f) {
         powerDrawResponseDto->power_draw = powerDraw;
         return createDtoResponse(Status::CODE_200, powerDrawResponseDto);
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve power draw");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve power draw"));
     }
 }
 
@@ -816,13 +813,13 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getP
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setIntensities(const oatpp::Object<IntensitiesDto>& body) {
     if (!body || !body->intensity || body->intensity->size() != 4) {
-        return createResponse(Status::CODE_400, "Invalid intensity array. Must contain exactly 4 values.");
+        return createDtoResponse(Status::CODE_400, createErrorDto("Invalid intensity array. Must contain exactly 4 values"));
     }
 
     for (size_t i = 0; i < body->intensity->size(); i++) {
         auto intensity = body->intensity->at(i); 
         if (!intensity || *intensity < 0.0f || *intensity > 1.0f) {
-            return createResponse(Status::CODE_400, "Invalid intensity value. Must be between 0.0 and 1.0.");
+            return createDtoResponse(Status::CODE_400, createErrorDto("Invalid intensity value. Must be between 0.0 and 1.0"));
         }
     }
 
@@ -858,9 +855,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setI
     }
 
     if (success) {
-        return createResponse(Status::CODE_200, "Intensities set successfully.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Intensities set successfully"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to set intensities.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to set intensities"));
     }
 }
 
@@ -884,12 +881,12 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setI
     const oatpp::Object<IntensityDto>& body
 ) {
     if (body->intensity < 0 || body->intensity > 1) {
-        return createResponse(Status::CODE_400, "Invalid intensity. Must be between 0 and 1.");
+        return createDtoResponse(Status::CODE_400, createErrorDto("Invalid intensity. Must be between 0 and 1"));
     }
 
     auto targetChannelOpt = getTargetChannel(channel);
     if (!targetChannelOpt.has_value()) { 
-        return createResponse(Status::CODE_400, "Invalid channel. Must be channel0, channel1, channel2, or channel3.");
+        return createDtoResponse(Status::CODE_400, createErrorDto("Invalid channel. Must be channel 0, 1, 2 or 3"));
     }
 
     int targetChannel = targetChannelOpt.value();
@@ -907,14 +904,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setI
     m_controlModule.setIntensity(Codes::Module::Control_module, body->intensity, targetChannel, handleSetIntensityResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Intensity set successfully.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Intensity set successfully"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to set intensity.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to set intensity"));
     }
 }
 
@@ -932,14 +929,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getI
 
     auto targetChannelOpt = getTargetChannel(channel);
     if (!targetChannelOpt.has_value()) {
-        return createResponse(Status::CODE_404, "Channel not found");
+        return createDtoResponse(Status::CODE_404, createErrorDto("Channel not found"));
     }
     int targetChannel = targetChannelOpt.value();
 
     m_controlModule.getIntensity(m_canRequestManager, Codes::Module::Control_module, targetChannel, handleIntensityResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float intensity = future.get();
 
@@ -947,9 +944,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getI
         intensityResponseDto->intensity = intensity;
         return createDtoResponse(Status::CODE_200, intensityResponseDto);
     } else if (intensity == -2) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve intensity");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve intensity"));
     }
 }
 
@@ -965,7 +962,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getL
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setHeaterIntensity(const oatpp::Object<IntensityDto>& body) {
     if (!body || body->intensity < -1.0f || body->intensity > 1.0f) {
-        return createResponse(Status::CODE_400, "Invalid intensity value. Must be between -1.0 and 1.0.");
+        return createDtoResponse(Status::CODE_400, createErrorDto("Invalid intensity value. Must be between -1.0 and 1.0"));
     }
 
     auto promise = std::make_shared<std::promise<bool>>();
@@ -981,14 +978,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setH
     m_controlModule.setHeaterIntensity(Codes::Module::Control_module, body->intensity, handleSetIntensityResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Intensity set successfully.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Intensity set successfully"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to set heater intensity.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to set heater intensity"));
     }
 }
 
@@ -1007,23 +1004,23 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getH
     m_controlModule.getHeaterIntensity(m_canRequestManager, Codes::Module::Control_module, handleIntensityResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float intensity = future.get();
 
     if (intensity == -2.0f) {
-        return createResponse(Status::CODE_504, "Request timed out"); 
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out")); 
     } else if (intensity >= -1.0f && intensity <= 1.0f) {
         intensityResponseDto->intensity = intensity;
         return createDtoResponse(Status::CODE_200, intensityResponseDto);  
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve heater intensity");  
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve heater intensity"));  
     }
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setHeaterTargetTemperature(const oatpp::Object<TempDto>& body) {
     if (!body || body->temperature < 0.0f) {
-        return createResponse(Status::CODE_400, "Invalid target temperature. Must be a positive value.");
+        return createDtoResponse(Status::CODE_400, createErrorDto("Invalid target temperature. Must be a positive value"));
     }
 
     auto promise = std::make_shared<std::promise<bool>>();
@@ -1039,14 +1036,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setH
     m_controlModule.setHeaterTargetTemperature(Codes::Module::Control_module, body->temperature, handleSetTargetTempResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Target temperature set successfully.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Target temperature set successfully"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to set target temperature.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to set target temperature"));
     }
 }
 
@@ -1084,20 +1081,20 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::turn
     m_controlModule.turnOffHeater(Codes::Module::Control_module, handleTurnOffResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Heater was turned off.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Heater was turned off"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to turn off heater.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to turn off heater"));
     }
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setCuvettePumpSpeed(const oatpp::Object<SpeedDto>& body) {
     if (!body || body->speed < -1.0f || body->speed > 1.0f) {
-        return createResponse(Status::CODE_400, "Invalid speed value. Must be between -1.0 and 1.0.");
+        return createDtoResponse(Status::CODE_400, createErrorDto("Invalid speed value. Must be between -1.0 and 1.0"));
     }
 
     auto promise = std::make_shared<std::promise<bool>>();
@@ -1113,14 +1110,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setC
     m_controlModule.setCuvettePumpSpeed(Codes::Module::Control_module, body->speed, handleSetSpeedResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Speed set successfully.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Speed set successfully"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to set pump speed.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to set pump speed"));
     }
 }
 
@@ -1139,7 +1136,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getC
     m_controlModule.getCuvettePumpSpeed(m_canRequestManager, Codes::Module::Control_module, handleSpeedResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float speed = future.get();
 
@@ -1147,15 +1144,15 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getC
         speedResponseDto->speed = speed;
         return createDtoResponse(Status::CODE_200, speedResponseDto);  
     } else if (speed == -2.0f) {
-        return createResponse(Status::CODE_504, "Request timed out"); 
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out")); 
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve pump speed");  
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve pump speed"));  
     }
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setCuvettePumpFlowrate(const oatpp::Object<FlowrateDto>& body) {
     if (!body || body->flowrate < -1000.0f || body->flowrate > 1000.0f) {
-        return createResponse(Status::CODE_400, "Invalid flowrate value. Must be between -1000.0 and 1000.0.");
+        return createDtoResponse(Status::CODE_400, createErrorDto("Invalid flowrate value. Must be between -1000.0 and 1000.0"));
     }
 
     auto promise = std::make_shared<std::promise<bool>>();
@@ -1171,14 +1168,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setC
     m_controlModule.setCuvettePumpFlowrate(Codes::Module::Control_module, body->flowrate, handleSetFlowrateResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Flowrate set successfully.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Flowrate set successfully"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to set cuvette pump flowrate.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to set cuvette pump flowrate"));
     }
 }
 
@@ -1197,23 +1194,23 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getC
     m_controlModule.getCuvettePumpFlowrate(m_canRequestManager, Codes::Module::Control_module, handleFlowrateResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float flowrate = future.get();
 
     if (flowrate == -2000.0f) {
-        return createResponse(Status::CODE_504, "Request timed out"); 
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out")); 
     } else if (flowrate >= -1000.0f && flowrate <= 1000.0f) {
         flowrateResponseDto->flowrate = flowrate;
         return createDtoResponse(Status::CODE_200, flowrateResponseDto);  
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve cuvette pump flowrate");  
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve cuvette pump flowrate"));  
     }
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::moveCuvettePump(const oatpp::Object<MoveDto>& body) {
     if (!body) {
-        return createResponse(Status::CODE_400, "Invalid request body.");
+        return createDtoResponse(Status::CODE_400, createErrorDto("Invalid request body"));
     }
 
     auto moveResponseDto = MoveDto::createShared();
@@ -1230,7 +1227,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::move
     m_controlModule.moveCuvettePump(Codes::Module::Control_module, body->volume, body->flowrate, handleMoveResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
@@ -1239,7 +1236,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::move
         moveResponseDto->flowrate = body->flowrate;
         return createDtoResponse(Status::CODE_200, moveResponseDto);  
     } else {
-        return createResponse(Status::CODE_500, "Failed to start moving liquid");  
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to start moving liquid"));  
     }
 }
 
@@ -1257,14 +1254,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::prim
     m_controlModule.primeCuvettePump(Codes::Module::Control_module, handlePrimeResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Cuvette pump priming was started.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Cuvette pump priming was started"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to start cuvette pump priming.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to start cuvette pump priming"));
     }
 }
 
@@ -1282,14 +1279,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::purg
     m_controlModule.purgeCuvettePump(Codes::Module::Control_module, handlePurgeResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Cuvette pump purging was started.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Cuvette pump purging was started"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to start cuvette pump purging.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to start cuvette pump purging"));
     }
 }
 
@@ -1307,20 +1304,20 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::stop
     m_controlModule.stopCuvettePump(Codes::Module::Control_module, handleStopResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Cuvette pump was stopped.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Cuvette pump was stopped"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to stop cuvette pump.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to stop cuvette pump"));
     }
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setAeratorSpeed(const oatpp::Object<SpeedDto>& body) {
     if (!body || body->speed < 0.0f || body->speed > 1.0f) {
-        return createResponse(Status::CODE_400, "Invalid speed value. Must be between 0.0 and 1.0.");
+        return createDtoResponse(Status::CODE_400, createErrorDto("Invalid speed value. Must be between 0.0 and 1.0"));
     }
 
     auto promise = std::make_shared<std::promise<bool>>();
@@ -1336,14 +1333,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setA
     m_controlModule.setAeratorSpeed(Codes::Module::Control_module, body->speed, handleSetSpeedResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Speed set successfully.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Speed set successfully"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to set aerator speed.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to set aerator speed"));
     }
 }
 
@@ -1362,7 +1359,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getA
     m_controlModule.getAeratorSpeed(m_canRequestManager, Codes::Module::Control_module, handleSpeedResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float speed = future.get();
 
@@ -1370,15 +1367,15 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getA
         speedResponseDto->speed = speed;
         return createDtoResponse(Status::CODE_200, speedResponseDto);  
     } else if (speed == -2.0f) {
-        return createResponse(Status::CODE_504, "Request timed out"); 
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out")); 
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve aerator speed");  
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve aerator speed"));  
     }
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setAeratorFlowrate(const oatpp::Object<FlowrateDto>& body) {
     if (!body || body->flowrate < 10.0f || body->flowrate > 5000.0f) {
-        return createResponse(Status::CODE_400, "Invalid flowrate value. Must be between 10.0 and 5000.0 ml/min.");
+        return createDtoResponse(Status::CODE_400, createErrorDto("Invalid flowrate value. Must be between 10.0 and 5000.0 ml/min"));
     }
 
     auto promise = std::make_shared<std::promise<bool>>();
@@ -1394,14 +1391,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setA
     m_controlModule.setAeratorFlowrate(Codes::Module::Control_module, body->flowrate, handleSetFlowrateResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Flowrate set successfully.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Flowrate set successfully"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to set aerator flowrate.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to set aerator flowrate"));
     }
 }
 
@@ -1420,7 +1417,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getA
     m_controlModule.getAeratorFlowrate(m_canRequestManager, Codes::Module::Control_module, handleFlowrateResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float flowrate = future.get();
 
@@ -1428,9 +1425,9 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getA
         flowrateResponseDto->flowrate = flowrate;
         return createDtoResponse(Status::CODE_200, flowrateResponseDto);  
     } else if (flowrate == -2.0f) {
-        return createResponse(Status::CODE_504, "Request timed out"); 
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out")); 
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve aerator flowrate");  
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve aerator flowrate"));  
     }
 }
 
@@ -1449,7 +1446,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::move
     m_controlModule.moveAerator(Codes::Module::Control_module, body->volume, body->flowrate, handleMoveResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
@@ -1458,7 +1455,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::move
         moveResponseDto->flowrate = body->flowrate;
         return createDtoResponse(Status::CODE_200, moveResponseDto);
     } else {
-        return createResponse(Status::CODE_500, "Failed to start moving air");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to start moving air"));
     }
 }
 
@@ -1476,20 +1473,20 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::stop
     m_controlModule.stopAerator(Codes::Module::Control_module, handleStopResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Aerator was stopped.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Aerator was stopped"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to stop aerator.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to stop aerator"));
     }
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setMixerSpeed(const oatpp::Object<SpeedDto>& body) {
     if (!body || body->speed < 0.0f || body->speed > 1.0f) {
-        return createResponse(Status::CODE_400, "Invalid speed value. Must be between 0.0 and 1.0.");
+        return createDtoResponse(Status::CODE_400, createErrorDto("Invalid speed value. Must be between 0.0 and 1.0"));
     }
 
     auto promise = std::make_shared<std::promise<bool>>();
@@ -1505,14 +1502,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setM
     m_controlModule.setMixerSpeed(Codes::Module::Control_module, body->speed, handleSetSpeedResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Mixer speed set successfully.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Mixer speed set successfully"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to set mixer speed.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to set mixer speed"));
     }
 }
 
@@ -1531,7 +1528,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getM
     m_controlModule.getMixerSpeed(m_canRequestManager, Codes::Module::Control_module, handleSpeedResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     float speed = future.get();
 
@@ -1539,15 +1536,15 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getM
         speedResponseDto->speed = speed;
         return createDtoResponse(Status::CODE_200, speedResponseDto);
     } else if (speed == -2.0f) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve mixer speed");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve mixer speed"));
     }
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setMixerRpm(const oatpp::Object<RpmDto>& body) {
     if (!body || body->rpm < 0.0f || body->rpm > 10000.0f) {
-        return createResponse(Status::CODE_400, "Invalid RPM value. Must be between 0 and 10000.");
+        return createDtoResponse(Status::CODE_400, createErrorDto("Invalid RPM value. Must be between 0 and 10000"));
     }
 
     auto promise = std::make_shared<std::promise<bool>>();
@@ -1563,14 +1560,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::setM
     m_controlModule.setMixerRpm(Codes::Module::Control_module, body->rpm, handleSetRpmResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Target RPM set successfully.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Target RPM set successfully"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to set mixer RPM.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to set mixer RPM"));
     }
 }
 
@@ -1589,7 +1586,7 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getM
     m_controlModule.getMixerRpm(m_canRequestManager, Codes::Module::Control_module, handleRpmResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     int rpm = future.get();
 
@@ -1597,15 +1594,15 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getM
         rpmResponseDto->rpm = static_cast<float>(rpm);
         return createDtoResponse(Status::CODE_200, rpmResponseDto);
     } else if (rpm == -2) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to retrieve mixer RPM");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to retrieve mixer RPM"));
     }
 }
 
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::stirMixer(const oatpp::Object<StirDto>& body) {
     if (!body || body->rpm < 0.0f || body->rpm > 10000.0f || body->time < 0.0f || body->time > 3600.0f) {
-        return createResponse(Status::CODE_400, "Invalid RPM or time value. RPM must be between 0 and 10000, and time must be between 0 and 3600 seconds.");
+        return createDtoResponse(Status::CODE_400, createErrorDto("Invalid RPM or time value. RPM must be between 0 and 10000, and time must be between 0 and 3600 seconds"));
     }
 
     auto promise = std::make_shared<std::promise<bool>>();
@@ -1621,14 +1618,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::stir
     m_controlModule.stirMixer(Codes::Module::Control_module, body->rpm, body->time, handleStirResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Stirring started successfully.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Stirring started successfully"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to start stirring.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to start stirring"));
     }
 }
 
@@ -1646,14 +1643,14 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::stop
     m_controlModule.stopMixer(Codes::Module::Control_module, handleStopResult);
 
     if (future.wait_for(REQUEST_TIMEOUT_DURATION) == std::future_status::timeout) {
-        return createResponse(Status::CODE_504, "Request timed out");
+        return createDtoResponse(Status::CODE_504, createErrorDto("Request timed out"));
     }
     bool success = future.get();
 
     if (success) {
-        return createResponse(Status::CODE_200, "Mixer was stopped.");
+        return createDtoResponse(Status::CODE_200, createErrorDto("Mixer was stopped"));
     } else {
-        return createResponse(Status::CODE_500, "Failed to stop the mixer.");
+        return createDtoResponse(Status::CODE_500, createErrorDto("Failed to stop the mixer"));
     }
 }
 
@@ -1718,6 +1715,6 @@ std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::getB
 std::shared_ptr<oatpp::web::protocol::http::outgoing::Response> Controller::pingDirect() {
     oatpp::String response = "{\"message\": \"Ping direct response successful\"}";
 
-    return createResponse(Status::CODE_200, response);
+    return createDtoResponse(Status::CODE_200, response);
 }
 */

@@ -34,6 +34,8 @@
 #include "oatpp/data/mapping/ObjectMapper.hpp"
 
 
+
+
 #include <future>
 #include <iomanip>
 #include <cstdint>
@@ -67,9 +69,10 @@ public:
                  ControlModule& controlModule,
                  CoreModule& CoreModule,
                  SensorModule& SensorModule,
-                 CanRequestManager& canRequestManager);
-
+                 CanRequestManager& canRequestManager);             
+    oatpp::Object<ErrorResponseDto> createErrorDto(const std::string& message);
 public:
+
 // ==========================================
 // System Endpoints
 // ==========================================
@@ -115,7 +118,7 @@ public:
         info->addResponse<Object<LoadResponseDto>>(Status::CODE_200, "application/json");
         info->addResponse<String>(Status::CODE_404, "application/json", "Module not found");
         info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve load");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Ping timed out");
     }
     ADD_CORS(getCoreLoad)
     ENDPOINT("GET", "/{module}/load", getCoreLoad, PATH(oatpp::Enum<dto::ModuleEnum>::AsString, module));
