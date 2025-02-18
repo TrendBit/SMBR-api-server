@@ -97,6 +97,10 @@ public:
     ADD_CORS(getSystemModules)
     ENDPOINT("GET", "/system/modules", getSystemModules);
 
+// ==========================================
+// Common Endpoints
+// ==========================================
+
     /**
      * @brief Sends a ping to the target module and returns the response time.
      */
@@ -245,9 +249,14 @@ public:
         info->summary = "Get Short ID (SID) of the device";
         info->addTag("Core module");
         info->description = "Retrieves the 4-character hexadecimal SID of the device. The SID may not be unique across devices.";
-        info->addResponse<Object<SIDDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve SID");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+        auto example = SIDDto::createShared();
+        example->sid = "c0de";
+        info->addResponse<Object<SIDDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve SID")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve SID"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getShortID)
     ENDPOINT("GET", "/core/sid", getShortID);
@@ -259,8 +268,14 @@ public:
         info->summary = "Get IP address of the device";
         info->addTag("Core module");
         info->description = "Retrieves the IP address of the device. If not available, returns an empty string.";
-        info->addResponse<Object<IpDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve IP address");
+        auto example = IpDto::createShared();
+        example->ipAddress = "192.168.1.100";
+        info->addResponse<Object<IpDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve IP address")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve IP address"}}));
+            info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getIpAddress)
     ENDPOINT("GET", "/core/ip_address", getIpAddress);
@@ -272,9 +287,14 @@ public:
         info->summary = "Get Hostname of the device";
         info->addTag("Core module");
         info->description = "Retrieves the hostname of the device, truncated to 8 characters for CAN bus compatibility.";
-        info->addResponse<Object<HostnameDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve hostname");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+        auto example = HostnameDto::createShared();
+        example->hostname = "smpbr_01";
+        info->addResponse<Object<HostnameDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve hostname")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve hostname"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getHostname)
     ENDPOINT("GET", "/core/hostname", getHostname);
@@ -286,9 +306,14 @@ public:
         info->summary = "Get Serial Number of the device";
         info->addTag("Core module");
         info->description = "Retrieves the serial number of the device, which is unique and corresponds to the RPi serial number.";
-        info->addResponse<Object<SerialDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve serial number");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+        auto example = SerialDto::createShared();
+        example->serial = 1907977600;
+        info->addResponse<Object<SerialDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve serial number")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve serial number"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getSerialNumber)
     ENDPOINT("GET", "/core/serial", getSerialNumber);
@@ -300,8 +325,16 @@ public:
         info->summary = "Get type of power supply";
         info->addTag("Core module");
         info->description = "Retrieves the type of power supply powering the device. The options are: - VIN: external power supply adapter. - PoE: Power over Ethernet from RJ45 on RPi (15W). - PoE_HB: Variant of PoE with higher power budget (25-30W).";
-        info->addResponse<Object<SupplyTypeDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve power supply type");
+        auto example = SupplyTypeDto::createShared();
+        example->vin = true;
+        example->poe = false;
+        example->poe_hb = false;
+        info->addResponse<Object<SupplyTypeDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve power supply type")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve power supply type"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getPowerSupplyType)
     ENDPOINT("GET", "/core/supply/type", getPowerSupplyType);
@@ -313,9 +346,14 @@ public:
         info->summary = "Get voltage of 5V power rail";
         info->addTag("Core module");
         info->description = "Gets voltage of 5V power rail on device in volts.";
-        info->addResponse<Object<VoltageDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve voltage");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+        auto example = VoltageDto::createShared();
+        example->voltage = 5.035;
+        info->addResponse<Object<VoltageDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve voltage")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve voltage"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getVoltage5V)
     ENDPOINT("GET", "/core/supply/5v", getVoltage5V);
@@ -327,23 +365,33 @@ public:
         info->summary = "Get Voltage at VIN Power Rail (12V)";
         info->addTag("Core module");
         info->description = "Retrieves the voltage at the VIN power rail on the device, which is supplied by an external power supply adapter.";
-        info->addResponse<Object<VoltageDto>>(Status::CODE_200, "application/json");
-        info->addResponse<String>(Status::CODE_500, "application/json", "Failed to retrieve VIN voltage");
-        info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
+        auto example = VoltageDto::createShared();
+        example->voltage = 11.995;
+        info->addResponse<Object<VoltageDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve VIN voltage")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve VIN voltage"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getVoltageVIN)
-    ENDPOINT("GET", "/core/supply/vin", getVoltageVIN);
+    ENDPOINT("GET", "/core/supply/vin", getVoltageVIN);;
 
     /**
      * @brief Retrieves the voltage of PoE power rail (12V).
      */
     ENDPOINT_INFO(getPoEVoltage) {
-    info->summary = "Get Voltage at PoE Power Rail (12V)";
-    info->addTag("Core module");
-    info->description = "Retrieves the voltage of the PoE power rail, supplied by Power over Ethernet (PoE) from RJ45 on RPi.";
-    info->addResponse<Object<VoltageDto>>(Status::CODE_200, "application/json");
-    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
-    info->addResponse<String>(Status::CODE_500, "application/json", "Internal error or invalid data");
+        info->summary = "Get Voltage at PoE Power Rail (12V)";
+        info->addTag("Core module");
+        info->description = "Retrieves the voltage of the PoE power rail, supplied by Power over Ethernet (PoE) from RJ45 on RPi.";
+        auto example = VoltageDto::createShared();
+        example->voltage = 12.01;
+        info->addResponse<Object<VoltageDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve POE voltage")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve POE voltage"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getPoEVoltage)
     ENDPOINT("GET", "/core/supply/poe", getPoEVoltage);
@@ -352,12 +400,17 @@ public:
      * @brief Retrieves the current consumption of the device.
      */
     ENDPOINT_INFO(getCurrentConsumption) {
-    info->summary = "Get Current Consumption of the Device";
-    info->addTag("Core module");
-    info->description = "Retrieves the current consumption of the device, including RPi and all connected modules. The current should be in the range 0-5 A.";
-    info->addResponse<Object<CurrentDto>>(Status::CODE_200, "application/json");
-    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
-    info->addResponse<String>(Status::CODE_500, "application/json", "Internal error or invalid data");
+        info->summary = "Get Current Consumption of the Device";
+        info->addTag("Core module");
+        info->description = "Retrieves the current consumption of the device, including RPi and all connected modules. The current should be in the range 0-5 A.";
+        auto example = CurrentDto::createShared();
+        example->current = 0.9;
+        info->addResponse<Object<CurrentDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve current consumption")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve current consumption"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getCurrentConsumption)
     ENDPOINT("GET", "/core/supply/current", getCurrentConsumption);
@@ -366,17 +419,20 @@ public:
      * @brief Retrieves the power draw of the device in watts.
      */
     ENDPOINT_INFO(getPowerDraw) {
-    info->summary = "Get Power Draw of the Device";
-    info->addTag("Core module");
-    info->description = "Retrieves the power draw of the device, including RPi and all connected modules.";
-    info->addResponse<Object<PowerDrawDto>>(Status::CODE_200, "application/json");
-    info->addResponse<String>(Status::CODE_504, "application/json", "Request timed out");
-    info->addResponse<String>(Status::CODE_500, "application/json", "Internal error or invalid data");
+        info->summary = "Get Power Draw of the Device";
+        info->addTag("Core module");
+        info->description = "Retrieves the power draw of the device, including RPi and all connected modules.";
+        auto example = PowerDrawDto::createShared();
+        example->power_draw = 4.2;
+        info->addResponse<Object<PowerDrawDto>>(Status::CODE_200, "application/json")
+            .addExample("application/json", example);
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_500, "application/json", "Failed to retrieve power draw")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Failed to retrieve power draw"}}));
+        info->addResponse<Object<ErrorResponseDto>>(Status::CODE_504, "application/json", "Request timed out")
+            .addExample("application/json", oatpp::Fields<oatpp::String>({{"message", "Request timed out"}}));
     }
     ADD_CORS(getPowerDraw)
     ENDPOINT("GET", "/core/supply/power_draw", getPowerDraw);
-
-
 
 
 // ==========================================
